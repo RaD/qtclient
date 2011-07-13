@@ -1,0 +1,580 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# (c) 2009-2011 Ruslan Popov <ruslan.popov@gmail.com>
+
+import sys, re, time
+from datetime import datetime, timedelta
+from os.path import dirname, join
+
+from http import Http
+from event_storage import Event
+from qtschedule import QtSchedule
+from printer import Printer
+#from team_tree import TreeModel
+
+from dialogs.rfid_wait import WaitingRFID
+from dialogs.searching import Searching
+from dialogs.user_info import ClientInfo, RenterInfo
+from dlg_settings import DlgSettings
+from dlg_login import DlgLogin
+from dlg_event_assign import DlgEventAssign
+from dlg_event_info import EventInfo
+from dlg_calendar import DlgCalendar
+from dlg_accounting import DlgAccounting
+
+from settings import _, DEBUG
+DEBUG_COMMON, DEBUG_RFID, DEBUG_PRINTER = DEBUG
+
+from library import ParamStorage
+
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
+
+class MainWindow(QMainWindow):
+
+    params = None
+
+    def __init__(self, parent=None):
+        QMainWindow.__init__(self, parent)
+
+        self.params = ParamStorage()
+
+        self.mimes = {'team': 'application/x-team-item',
+                      'event':  'application/x-calendar-event',
+                      }
+        self.rooms = []
+        self.tree = []
+        self.rfid_id = None
+
+        self.params.http = self.http = Http(self)
+
+        self.work_hours = (8, 24)
+        self.schedule_quant = timedelta(minutes=30)
+
+        self.menus = []
+        self.create_menus()
+        self.setup_views()
+
+        settings = QSettings()
+        settings.beginGroup('network')
+        host = settings.value('addressHttpServer', QVariant('WrongHost'))
+        settings.endGroup()
+
+        if 'WrongHost' == host.toString():
+            self.setupApp()
+
+        self.baseTitle = _('Manager\'s interface')
+        self.logoutTitle()
+        self.statusBar().showMessage(_('Ready'), 2000)
+        self.resize(640, 480)
+
+    def loggedTitle(self, response):
+        last_name = response.get('last_name')
+        first_name = response.get('first_name')
+        if len(last_name) > 0 or len(first_name) > 0:
+            self.setWindowTitle('%s : %s %s' % (self.baseTitle, last_name, first_name))
+        else:
+            self.setWindowTitle('%s : %s' % (self.baseTitle, response.get('username')))
+
+    def logoutTitle(self):
+        self.setWindowTitle('%s : %s' % (self.baseTitle, _('Login to start session')))
+
+    def get_dynamic(self):
+        self.bpMonday.setText(self.schedule.model().getMonday().strftime('%d/%m/%Y'))
+        self.bpSunday.setText(self.schedule.model().getSunday().strftime('%d/%m/%Y'))
+
+    def get_static(self):
+        """ This methods get static information from server. """
+        # get rooms
+        if not self.http.request('/manager/get_rooms/', {}):
+            QMessageBox.critical(self, _('Room info'), _('Unable to fetch: %s') % self.http.error_msg)
+            return
+        default_response = {'rows': []}
+        response = self.http.parse(default_response)
+        """
+        {'rows': [{'color': 'FFAAAA', 'text': 'red', 'id': 1},
+                  {'color': 'AAFFAA', 'text': 'green', 'id': 2},
+            ...]}
+        """
+
+        self.rooms = tuple( [ (a['title'], a['color'], a['id']) for a in response['rows'] ] )
+        self.schedule.update_static( {'rooms': self.rooms} )
+
+        # сохраняем информацию о залах в синглтон
+        map(lambda r: self.params.rooms.update( { r['id']: r['title'], } ), response['rows'])
+
+        # static info
+        if not self.http.request('/manager/static/', {}):
+            QMessageBox.critical(self, _('Static info'), _('Unable to fetch: %s') % self.http.error_msg)
+            return
+        response = self.http.parse()
+        self.params.static = self.static = response
+        #print 'Static is', self.static.keys()
+        #import pprint; pprint.pprint(self.static)
+
+        #self.tree = TreeModel(self.static.get('styles', None))
+
+    def update_interface(self):
+        """ This method updates application's interface using static
+        information obtained in previous method. """
+        # rooms
+        if self.rooms and len(self.rooms) > 0:
+            for title, color, id in self.rooms:
+                buttonFilter = QPushButton(title)
+                buttonFilter.setCheckable(True)
+                buttonFilter.setDisabled(True) # BUG #28
+                self.panelRooms.addWidget(buttonFilter)
+                self.connect(buttonFilter, SIGNAL('clicked()'),
+                             self.prepare_filter(id, title))
+
+    def printer_init(self, template):
+        self.printer = Printer(template=template)
+        run_it = True
+        def show_printer_status():
+            ok, tip = self.printer.get_status()
+            self.printer_widget.setToolTip(tip)
+            if ok:
+                msg = _('Printer is ready')
+            else:
+                msg = _('Printer is not ready')
+            self.printer_widget.setText(msg)
+        self.printer_refresh = self.makeTimer(show_printer_status,
+                                              self.printer.refresh_timeout,
+                                              run_it)
+
+    def prepare_filter(self, id, title):
+        def handler():
+            self.statusBar().showMessage(_('Filter: Room "%s" is changed its state') % title)
+        return handler
+
+    def setup_views(self):
+        self.panelRooms = QHBoxLayout()
+
+        schedule_params = {
+            'http': self.http,
+            'work_hours': self.work_hours,
+            'quant': self.schedule_quant,
+            'rooms': self.rooms,
+            }
+        self.schedule = QtSchedule(self, schedule_params)
+
+        self.bpMonday = QLabel('--/--/----')
+        self.bpSunday = QLabel('--/--/----')
+        self.buttonPrev = QPushButton(_('<<'))
+        self.buttonNext = QPushButton(_('>>'))
+        self.buttonToday = QPushButton(_('Today'))
+        self.buttonPrev.setDisabled(True)
+        self.buttonNext.setDisabled(True)
+        self.buttonToday.setDisabled(True)
+
+        # callback helper function
+        def prev_week():
+            week_range = self.schedule.model().showPrevWeek()
+            self.showWeekRange(week_range)
+        def next_week():
+            week_range = self.schedule.model().showNextWeek()
+            self.showWeekRange(week_range)
+        def today():
+            week_range = self.schedule.model().showCurrWeek()
+            self.showWeekRange(week_range)
+
+        self.connect(self.buttonPrev, SIGNAL('clicked()'), prev_week)
+        self.connect(self.buttonNext, SIGNAL('clicked()'), next_week)
+        self.connect(self.buttonToday, SIGNAL('clicked()'), today)
+
+        bottomPanel = QHBoxLayout()
+        bottomPanel.addWidget(QLabel(_('Week:')))
+        bottomPanel.addWidget(self.bpMonday)
+        bottomPanel.addWidget(QLabel('-'))
+        bottomPanel.addWidget(self.bpSunday)
+        bottomPanel.addStretch(1)
+        bottomPanel.addWidget(self.buttonPrev)
+        bottomPanel.addWidget(self.buttonToday)
+        bottomPanel.addWidget(self.buttonNext)
+
+        mainLayout = QVBoxLayout()
+        mainLayout.addLayout(self.panelRooms)
+        mainLayout.addWidget(self.schedule)
+        mainLayout.addLayout(bottomPanel)
+
+        mainWidget = QWidget()
+        mainWidget.setLayout(mainLayout)
+
+        self.setCentralWidget(mainWidget)
+
+        self.printer_widget = QLabel('--', self.statusBar())
+        self.printer_widget.setToolTip(u'Initialization in progress')
+        self.statusBar().addPermanentWidget(self.printer_widget)
+
+    def showWeekRange(self, week_range):
+        if self.schedule.model().getShowMode() == 'week':
+            monday, sunday = week_range
+            self.bpMonday.setText(monday.strftime('%d/%m/%Y'))
+            self.bpSunday.setText(sunday.strftime('%d/%m/%Y'))
+
+    def getMime(self, name):
+        return self.mimes.get(name, None)
+
+    def create_menus(self):
+        """ This method generates the application menu. Usage:
+        Describe the menu with all its action in data block and
+        realize handlers for each action."""
+        data = [
+            (_('File'), [
+                (_('Log in'), 'Ctrl+I', 'login', _('Start user session.')),
+                (_('Log out'), '', 'logout', _('End user session.')),
+                None,
+                (_('Application settings'), 'Ctrl+S', 'setupApp', _('Manage the application settings.')),
+                None,
+                (_('Exit'), '', 'close', _('Close the application.')),
+                ]
+             ),
+            (_('Client'), [
+                (_('New'), 'Ctrl+N', 'client_new', _('Register new client.')),
+                (_('Search by RFID'), 'Ctrl+D', 'client_search_rfid', _('Search a client with its RFID card.')),
+                (_('Search by name'), 'Ctrl+F', 'client_search_name', _('Search a client with its name.')),
+                ]
+             ),
+            (_('Renter'), [
+                (_('New'), 'Ctrl+M', 'renter_new', _('Register new renter.')),
+                (_('Search by name'), 'Ctrl+G', 'renter_search_name', _('Search a renter with its name.')),
+                ]
+             ),
+            (_('Calendar'), [
+                (_('Fill week'), 'Ctrl+L', 'fillWeek', _('Fill current week.')),
+                ]
+             ),
+            # 	    (_('Accounting'), [
+            # 		    (_('Add resources'), '',
+            # 		     'addResources', _('Add new set of resources into accounting.')),
+            #                     ]
+            #              ),
+            ]
+
+        for topic, info in data:
+            menu = self.menuBar().addMenu(topic)
+            # Disable the following menu actions, until user will be authorized.
+            if topic != _('File'):
+                menu.setDisabled(True)
+            for item in info:
+                if item is None:
+                    menu.addSeparator()
+                    continue
+                title, short, name, desc = item
+                setattr(self, 'act_%s' % name, QAction(title, self))
+                action = getattr(self, 'act_%s' % name)
+                action.setShortcut(short)
+                action.setStatusTip(desc)
+                self.connect(action, SIGNAL('triggered()'), getattr(self, name))
+                menu.addAction(action)
+                self.menus.append(menu)
+
+    def interface_disable(self, state): # True = disabled, False = enabled
+        # Enable menu's action
+        for menu in self.menus:
+            if menu.title() != _('File'):
+                menu.setDisabled(state)
+        # Enable the navigation buttons
+        self.buttonPrev.setDisabled(state)
+        self.buttonNext.setDisabled(state)
+        self.buttonToday.setDisabled(state)
+
+    def refresh_data(self):
+        """ This method get the data from a server. It call periodically using timer. """
+
+        # Do nothing until user authoruized
+        if not self.http.is_session_open():
+            return
+        # Just refresh the calendar's model
+        self.schedule.model().update
+
+    # Menu handlers: The begin
+
+    def login(self):
+        def callback(credentials):
+            self.credentials = credentials
+
+        self.dialog = DlgLogin(self)
+        self.dialog.setCallback(callback)
+        self.dialog.setModal(True)
+        dlgStatus = self.dialog.exec_()
+
+        if QDialog.Accepted == dlgStatus:
+            if not self.http.request('/api/login/', 'POST', self.credentials):
+                QMessageBox.critical(self, _('Login'), _('Unable to login: %s') % self.http.error_msg)
+                return
+
+            default_response = None
+            response = self.http.parse(default_response)
+            if response and 'id' in response:
+                self.loggedTitle(response)
+
+                # подгружаем статическую информацию и список залов
+                self.get_static()
+                # здесь только правим текстовые метки
+                self.get_dynamic()
+                # изменяем свойства элементов интерфейса
+                self.update_interface()
+                # загружаем информацию о занятиях на расписание
+                self.schedule.model().showCurrWeek()
+
+                # run refresh timer
+                from settings import SCHEDULE_REFRESH_TIMEOUT
+                self.refreshTimer = self.makeTimer(self.refresh_data, SCHEDULE_REFRESH_TIMEOUT, True)
+
+                self.printer_init(template=self.static['printer'])
+                self.interface_disable(False)
+            else:
+                QMessageBox.warning(self, _('Login failed'),
+                                    _('It seems you\'ve entered wrong login/password.'))
+
+    def logout(self):
+        self.interface_disable(True)
+        self.setWindowTitle('%s : %s' % (self.baseTitle, _('Login to start session')))
+        self.schedule.model().storage_init()
+
+        # clear rooms layout
+        layout = self.panelRooms
+        while layout.count() > 0:
+            item = layout.takeAt(0)
+            if not item:
+                continue
+            w = item.widget()
+            if w:
+                w.deleteLater()
+
+    def setupApp(self):
+        self.dialog = DlgSettings(self)
+        self.dialog.setModal(True)
+        self.dialog.exec_()
+        self.get_dynamic()
+        self.http.reconnect()
+
+    def client_new(self):
+        params = { 'http': self.http, 'static': self.static, }
+        self.dialog = ClientInfo(self, params)
+        self.dialog.setModal(True)
+        self.dialog.exec_()
+
+    def client_search_rfid(self):
+        if not self.http or not self.http.is_session_open():
+            return # login first
+
+        def callback(rfid):
+            self.rfid_id = rfid
+
+        params = {
+            'http': self.http,
+            'static': self.static,
+            'mode': 'client',
+            'callback': callback,
+            }
+        dialog = WaitingRFID(self, params)
+        dialog.setModal(True)
+        dlgStatus = dialog.exec_()
+
+        if QDialog.Accepted == dlgStatus and self.rfid_id is not None:
+            params = {'rfid_code': self.rfid_id, 'mode': 'client'}
+            if not self.http.request('/manager/get_client_info/', params):
+                QMessageBox.critical(self, _('Client info'), _('Unable to fetch: %s') % self.http.error_msg)
+                return
+            default_response = None
+            response = self.http.parse(default_response)
+
+            if not response or response['info'] is None:
+                QMessageBox.warning(self, _('Warning'),
+                                    _('This RFID belongs to nobody.'))
+            else:
+                user_info = response['info']
+                params = {
+                    'http': self.http,
+                    'static': self.static,
+                    }
+                self.dialog = ClientInfo(self, params)
+                self.dialog.setModal(True)
+
+                self.dialog.initData(user_info)
+                self.dialog.exec_()
+                self.rfid_id = None
+
+    def client_search_name(self):
+        if not self.http or not self.http.is_session_open():
+            return # login first
+
+        def callback(user):
+            self.user = user
+
+        params = { 'http': self.http, 'static': self.static,
+                   'mode': 'client', 'apply_title': _('Show'), }
+        self.dialog = Searching(self, params)
+        self.dialog.setModal(True)
+        self.dialog.setCallback(callback)
+        if QDialog.Accepted == self.dialog.exec_():
+            params = { 'http': self.http, 'static': self.static, }
+            self.dialog = ClientInfo(self, params)
+            self.dialog.setModal(True)
+            self.dialog.initData(self.user)
+            self.dialog.exec_()
+
+    def renter_new(self):
+        params = { 'http': self.http, 'static': self.static, }
+        self.dialog = RenterInfo(self, params)
+        self.dialog.setModal(True)
+        self.dialog.exec_()
+
+    def renter_search_name(self):
+        def callback(user):
+            self.user = user
+            print 'SEARCHING:', user
+
+        params = { 'http': self.http, 'static': self.static, 'mode': 'renter', }
+        self.dialog = Searching(self, params)
+        self.dialog.setModal(True)
+        self.dialog.setCallback(callback)
+        if QDialog.Accepted == self.dialog.exec_():
+            self.dialog = RenterInfo(self)
+            self.dialog.setModal(True)
+            self.dialog.initData(self.user)
+            self.dialog.exec_()
+
+    def eventTraining(self):
+        def callback(e_date, e_time, room_tuple, team):
+            room, ok = room_tuple
+            title, team_id, count, price, coach, duration = team
+            begin = datetime.combine(e_date, e_time)
+            duration = timedelta(minutes=int(duration * 60))
+
+            ajax = HttpAjax(self, '/manager/cal_event_add/',
+                            {'event_id': team_id,
+                             'room_id': room,
+                             'begin': begin,
+                             'ev_type': 0}, self.session_id)
+            response = ajax.parse_json()
+            event_info = {'id': int(response['saved_id']),
+                          'title': title, 'price': price,
+                          'count': count, 'coach': coach,
+                          'duration': duration,
+                          'groups': _('Waiting for update.')}
+            eventObj = Event({}) # FIXME
+            self.schedule.insertEvent(room, eventObj)
+
+        self.dialog = DlgEventAssign('training', self)
+        self.dialog.setModal(True)
+        self.dialog.setCallback(callback)
+        self.dialog.setModel(self.tree)
+        self.dialog.setRooms(self.rooms)
+        self.dialog.exec_()
+
+    def eventRent(self):
+        def callback(e_date, e_time, e_duration, room_tuple, rent):
+            room, ok = room_tuple
+            rent_id = rent['id']
+            begin = datetime.combine(e_date, e_time)
+            duration = timedelta(hours=e_duration.hour,
+                                 minutes=e_duration.minute)
+            params = {
+                'event_id': rent_id,
+                'room_id': room,
+                'begin': begin,
+                'ev_type': 1,
+                'duration': float(duration.seconds) / 3600
+                }
+            ajax = HttpAjax(self, '/manager/cal_event_add/', params, self.session_id)
+            response = ajax.parse_json()
+            id = int(response['saved_id'])
+            eventObj = Event({}) # FIXME
+            self.schedule.insertEvent(room, eventObj)
+
+        self.dialog = DlgEventAssign('rent', self)
+        self.dialog.setModal(True)
+        self.dialog.setCallback(callback)
+        self.dialog.setRooms(self.rooms)
+        self.dialog.exec_()
+
+    def fillWeek(self):
+        def callback(selected_date):
+            model = self.schedule.model()
+            from_range = model.weekRange
+            to_range = model.date2range(selected_date)
+
+            if not self.http.request('/manager/fill_week/', {'to_date': to_range[0]}):
+                QMessageBox.critical(self, _('Fill week'), _('Unable to fill: %s') % self.http.error_msg)
+                return
+            default_response = None
+            response = self.http.parse(default_response)
+            if response and 'saved_id' in response:
+                # inform user
+                info = response['saved_id']
+                msg = _('The week has been filled sucessfully. Copied: %(copied)i. Passed: %(passed)i.')
+                self.statusBar().showMessage(msg % info, 3000)
+                # FIXME: pause here, but not just sleep, use timer
+                # update view
+                self.schedule.model().update()
+
+        params = {'title': _('Choose a week to fill')}
+        self.dialog = DlgCalendar(self, **params)
+        self.dialog.setModal(True)
+        self.dialog.setCallback(callback)
+        self.dialog.exec_()
+
+    def addResources(self):
+        def callback(count, price):
+#             ajax = HttpAjax(self, '/manager/add_resource/',
+#                             {'from_date': from_range[0],
+#                              'to_date': to_range[0]}, self.session_id)
+            response = ajax.parse_json()
+            self.statusBar().showMessage(_('The week has been copied sucessfully.'))
+
+        self.dialog = DlgAccounting(self)
+        self.dialog.setModal(True)
+        self.dialog.setCallback(callback)
+        self.dialog.exec_()
+
+    # Menu handlers: The end
+
+    def makeTimer(self, handler, timeout=0, run=False):
+        timer = QTimer(self)
+        timer.setInterval(timeout)
+        self.connect(timer, SIGNAL('timeout()'), handler)
+        if run:
+            timer.start()
+        return timer
+
+    def showEventProperties(self, calendar_event, index): #, room_id):
+        self.dialog = EventInfo(self, {'http': self.http})
+        self.dialog.setModal(True)
+        self.dialog.initData(calendar_event, index)
+        self.dialog.exec_()
+
+    # Drag'n'Drop section begins
+    def mousePressEvent(self, event):
+        if DEBUG_COMMON:
+            print 'press event', event.button()
+
+    def mouseMoveEvent(self, event):
+        if DEBUG_COMMON:
+            print 'move event', event.pos()
+    # Drag'n'Drop section ends
+
+
+if __name__=="__main__":
+
+    def readStyleSheet(fileName) :
+        css = QString()
+        file = QFile(join(dirname(__file__), fileName))
+        if file.open(QIODevice.ReadOnly) :
+                css = QString(file.readAll())
+                file.close()
+        return css
+
+    # application global settings
+    QCoreApplication.setOrganizationName('Home, Sweet Home')
+    QCoreApplication.setOrganizationDomain('snegiri.dontexist.org')
+    QCoreApplication.setApplicationName('foobar')
+    QCoreApplication.setApplicationVersion('0.1')
+
+    app = QApplication(sys.argv)
+    app.setStyleSheet(readStyleSheet('manager.css'))
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec_())
