@@ -15,9 +15,6 @@ DEBUG_COMMON, DEBUG_RFID, DEBUG_PRINTER = DEBUG
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-__ = lambda x: \
-     datetime.strptime(x, '%H:%M:%S')
-
 def dump(value):
     import pprint
     pprint.pprint(value)
@@ -39,13 +36,14 @@ class Event(object):
         self.monday = monday
         self.data = info
 
-        self.activity = info.get('activity')
-
-        self.room_uuid = info['room']['uuid']
-        self.prototype = self.RENT if 'renter_id' in self.activity else self.TEAM
-        self.begin = __(info.get('begin_time'))
-        self.end = __(info.get('end_time'))
+        day = monday + timedelta(days=int(info.get('weekday')))
+        self.begin = datetime.strptime(info.get('begin'), '%Y-%m-%d %H:%M:%S')
+        self.end = datetime.strptime(info.get('end'), '%Y-%m-%d %H:%M:%S') + timedelta(seconds=1)
         self.duration = self.end - self.begin + timedelta(seconds=1)
+
+        self.activity = info.get('activity')
+        self.room_uuid = info['room']['uuid']
+        self.prototype = self.RENT if 'renter' in self.activity else self.TEAM
         self.coaches_list = self.activity.get('coaches')
         self.styles_list = self.activity.get('dance_style')
 
