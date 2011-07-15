@@ -42,7 +42,7 @@ class Event(object):
         self.duration = self.end - self.begin + timedelta(seconds=1)
 
         self.activity = info.get('activity')
-        self.room_uuid = info['room']['uuid']
+        self.room_uuid = info.get('room__uuid')
         self.prototype = self.RENT if 'renter' in self.activity else self.TEAM
         self.coaches_list = self.activity.get('coaches')
         self.styles_list = self.activity.get('dance_style')
