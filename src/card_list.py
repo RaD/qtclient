@@ -4,7 +4,7 @@
 from datetime import datetime, date, timedelta
 import json
 
-from library import date2str, dt2str
+from library import date2str, dt2str, ParamStorage
 from settings import _, DEBUG, userRoles
 GET_ID_ROLE = userRoles['getObjectID']
 
@@ -12,14 +12,14 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
 MODEL_MAP_RAW = (
-    ('voucher_title', None, _('Type'), unicode, False),
-    ('category', None, _('Category'), int, True),
+    ('card', None, _('Type'), unicode, False),
+    ('category', None, _('Category'), unicode, True),
     ('price', None, _('Price'), float, False),
-    ('begin_date', None, _('Begin'), date2str, False),
-    ('end_date', None, _('End'), date2str, False),
-    ('reg_datetime', None, _('Register'), dt2str, False),
-    ('cancel_datetime', None, _('Cancel'), dt2str, False),
-    ('id', None, 'id', int, False), # идентификатор ваучера
+    ('begin', None, _('Begin'), date2str, False),
+    ('end', None, _('End'), date2str, False),
+    ('registered', None, _('Register'), dt2str, False),
+    ('cancelled', None, _('Cancel'), dt2str, False),
+    ('uuid', None, 'id', int, False), # идентификатор ваучера
     ('object', None, 'object', None, False), # всё описание ваучера
 )
 MODEL_MAP = list()
@@ -30,33 +30,26 @@ for name, delegate, title, action, static in MODEL_MAP_RAW[:-1]: # без пос
 
 class CardListModel(QAbstractTableModel):
 
+    params = ParamStorage()
     free_visit_used = False
 
     def __init__(self, parent=None):
         QAbstractTableModel.__init__(self, parent)
 
-        self.static = parent.static
         self.storage = [] # here the data is stored, as list of dictionaries
         self.hidden_fields = 1 # from end of following lists
 
     def init_data(self, voucher_list):
-        """
-        Data format is described in about() method of models.
-        Is called from DlgClientInfo::initData()
-        """
         for item in voucher_list:
             # если халявное посещение использовано, отметим это
-            if item['voucher_type'] in ('flyer', 'test',):
+            if item['type'] in ('voucherflyer', 'vouchertest',):
                 self.free_visit_used = True
 
             record = []
 
             for name, delegate, title, action, static in MODEL_MAP_RAW:
                 if name != 'object':
-                    default = '--'
-                    if action == float:
-                        default = '0.00'
-                    value = item.get(name, default)
+                    value = item.get(name, action == float and '0.00' or '--')
                 else:
                     value = item
                 record.append(value)
@@ -181,7 +174,7 @@ class CardListModel(QAbstractTableModel):
         # категории нет только у пробных и флаера
         if vtype in ('once', 'abonement', 'club'):
             info['category'] = filter(lambda a: a['id'] == info.get('category', None),
-                                      self.static['price_cats_team']
+                                      self.params.static.get('category_team')
                                       )[0]
             template['category'] = info['category']
 
@@ -263,7 +256,7 @@ class CardListModel(QAbstractTableModel):
 
             # для сложного типа, отображаем его название
             if type(value) is dict and 'title' in value:
-                return QVariant(value['title'])
+                return QVariant(value.get('title'))
 
             if value is None or value == '--':
                 return QVariant('--')
@@ -274,27 +267,27 @@ class CardListModel(QAbstractTableModel):
             # вывод подсказки
             out = []
             info = self.get_voucher_info(index)
-            vtype = info['voucher_type']
-            if vtype in ('flyer', 'test', 'once'):
-                out.append( info.get('is_utilized', None) and _('Utilized') or _('Not utilized') )
-            if vtype in ('abonement', 'club', 'promo'):
+            vtype = info['type']
+            if vtype in ('voucherflyer', 'vouchertest', 'voucheronce'):
+                out.append( info.get('is_utilized') and _('Utilized') or _('Not utilized') )
+            if vtype in ('voucherabonement', 'voucherclub', 'voucherpromo'):
                 # при обработке цены, проверяем долг клиента, если он
                 # есть, то показываем это
                 debt, amount = self.is_debt_exist(index)
                 if debt:
                     out.append( _('debt %.02f') % (amount,) )
-            if vtype in ('abonement',):
+            if vtype in ('voucherabonement',):
                 # отображаем скидку, если есть
                 if 'discount_price' in info:
                     price = float( info['price'] )
                     discount_price = float( info['discount_price'] )
                     discount_percent = int( info['discount_percent'] )
                     out.append( _('discount %.02f/%i%%') % (price - discount_price, discount_percent) )
-            if vtype in ('abonement', 'promo'):
+            if vtype in ('voucherabonement', 'voucherpromo'):
                 out.append( 'sold %i' % int( info.get('count_sold', 0) ))
                 out.append( 'used %i' % int( info.get('count_used', 0) ))
                 out.append( 'available %i' % int( info.get('count_available', 0) ))
-            if vtype == 'club':
+            if vtype == 'voucherclub':
                 out.append( 'days %i' % int( info['card'].get('count_days', 0) ))
                 out.append( 'used %i' % int( info.get('count_used', 0) ))
             return QVariant('; '.join(out))

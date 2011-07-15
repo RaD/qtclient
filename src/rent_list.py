@@ -202,7 +202,7 @@ class RentListModel(BaseModel):
     """ Модель для представления списка аренд."""
 
     # описание модели
-    FIELDS = (_('Title'), _('Begin'), _('End'), _('Hours'), _('Paid'), None)
+    FIELDS = (_('Title'), _('Begin'), _('End'), _('Hours'), _('Price'), _('Paid'), None)
     HIDDEN_FIELDS = 1
     storage = []
 
@@ -234,16 +234,13 @@ class RentListModel(BaseModel):
         return True
 
     def prepare_record(self, info):
-        print 'INFO', info
-        title = QString.fromUtf8(info['title'])
-        begin = info['begin_date']
-        end = info['end_date']
-        paid = QString('%.02f' % info['paid'])
-        if info.get('events', None):
-            hours = QString('%.01f' % reduce(lambda x,y: x+y,
-                                             map(lambda x: x['duration'],
-                                                 info['events']),
-                                             0.0))
-        else:
-            hours = 0.0
-        return (title, begin, end, hours, paid, info)
+        desc = QString.fromUtf8(info.get('desc')[:20])
+        begin = info.get('begin_date')
+        end = info.get('end_date')
+        price = QString('%.02f' % info.get('price', 0.0))
+        paid = QString('%.02f' % info.get('paid', 0.0))
+        hours = QString('%.01f' % reduce(lambda x,y: x+y,
+                                         map(lambda x: x['duration'],
+                                             info.get('plan_list')),
+                                         0.0))
+        return (desc, begin, end, hours, price, paid, info)

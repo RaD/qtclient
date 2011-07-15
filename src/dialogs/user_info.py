@@ -33,15 +33,15 @@ def str2date(value):
 class ClientInfo(UiDlgTemplate):
 
     ui_file = 'uis/dlg_user_info.ui'
+    params = ParamStorage()
     title = _('Client\'s information')
     card_model = None
-    static = None
     user_id = u'0'
-    discounts = {}
+    discounts_by_index = {}
+    discounts_by_uuid = {}
 
-    def __init__(self, parent=None, params=dict()):
-        self.static = params['static']
-        UiDlgTemplate.__init__(self, parent, params)
+    def __init__(self, parent=None):
+        UiDlgTemplate.__init__(self, parent)
 
     def setupUi(self):
         UiDlgTemplate.setupUi(self)
@@ -54,10 +54,11 @@ class ClientInfo(UiDlgTemplate):
         self.tableHistory.customContextMenuRequested.connect(self.context_menu)
 
         # добавляем на диалог все зарегистрированные виды скидок
-        for discount in self.static.get('discount_client', None): # see params
-            item = QCheckBox('%(title)s (%(percent)s%%)' % discount)
-            self.discounts[int(discount['id'])] = (item, discount)
-            self.discountLayout.addWidget(item)
+        for index, item in enumerate(self.params.static.get('discount_client')):
+            checkbox = QCheckBox('%(title)s (%(percent)s%%)' % item)
+            self.discounts_by_index[index] = (checkbox, item)
+            self.discounts_by_uuid[item.get('uuid')] = (checkbox, item)
+            self.discountLayout.addWidget(checkbox)
         self.discountLayout.addStretch(10)
 
         self.connect(self.buttonAssign, SIGNAL('clicked()'), self.assign_voucher)
@@ -93,7 +94,7 @@ class ClientInfo(UiDlgTemplate):
         else:
             print 'unknown'
 
-    def initData(self, data=dict()):
+    def initData(self, data={}):
         # новые записи обозначаются нулевым идентификатором
         self.user_id = data.get('id', '0')
 
@@ -108,24 +109,21 @@ class ClientInfo(UiDlgTemplate):
             obj.setText(text)
             obj.setToolTip(text)
 
-        for i in data.get('discount_list', None):
-            item, desc = self.discounts[i['id']]
-            item.setCheckState(Qt.Checked)
+        for item in data.get('discount'):
+            checkbox, desc = self.discounts_by_uuid[item.get('uuid')]
+            checkbox.setCheckState(Qt.Checked)
 
         birth_date = data.get('birth_date', None) # it could be none while testing
         self.dateBirth.setDate(birth_date and str2date(birth_date) or \
                                QDate.currentDate())
-        rfid = data.get('rfid_code', None)
+        rfid = data.get('rfid_code')
         if rfid:
             self.buttonRFID.setText(rfid)
             self.buttonRFID.setToolTip(_('RFID code of this client.'))
             self.buttonRFID.setDisabled(True)
 
         # заполняем список приобретённых ваучеров
-        self.tableHistory.model().init_data(
-            data.get('voucher_list', [])
-            )
-        #self.tableHistory.model().dump()
+        self.tableHistory.model().init_data( data.get('voucher_list', []) )
 
     def voucher_payment_add(self, index, initial_value=0.00):
         """ Show price dialog and register payment. """
@@ -183,7 +181,7 @@ class ClientInfo(UiDlgTemplate):
         # получаем информацию о ваучере
         model = index.model()
         voucher = model.get_voucher_info(index)
-        voucher_id = voucher.get('id', None)
+        voucher_id = voucher.get('id')
         if not voucher_id:
             raise Exception('Bad voucher id')
         # определяем обработчик диалога
@@ -220,7 +218,7 @@ class ClientInfo(UiDlgTemplate):
         # получаем информацию о ваучере
         model = index.model()
         voucher = model.get_voucher_info(index)
-        voucher_id = voucher.get('id', None)
+        voucher_id = voucher.get('id')
         if not voucher_id:
             raise Exception('Bad voucher id')
         # удостоверяемся в трезвом уме пользователя
@@ -306,16 +304,16 @@ class ClientInfo(UiDlgTemplate):
         первого диалога."""
         free_visit_used = self.tableHistory.model().free_visit_used
         card_list = []
-        for i in self.static['card_ordinary']:
+        for i in self.params.static.get('card_ordinary'):
             if i['slug'] in ('flyer', 'test',) and free_visit_used:
                 continue
 
             item = (i['slug'], i['title'])
             card_list.append(item)
-        if 0 < len(self.static['card_club']):
+        if 0 < len(self.params.static.get('card_club')):
             item = ('club', _('Club Card'))
             card_list.append(item)
-        if 0 < len(self.static['card_promo']):
+        if 0 < len(self.params.static.get('card_promo')):
             item = ('promo', _('Promo Card'))
             card_list.append(item)
         return card_list
@@ -350,7 +348,7 @@ class ClientInfo(UiDlgTemplate):
         steps = {'voucher_type': voucher_type}
 
         # выделяем нужный тип карт из списка обычных
-        static_info = filter_dictlist(self.static['card_ordinary'], 'slug', voucher_type)[0]
+        static_info = filter_dictlist(self.params.static.get('card_ordinary'), 'slug', voucher_type)[0]
         cat_list = [(i['id'], i['title']) for i in static_info['price_categories']]
         dis_list = [(i['id'], i['title']) for i in static_info['discounts']]
         cat_dict_id = {}
@@ -398,7 +396,7 @@ class ClientInfo(UiDlgTemplate):
                     # потом проверяем скидку по количеству приобретённых посещений
                     tmp_id = 0
                     tmp_percent = 0
-                    for discount in sorted(self.static.get('discount_card', None),
+                    for discount in sorted(self.params.static.get('discount_card'),
                                            lambda a,b: cmp(int(a['threshold']), int(b['threshold']))):
                         if discount['threshold'] <= steps['count_sold']:
                             tmp_id = discount['id']
@@ -457,7 +455,7 @@ class ClientInfo(UiDlgTemplate):
 
         steps = {'voucher_type': 'club'}
         card_dict = {}
-        for i in self.static['card_club']:
+        for i in self.params.static.get('card_club'):
             key = i['id']
             card_dict[key] = i
         card_list = [(k, d['title']) for k,d in card_dict.items()]
@@ -472,7 +470,7 @@ class ClientInfo(UiDlgTemplate):
         steps['club_type'] = steps['card']['slug']
         steps['duration'] = int(result)
 
-        card_by_id = dictlist2dict(self.static['card_club'], 'id')
+        card_by_id = dictlist2dict(self.params.static.get('card_club'), 'id')
         steps['price'] = card_by_id[int(result)]['price']
 
         cat_list = [(i['id'], i['title']) for i in card_by_id[int(result)]['price_categories']]
@@ -494,7 +492,7 @@ class ClientInfo(UiDlgTemplate):
         steps = {'voucher_type': 'promo'}
 
         card_dict = {}
-        for i in self.static['card_promo']:
+        for i in self.params.static.get('card_promo'):
             key = i['id']
             card_dict[key] = i
         card_list = [(k, d['title']) for k,d in card_dict.items()]
@@ -518,8 +516,8 @@ class ClientInfo(UiDlgTemplate):
             # пробрасываем исключение дальше
             raise
         else:
-            steps['begin_date'] = steps['card'].get('date_activation', None)
-            steps['end_date'] = steps['card'].get('date_expiration', None)
+            steps['begin_date'] = steps['card'].get('date_activation')
+            steps['end_date'] = steps['card'].get('date_expiration')
             steps['count_sold'] = steps['card'].get('count_sold', 0)
             steps['count_used'] = steps['card'].get('count_used', 0)
             steps['count_available'] = steps['card'].get('count_available', 0)
@@ -527,7 +525,7 @@ class ClientInfo(UiDlgTemplate):
 
     def _price_abonement(self, steps):
         """ This method calculate the abonement price. See logic_clientcard.xml. """
-        prices = filter_dictlist(self.static['price_cats_team'], 'id', steps['category'])[0]
+        prices = filter_dictlist(self.params.static('category_team'), 'id', steps['category'])[0]
 
         count = int(steps['count_sold'])
         if count == 1:
@@ -651,7 +649,7 @@ class RenterInfo(UiDlgTemplate):
 
         self.buttonRFID.setDisabled(True)
 
-    def initData(self, data=dict()):
+    def initData(self, data={}):
         # новые записи обозначаются нулевым идентификатором
         self.user_id = data.get('id', '0')
 
@@ -666,19 +664,16 @@ class RenterInfo(UiDlgTemplate):
             obj.setText(text)
             obj.setToolTip(text)
 
-        for i in data.get('discount_list', None):
+        for i in data.get('discount'):
             item, desc = self.discounts[i['id']]
             item.setCheckState(Qt.Checked)
 
-        birth_date = data.get('birth_date', None) # it could be none while testing
+        birth_date = data.get('birth_date') # it could be none while testing
         self.dateBirth.setDate(birth_date and str2date(birth_date) or \
                                QDate.currentDate())
 
         # заполняем список зарегистрированных аренд
-        print '\n\nИнформация о зарегистрированных арендах:', data.get('rent_list', [])
-        self.tableHistory.model().init_data(
-            data.get('rent_list', [])
-            )
+        self.tableHistory.model().init_data(data.get('activity_list', []))
 
     def assign_rent(self):
         """ Метод отображает диалог регистрации аренды. """
