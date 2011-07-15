@@ -304,11 +304,11 @@ class MainWindow(QMainWindow):
                 self.schedule.model().showCurrWeek()
 
                 # # run refresh timer
-                # from settings import SCHEDULE_REFRESH_TIMEOUT
-                # self.refreshTimer = self.makeTimer(self.refresh_data, SCHEDULE_REFRESH_TIMEOUT, True)
+                from settings import SCHEDULE_REFRESH_TIMEOUT
+                self.refreshTimer = self.makeTimer(self.refresh_data, SCHEDULE_REFRESH_TIMEOUT, True)
 
-                # self.printer_init(template=self.static['printer'])
-                # self.interface_disable(False)
+                self.printer_init(template=self.params.static.get('printer'))
+                self.interface_disable(False)
             else:
                 QMessageBox.warning(self, _('Login failed'),
                                     _('It seems you\'ve entered wrong login/password.'))
