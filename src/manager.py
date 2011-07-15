@@ -338,60 +338,44 @@ class MainWindow(QMainWindow):
         self.dialog.exec_()
 
     def client_search_rfid(self):
-        if not self.params.http or not self.params.http.is_session_open():
-            return # login first
 
         def callback(rfid):
             self.rfid_id = rfid
 
-        params = {
-            'http': self.params.http,
-            'static': self.static,
-            'mode': 'client',
-            'callback': callback,
-            }
-        dialog = WaitingRFID(self, params)
-        dialog.setModal(True)
-        dlgStatus = dialog.exec_()
+        if self.params.logged_in:
+            dialog = WaitingRFID(self, mode='client', callback=callback)
+            dialog.setModal(True)
+            if QDialog.Accepted == dialog.exec_() and self.rfid_id:
+                h = self.params.http
+                if not h.request('/api/client/%s/' % self.rfid_id, 'GET'):
+                    QMessageBox.critical(self, _('Client info'), _('Unable to fetch: %s') % h.error_msg)
+                    return
+                response = h.parse()
 
-        if QDialog.Accepted == dlgStatus and self.rfid_id is not None:
-            params = {'rfid_code': self.rfid_id, 'mode': 'client'}
-            if not self.params.http.request('/manager/get_client_info/', params):
-                QMessageBox.critical(self, _('Client info'), _('Unable to fetch: %s') % self.params.http.error_msg)
-                return
-            default_response = None
-            response = self.params.http.parse(default_response)
-
-            if not response or response['info'] is None:
-                QMessageBox.warning(self, _('Warning'),
-                                    _('This RFID belongs to nobody.'))
-            else:
-                user_info = response['info']
-                params = {
-                    'http': self.params.http,
-                    }
-                self.dialog = ClientInfo(self, params)
-                self.dialog.setModal(True)
-
-                self.dialog.initData(user_info)
-                self.dialog.exec_()
-                self.rfid_id = None
+                if 0 == len(response):
+                    QMessageBox.warning(self, _('Warning'),
+                                        _('This RFID belongs to nobody.'))
+                else:
+                    self.dialog = ClientInfo(self)
+                    self.dialog.setModal(True)
+                    self.dialog.initData(response[0])
+                    self.dialog.exec_()
+                    self.rfid_id = None
 
     def client_search_name(self):
-        if not self.params.http or not self.params.http.is_session_open():
-            return # login first
 
         def callback(user):
             self.user = user
 
-        self.dialog = Searching(self, mode='client')
-        self.dialog.setModal(True)
-        self.dialog.setCallback(callback)
-        if QDialog.Accepted == self.dialog.exec_():
-            self.dialog = ClientInfo(self)
+        if self.params.logged_in:
+            self.dialog = Searching(self, mode='client')
             self.dialog.setModal(True)
-            self.dialog.initData(self.user)
-            self.dialog.exec_()
+            self.dialog.setCallback(callback)
+            if QDialog.Accepted == self.dialog.exec_():
+                self.dialog = ClientInfo(self)
+                self.dialog.setModal(True)
+                self.dialog.initData(self.user)
+                self.dialog.exec_()
 
     def renter_new(self):
         params = { 'http': self.params.http, 'static': self.static, }

@@ -15,9 +15,10 @@ class WaitingRFID(UiDlgTemplate):
     title = _('RFID Reader')
     callback = None
 
-    def __init__(self, parent, params=dict()):
-        UiDlgTemplate.__init__(self, parent, params)
-        self.callback = params.get('callback', None)
+    def __init__(self, parent, *args, **kwargs):
+        UiDlgTemplate.__init__(self, parent)
+
+        self.callback = kwargs.get('callback')
 
     def setupUi(self):
         UiDlgTemplate.setupUi(self)

@@ -245,24 +245,16 @@ class ClientInfo(UiDlgTemplate):
         def callback(rfid):
             self.rfid_id = rfid
 
-        params = {
-            'http': self.http,
-            'static': self.static,
-            'mode': 'client',
-            'callback': callback,
-            }
-        dialog = WaitingRFID(self, params)
+        dialog = WaitingRFID(self, mode='client', callback=callback)
         dialog.setModal(True)
         dlgStatus = dialog.exec_()
 
         if QDialog.Accepted == dlgStatus:
-            # check the rfid code
-            params = {'rfid_code': self.rfid_id, 'mode': 'client'}
-            if not self.http.request('/manager/get_client_info/', params):
-                QMessageBox.critical(self, _('Client info'), _('Unable to fetch: %s') % self.http.error_msg)
+            h = self.params.http
+            if not h.request('/api/client/%s/' % self.rfid_id, 'GET'):
+                QMessageBox.critical(self, _('Client info'), _('Unable to fetch: %s') % h.error_msg)
                 return
-            default_response = None
-            response = self.http.parse(default_response)
+            response = h.parse()
             if response and 'info' in response and response['info'] is not None:
                 QMessageBox.warning(self, _('Warning'),
                                     _('This RFID is used already!'))
