@@ -20,7 +20,7 @@ class Searching(UiDlgTemplate):
     def __init__(self, parent, *args, **kwargs):
 
         self.mode = kwargs.get('mode', 'client')
-        self.apply_title = kwargs.get('title', _('Show'))
+        self.apply_title = kwargs.get('apply_title', _('Show'))
         if self.mode == 'client':
             self.title = _('Search client')
         else:
@@ -46,27 +46,26 @@ class Searching(UiDlgTemplate):
         name = self.editSearch.text().toUtf8()
         http = self.params.http
         params = {'name': name, 'mode': self.mode}
-        if not http.request('/api/search/%s/name/%s/' % (self.mode, name)):
+        if not http.request('/api/search/%s/name/%s/' % (self.mode, name), 'GET'):
             QMessageBox.critical(self, _('Searching'), _('Unable to search: %s') % http.error_msg)
             return
         response = http.parse()
-        if response and 'users' in response:
-            user_list = response['users']
-            self.showList(user_list)
-            self.buttonApply.setDisabled(False)
+        self.showList(response)
+        self.buttonApply.setDisabled(False)
 
     def showList(self, user_list):
-        self.user_list = user_list
         while self.tableUsers.rowCount() > 0:
             self.tableUsers.removeRow(0)
 
-        for user in user_list:
+        self.user_list = {}
+
+        for index, user in enumerate(user_list):
+            self.user_list[index] = user
             lastRow = self.tableUsers.rowCount()
             self.tableUsers.insertRow(lastRow)
             name = QTableWidgetItem(user['last_name']) # data may assign on cells only, use first one
-            name.setData(GET_ID_ROLE, int(user['id']))
+            name.setData(GET_ID_ROLE, index)
             self.tableUsers.setItem(lastRow, 0, name)
-            self.tableUsers.setItem(lastRow, 0, QTableWidgetItem(user['last_name']))
             self.tableUsers.setItem(lastRow, 1, QTableWidgetItem(user['first_name']))
             self.tableUsers.setItem(lastRow, 2, QTableWidgetItem(user['email']))
 

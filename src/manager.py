@@ -388,7 +388,7 @@ class MainWindow(QMainWindow):
         def callback(user):
             self.user = user
 
-        self.dialog = Searching(self, mode='client', title=_('Show'))
+        self.dialog = Searching(self, mode='client')
         self.dialog.setModal(True)
         self.dialog.setCallback(callback)
         if QDialog.Accepted == self.dialog.exec_():
@@ -406,10 +406,8 @@ class MainWindow(QMainWindow):
     def renter_search_name(self):
         def callback(user):
             self.user = user
-            print 'SEARCHING:', user
 
-        params = { 'http': self.params.http, 'static': self.static, 'mode': 'renter', }
-        self.dialog = Searching(self, params)
+        self.dialog = Searching(self, mode='renter')
         self.dialog.setModal(True)
         self.dialog.setCallback(callback)
         if QDialog.Accepted == self.dialog.exec_():
