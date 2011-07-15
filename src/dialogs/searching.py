@@ -2,8 +2,8 @@
 # (c) 2009-2010 Ruslan Popov <ruslan.popov@gmail.com>
 
 from settings import _, userRoles
+from library import ParamStorage
 from ui_dialog import UiDlgTemplate
-from http import Http
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -13,17 +13,19 @@ GET_ID_ROLE = userRoles['getObjectID']
 class Searching(UiDlgTemplate):
 
     ui_file = 'uis/dlg_searching.ui'
+    params = ParamStorage()
     title = None
     mode = None
 
-    def __init__(self, parent, params=dict()):
-        self.mode = params.get('mode', 'client')
-        self.apply_title = params.get('apply_title', _('Show'))
+    def __init__(self, parent, *args, **kwargs):
+
+        self.mode = kwargs.get('mode', 'client')
+        self.apply_title = kwargs.get('title', _('Show'))
         if self.mode == 'client':
             self.title = _('Search client')
         else:
             self.title = _('Search renter')
-        UiDlgTemplate.__init__(self, parent, params)
+        UiDlgTemplate.__init__(self, parent)
 
     def setupUi(self):
         UiDlgTemplate.setupUi(self)
@@ -42,12 +44,12 @@ class Searching(UiDlgTemplate):
 
     def searchFor(self):
         name = self.editSearch.text().toUtf8()
+        http = self.params.http
         params = {'name': name, 'mode': self.mode}
-        if not self.http.request('/manager/get_users_info_by_name/', params):
-            QMessageBox.critical(self, _('Searching'), _('Unable to search: %s') % self.http.error_msg)
+        if not http.request('/api/search/%s/name/%s/' % (self.mode, name)):
+            QMessageBox.critical(self, _('Searching'), _('Unable to search: %s') % http.error_msg)
             return
-        default_response = None
-        response = self.http.parse(default_response)
+        response = http.parse()
         if response and 'users' in response:
             user_list = response['users']
             self.showList(user_list)

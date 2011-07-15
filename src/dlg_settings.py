@@ -106,8 +106,8 @@ class TabGeneral(UiDlgTemplate):
 
     ui_file = 'uis/dlg_settings_general.ui'
 
-    def __init__(self, parent, params=dict()):
-        UiDlgTemplate.__init__(self, parent, params)
+    def __init__(self, parent):
+        UiDlgTemplate.__init__(self, parent)
 
     def setupUi(self):
         UiDlgTemplate.setupUi(self)
@@ -238,8 +238,8 @@ class TabPrinter(UiDlgTemplate):
 
     ui_file = 'uis/dlg_settings_printer.ui'
 
-    def __init__(self, parent, params=dict()):
-        UiDlgTemplate.__init__(self, parent, params)
+    def __init__(self, parent):
+        UiDlgTemplate.__init__(self, parent)
 
     def setupUi(self):
         UiDlgTemplate.setupUi(self)

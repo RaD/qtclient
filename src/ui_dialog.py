@@ -10,16 +10,14 @@ from PyQt4 import uic
 class UiDlgTemplate(QDialog):
     """ This is a common template for all UI dialogs. """
 
-    parent = None
     ui_file = None
+    parent = None
     title = None
-    http = None
 
-    def __init__(self, parent=None, params=dict()):
+    def __init__(self, parent=None):
         QDialog.__init__(self, parent)
 
         self.parent = parent
-        self.http = params.get('http', None)
         uic.loadUi(self.ui_file, self)
         self.setupUi()
 
@@ -29,5 +27,3 @@ class UiDlgTemplate(QDialog):
 
         # каждый UI должен иметь mainLayout!
         self.setLayout(self.mainLayout)
-
-

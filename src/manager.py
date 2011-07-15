@@ -388,14 +388,11 @@ class MainWindow(QMainWindow):
         def callback(user):
             self.user = user
 
-        params = { 'http': self.params.http, 'static': self.static,
-                   'mode': 'client', 'apply_title': _('Show'), }
-        self.dialog = Searching(self, params)
+        self.dialog = Searching(self, mode='client', title=_('Show'))
         self.dialog.setModal(True)
         self.dialog.setCallback(callback)
         if QDialog.Accepted == self.dialog.exec_():
-            params = { 'http': self.params.http, 'static': self.static, }
-            self.dialog = ClientInfo(self, params)
+            self.dialog = ClientInfo(self)
             self.dialog.setModal(True)
             self.dialog.initData(self.user)
             self.dialog.exec_()

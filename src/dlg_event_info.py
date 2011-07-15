@@ -38,8 +38,8 @@ class EventInfo(UiDlgTemplate):
     s_obj = None
     s_idx = None
 
-    def __init__(self, parent=None, params=dict()):
-        UiDlgTemplate.__init__(self, parent, params)
+    def __init__(self, parent=None):
+        UiDlgTemplate.__init__(self, parent)
         self.params = ParamStorage()
 
     def setupUi(self):
