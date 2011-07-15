@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-# (c) 2009-2010 Ruslan Popov <ruslan.popov@gmail.com>
+# (c) 2009-2011 Ruslan Popov <ruslan.popov@gmail.com>
 
 import sys, re, time, operator
 from datetime import datetime, date, time as dtime, timedelta
 
 from os.path import dirname, join
 
+from library import ParamStorage
 from http import Http
 
 from settings import _, DEBUG, WEEK_DAYS, userRoles
@@ -15,73 +16,110 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
 __ = lambda x: \
-     datetime(*time.strptime(x, '%Y-%m-%d %H:%M:%S')[:6])
+     datetime.strptime(x, '%H:%M:%S')
 
 def dump(value):
     import pprint
     pprint.pprint(value)
 
 class Event(object):
-
-    """ Модель активности для представления всех её параметров в
-    нужном виде."""
+    """
+    Модель активности для представления всех её параметров в нужном
+    виде.
+    """
+    TEAM = 0; RENT = 1;
 
     monday = None
     data = None
-    begin_datetime = None
-    end_datetime = None
+    begin = None
+    end = None
     duration = None
 
-    def __init__(self, monday, activity):
+    def __init__(self, monday, info):
         self.monday = monday
-        self.data = activity
-        self.begin_datetime = __( self.data['begin_datetime'] )
-        self.end_datetime = __( self.data['begin_datetime'] )
-        minutes = int( self.data['event']['duration'] * 60 )
-        self.duration = timedelta(minutes=minutes)
+        self.data = info
+
+        self.activity = info.get('activity')
+
+        self.room_uuid = info['room']['uuid']
+        self.prototype = self.RENT if 'renter_id' in self.activity else self.TEAM
+        self.begin = __(info.get('begin_time'))
+        self.end = __(info.get('end_time'))
+        self.duration = self.end - self.begin + timedelta(seconds=1)
+        self.coaches_list = self.activity.get('coaches')
+        self.styles_list = self.activity.get('dance_style')
+
+        self.params = ParamStorage()
 
     def __unicode__(self):
         return self.title
 
-    def isTeam(self):
-        return 'team' == self.data['type']
-
-    def isRent(self):
-        return 'rent' == self.data['type']
+    def position(self):
+        row = (self.begin.hour - self.params.work_hours[0]) * self.params.multiplier
+        if self.begin.minute >= 30:
+            row += 1
+        col = int(self.data.get('weekday'))
+        #print '%s %s %s' % (dt, row, col)
+        return (row, col)
 
     @property
-    def id(self):
-        return int( self.data['id'] )
+    def uuid(self):
+        return self.data.get('uuid')
 
     @property
     def title(self):
-        event = self.data['event']
-        return event.get('dance_styles', _('Rent'))
+        if self.prototype == self.RENT:
+            return _('Rent')
+        else:
+            activity = self.data.get('activity')
+            ds_list = activity.get('dance_style')
+            return u', '.join([i.get('title') for i in ds_list])
+
+    @property
+    def category(self):
+        if self.prototype == self.RENT:
+            return '--'
+        else:
+            category = self.activity.get('category')
+            return category.get('title')
+
+    @property
+    def styles(self):
+        if self.prototype == self.RENT:
+            return _('Rent')
+        else:
+            return u', '.join(
+                [i.get('title') for i in self.styles_list])
 
     @property
     def coaches(self):
-        # warning: self.data['event']['coaches'] contains of initial coaches list
-        return self.data.get('coaches', _('Unknown'))
+        if self.prototype == self.RENT:
+            return _('Renter')
+        else:
+            return ', '.join(
+                ['%s %s' % (i.get('last_name'), i.get('first_name')) \
+                 for i in self.coaches_list])
 
     def set_coaches(self, coaches_list):
-        self.data['coaches'] = coaches_list
+        self.coaches_list = coaches_list
 
     @property
     def tooltip(self):
-        event = self.data['event']
-        return '%s\n%s\n%s' % (event.get('dance_styles', _('Rent')),
-                               self.coaches,
-                               event['category']['title'])
+        first_line = _('%(title)s, %(duration)s minutes') % {'title': self.title, 'duration': self.duration.seconds/60}
+        return '%s\n%s\n%s' % (first_line, self.coaches, self.category)
 
     @property
     def fixed(self): #FIXME
+        return 0
         return int( self.data['status'] )
 
     def set_fixed(self, value):
         self.data['status'] = str(value)
 
 class ModelStorage:
-
+    """
+    Данная модель реализует хранилище активностей.
+    """
     SET = 1; GET = 2; DEL = 3
 
     def __init__(self):
@@ -99,20 +137,31 @@ class ModelStorage:
     def setFilter(self, column):
         self.column = column
 
-    def searchByID(self, id):
+    def searchByID(self, event_uuid):
         for event, room in self.e2rc.keys():
-            if event.id == id:
+            if event.uuid == event_uuid:
                 return event
         return None
 
     def byRCR(self, op, key, value=None):
+        """
+        Метод для создания, изменения или удаления элементов хранилища
+        по ключу RCR (Row, Column, Room).
+
+        @type  op: SET, GET, DEL
+        @param op: Оператор, определяющий действие над элементов хранилища.
+        @type  key: tuple
+        @param key: Ключ элемента виде (Row, Column, Room).
+        @type  value: *
+        @param value: Значение для сохранения, имеет смысл только для операции SET.
+        """
         if self.column is not None:
             row, column, room_id = key
             key = (row, column + self.column, room_id)
         if op == self.SET:
             return self.rc2e.update( { key: value } )
         elif op == self.GET:
-            return self.rc2e.get(key, None)
+            return self.rc2e.get(key)
         elif op == self.DEL:
             del(self.rc2e[key])
         else:
@@ -135,25 +184,20 @@ class ModelStorage:
 
 class EventStorage(QAbstractTableModel):
 
-    def __init__(self, parent=None, params={}):
+    def __init__(self, parent, mode='week'):
         QAbstractTableModel.__init__(self, parent)
 
         self.parent = parent
-        self.params = params
-
-        self.work_hours = self.params.get('work_hours', None)
-        self.quant = self.params.get('quant', None)
-        self.rooms = self.params.get('rooms', None)
-        self.mode = self.params.get('mode', 'week') # 'week' or 'day'
+        self.params = ParamStorage()
+        self.mode = mode
 
         if 'week' == self.mode:
             self.week_days = WEEK_DAYS
         else:
             self.week_days = [ _('Day') ]
 
-        begin_hour, end_hour = self.work_hours
-        self.multiplier = timedelta(hours=1).seconds / self.quant.seconds
-        self.rows_count = (end_hour - begin_hour) * self.multiplier
+        begin_hour, end_hour = self.params.work_hours
+        self.rows_count = (end_hour - begin_hour) * self.params.multiplier
         self.cols_count = len(self.week_days)
 
         self.weekRange = self.date2range(datetime.now())
@@ -173,18 +217,18 @@ class EventStorage(QAbstractTableModel):
         if 'week' == self.mode:
             self.load_data()
 
-    def insert(self, room_id, event, emit_signal=False):
+    def insert(self, room_uuid, event, emit_signal=False):
         """ This method registers new event. """
         self.emit(SIGNAL('layoutAboutToBeChanged()'))
 
-        row, col = self.datetime2rowcol(event.begin_datetime)
+        row, col = event.position()
         #self.beginInsertRows(QModelIndex(), row, row)
         cells = []
-        for i in xrange(event.duration.seconds / self.quant.seconds):
+        for i in xrange(event.duration.seconds / self.params.quant.seconds):
             cells.append( (row + i, col) )
             self.storage.byRCR(ModelStorage.SET,
-                               (row + i, col, room_id), event)
-        self.storage.setByER( (event, room_id), cells )
+                               (row + i, col, room_uuid), event)
+        self.storage.setByER( (event, room_uuid), cells )
         #self.endInsertRows()
 
         if emit_signal:
@@ -215,26 +259,24 @@ class EventStorage(QAbstractTableModel):
         if 'day' == self.mode:
             return False
 
-        self.parent.parent.statusBar().showMessage(_('Request information for the calendar.'))
+        self.parent.parent.statusBar().showMessage(_('Request information for the calendar.')) # fixme: msg queue
         monday, sunday = self.weekRange
 
-        http = self.params.get('http', None)
+        http = self.params.http
         if http and http.is_session_open():
-            params = { 'monday': monday, 'filter': [] }
-            http.request('/manager/get_week/', params) # FIXME: wrong place for HTTP Request!
+            http.request('/api/calendar/%s/' % monday.strftime('%d%m%Y'), 'GET', {}) # FIXME: wrong place for HTTP Request!
             self.parent.parent.statusBar().showMessage(_('Parsing the response...'))
             response = http.parse(None)
 
             # result processing
-            if response and 'events' in response:
+            if response:
                 self.parent.parent.statusBar().showMessage(_('Filling the calendar...'))
                 self.storage_init()
                 # place the event in the model
-                for event_info in response['events']:
+                for event_info in response:
                     qApp.processEvents() # keep GUI active
-                    event_obj = Event(monday, event_info)
-                    room_id = int( event_info['room']['id'] )
-                    self.insert( room_id , event_obj )
+                    event = Event(monday, event_info)
+                    self.insert(event.room_uuid, event)
                 # draw events
                 self.emit(SIGNAL('layoutChanged()'))
                 self.parent.parent.statusBar().showMessage(_('Done'), 2000)
@@ -354,15 +396,15 @@ class EventStorage(QAbstractTableModel):
             daystr = (mon + timedelta(days=delta)).strftime('%d/%m')
             return QVariant('%s\n%s' % (self.week_days[delta], daystr))
         if orientation == Qt.Vertical and role == Qt.DisplayRole:
-            begin_hour, end_hour = self.work_hours
+            begin_hour, end_hour = self.params.work_hours
             start = timedelta(hours=begin_hour)
-            step = timedelta(seconds=(self.quant.seconds * section))
+            step = timedelta(seconds=(self.params.quant.seconds * section))
             return QVariant(str(start + step)[:-3])
         return QVariant()
 
-    def data(self, index, role, room_id=0):
+    def data(self, index, role, room_id=None):
         """ This method returns the data from model. Parameter 'role' here means room. """
-        if not index.isValid():
+        if not index.isValid() or not room_id:
             return QVariant()
         if role not in (Qt.DisplayRole, Qt.ToolTipRole):
             return QVariant()
@@ -409,18 +451,10 @@ class EventStorage(QAbstractTableModel):
     def date2timestamp(self, d):
         return int(time.mktime(d.timetuple()))
 
-    def datetime2rowcol(self, dt):
-        row = (dt.hour - self.work_hours[0]) * self.multiplier
-        if dt.minute >= 30:
-            row += 1
-        col = dt.weekday()
-        #print '%s %s %s' % (dt, row, col)
-        return (row, col)
-
     def may_insert(self, event, room_id):
         """ This method checks the ability of placing the event on schedule. """
         row, col = self.datetime2rowcol(event.begin)
-        for i in xrange(event.duration.seconds / self.quant.seconds):
+        for i in xrange(event.duration.seconds / self.params.quant.seconds):
             if self.storage.byRCR(
                 ModelStorage.GET,
                 (row + i, col, room_id)
@@ -430,7 +464,7 @@ class EventStorage(QAbstractTableModel):
 
 #     def prepare_event_cells(self, event, room_id, row, col):
 #         cells = []
-#         for i in xrange(event.duration.seconds / self.quant.seconds):
+#         for i in xrange(event.duration.seconds / self.params.quant.seconds):
 #             cells.append( (row + i, col, room_id) )
 #         return cells
 
@@ -445,7 +479,7 @@ class EventStorage(QAbstractTableModel):
 #         result = []
 #         for room_name, room_color, room_id in self.rooms:
 #             free = []
-#             for i in xrange(event.duration.seconds / self.quant.seconds):
+#             for i in xrange(event.duration.seconds / self.params.quant.seconds):
 #                 free.append( self.rc2e.get( (row + i, col, room_id), None ) is None )
 #             print free
 

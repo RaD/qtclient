@@ -13,7 +13,7 @@ from dialogs.show_coaches import ShowCoaches
 from dialogs.searching import Searching
 from dlg_show_visitors import ShowVisitors
 
-__ = lambda x: datetime(*time.strptime(str(x), '%Y-%m-%d %H:%M:%S')[:6])
+from library import ParamStorage
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -35,9 +35,12 @@ class EventInfo(UiDlgTemplate):
     title = _('Event\'s information')
     schedule = None # кэшируем здесь данные от сервера
     all_coaches = None # кэш с данными о преподавателях
+    s_obj = None
+    s_idx = None
 
     def __init__(self, parent=None, params=dict()):
         UiDlgTemplate.__init__(self, parent, params)
+        self.params = ParamStorage()
 
     def setupUi(self):
         UiDlgTemplate.setupUi(self)
@@ -54,51 +57,24 @@ class EventInfo(UiDlgTemplate):
 
     def initData(self, obj, index):
         """ Use this method to initialize the dialog. """
-        self.schedule_object = obj
-        self.schedule_index = index
+        self.s_obj = obj
+        self.s_idx = index
 
         title =  _('Event info')
 
-        # если данных в кэше нет, то получаем их от сервера
-        if self.schedule is None:
-            # получаем информацию о активности
-            if not self.http.request('/manager/get_one/',
-                                     {'action': 'get_event_info',
-                                      'item_id': self.schedule_object.id}):
-                QMessageBox.critical(self, title,
-                                     _('Unable to fetch: %s') % self.http.error_msg)
-                return
-            default_response = None
-            response = self.http.parse(default_response)
-            if not(response and 'data' in response):
-                QMessageBox.critical(self, title,
-                                     _('Unable to parse: %s') % self.http.error_msg)
-                return
-            # сохраняем данные в кэше
-            self.schedule = response['data']
+        self.editStyle.setText(self.s_obj.styles)
+        self.editPriceCategory.setText(self.s_obj.category)
+        self.editCoaches.setText(self.s_obj.coaches)
 
-        event = self.schedule['event']
-        status = self.schedule.get('status', 0) # 0 means wainting
-        room = self.schedule['room']
-        self.editStyle.setText(event.get('dance_styles', _('Rent')))
-        self.editPriceCategory.setText( event['category']['title'] )
-
-        if self.schedule.get('type', None) == EVENT_TYPE_TEAM:
-            # get coaches list from schedule, not from team, because of exchange
-            self.editCoaches.setText(self.schedule.get('coaches', _('Unknown')))
-
-        begin = __(self.schedule['begin_datetime'])
-        end = __(self.schedule['end_datetime'])
+        begin = self.s_obj.begin
+        end = self.s_obj.end
         self.editBegin.setDateTime(QDateTime(begin))
         self.editEnd.setDateTime(QDateTime(end))
 
-        current_id = int(room['id'])
-        self.current_room_index = current_id - 1
-        for title, color, room_id in self.parent.rooms:
-            self.comboRoom.addItem(title, QVariant(room_id))
-            if room_id == current_id + 100:
-                current = self.comboRoom.count() - 1
-        self.comboRoom.setCurrentIndex(self.current_room_index)
+        for index, room in self.params.static.get('rooms_by_index').items():
+            self.comboRoom.addItem(room.get('title'), QVariant(index))
+
+        self.comboRoom.setCurrentIndex(self.params.static.get('rooms_by_uuid').get(self.s_obj.room_uuid))
 
         # disable controls for events in the past
         is_past = begin < datetime.now()
@@ -107,7 +83,7 @@ class EventInfo(UiDlgTemplate):
         self.buttonVisitManual.setDisabled(is_past)
         self.buttonChange.setDisabled(is_past)
 
-        self._init_fix(status)
+        #self._init_fix(status)
 
     def _init_fix(self, current):
         """ Helper method to init eventFix combo."""
@@ -251,7 +227,7 @@ class EventInfo(UiDlgTemplate):
                 index = self.comboRoom.currentIndex()
                 room_id, ok = self.comboRoom.itemData(index).toInt()
                 model = self.parent.schedule.model()
-                model.remove(self.schedule_object, self.schedule_index, True)
+                model.remove(self.s_obj, self.s_idx, True)
                 QMessageBox.information(self, _('Event removing'),
                                         _('Complete.'))
                 self.accept()
@@ -273,9 +249,9 @@ class EventInfo(UiDlgTemplate):
         if response:
             message = _('The event has been fixed.')
 
-            self.schedule_object.set_fixed(fix_id)
+            self.s_obj.set_fixed(fix_id)
             model = self.parent.schedule.model()
-            model.change(self.schedule_object, self.schedule_index)
+            model.change(self.s_obj, self.s_idx)
             self.buttonFix.setDisabled(True)
         else:
             message = _('Unable to fix this event.')
@@ -305,7 +281,7 @@ class EventInfo(UiDlgTemplate):
             from library import filter_dictlist
             # get the coach descriptions' list using its id list
             coaches_dictlist = filter_dictlist(self.parent.static['coaches'], 'id', coach_id_list)
-            self.schedule_object.set_coaches(coaches_dictlist)
+            self.s_obj.set_coaches(coaches_dictlist)
 
         dialog = ShowCoaches(self, {'http': self.http})
         dialog.setCallback(coaches_callback)
@@ -316,8 +292,8 @@ class EventInfo(UiDlgTemplate):
         # очищаем кэш и заново запрашиваем информацию о событии, чтобы
         # показать изменения списка преподавателей.
         self.schedule = None
-        self.initData(self.schedule_object, self.schedule_index)
+        self.initData(self.s_obj, self.s_idx)
 
         # update schedule model to immediate refresh this event
         model = self.parent.schedule.model()
-        model.change(self.schedule_object, self.schedule_index)
+        model.change(self.s_obj, self.s_idx)

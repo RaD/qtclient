@@ -5,6 +5,7 @@ import sys, re
 from datetime import datetime, timedelta
 
 from settings import _
+from library import ParamStorage
 from event_storage import EventStorage
 from dlg_settings import TabGeneral
 
@@ -16,18 +17,14 @@ class QtSchedule(QTableView):
 
     """ Calendar class. """
 
-    def __init__(self, parent=None, params=dict()):
+    def __init__(self, parent):
         QTableView.__init__(self, parent)
 
         self.parent = parent
-        self.params = params # {http, work_hours, quant, rooms}
-
-        self.rooms = self.params.get('rooms', tuple())
+        self.params = ParamStorage()
 
         # Define the model
-        storage_params = self.params
-        storage_params.update( { 'mode': 'week' } )
-        self.model_object = EventStorage(self, storage_params)
+        self.model_object = EventStorage(self, mode='week')
         self.setModel(self.model_object)
 
         # Define the cell delegate
@@ -80,10 +77,10 @@ class QtSchedule(QTableView):
         self.contextMenu = QMenu(self)
         self.contextMenu.addAction(self.ctxMenuExchange)
 
-    def update_static(self, params=dict()):
-        """ params = {'rooms',} """
-        self.rooms = params.get('rooms', tuple())
-        self.model().rooms = self.rooms
+    # def update_static(self, params=dict()):
+    #     """ params = {'rooms',} """
+    #     self.rooms = params.get('rooms', tuple())
+    #     self.model().rooms = self.params.rooms
 
     def string2color(self, color):
         """ This method converts #RRGGBB into QColor. """
@@ -126,10 +123,11 @@ class QtSchedule(QTableView):
         """ This method returns the list of free rooms at the given cells. """
         row, col = row_col
         free = []
-        for room_name, room_color, room_id in self.rooms:
+        for item in self.params.static.get('rooms'):
+            room_id = item.get('uuid')
             event = self.model().get_event_by_cell(row, col, room_id)
             if not event:
-                free.append(id)
+                free.append(id) #wtf?
         return free
 
     def scrollContentsBy(self, dx, dy):
@@ -156,10 +154,11 @@ class QtSchedule(QTableView):
         w = self.columnWidth(index.column())
         cx, cy = self.get_scrolled_coords(self.columnViewportPosition(col),
                                           self.rowViewportPosition(row))
-        event_index = (x - cx) / (w / len(self.rooms))
-        room_name, room_color, room_id = self.rooms[event_index]
+        rooms = self.params.static.get('rooms')
+        event_index = (x - cx) / (w / len(rooms))
+        room = rooms[event_index]
         return (index, row, col, x, y, cx, cy,
-                room_name, room_color, room_id)
+                room.get('title'), room.get('color'), room.get('uuid'))
 
     def event_intersection(self, event_a, event_b):
         """ This method check the events intersection by time. """
@@ -252,7 +251,7 @@ class QtSchedule(QTableView):
 
             itemData = QByteArray()
             dataStream = QDataStream(itemData, QIODevice.WriteOnly)
-            dataStream << QString('%i,%i,%i' % (row, col, room_id))
+            dataStream << QString('%i,%i,%s' % (row, col, room_id))
             mimeData = QMimeData()
             mimeData.setData(self.getMime('event'), itemData)
 
@@ -280,10 +279,11 @@ class QtSchedule(QTableView):
         w = self.columnWidth(col)
         cx, cy = self.get_scrolled_coords(self.columnViewportPosition(col),
                                           self.rowViewportPosition(row))
-        event_index = (x - cx) / (w / len(self.rooms))
-        room_name, room_color, room_id = self.rooms[event_index]
+        rooms = self.params.static.get('rooms')
+        event_index = (x - cx) / (w / len(rooms))
+        room = rooms[event_index]
         model = self.model()
-        variant = model.data(model.index(row, col), Qt.DisplayRole, room_id)
+        variant = model.data(model.index(row, col), Qt.DisplayRole, room.get('uuid'))
         if not variant.isValid():
             return
         evt = variant.toPyObject()
@@ -340,22 +340,24 @@ class QtSchedule(QTableView):
 
     def viewportEvent(self, event):
         """ Reimplement ToolTip Event. """
-        if event.type() == QEvent.ToolTip and self.rooms:
-            help = QHelpEvent(event)
-            index = self.indexAt(help.pos())
-            row = index.row()
-            col = index.column()
-            x = help.x() - self.scrolledCellX
-            y = help.y() - self.scrolledCellY
-            w = self.columnWidth(col)
-            cx, cy = self.get_scrolled_coords(self.columnViewportPosition(col),
-                                              self.rowViewportPosition(row))
-            event_index = (x - cx) / (w / len(self.rooms))
-            room_name, room_color, room_id = self.rooms[event_index]
-            model = self.model()
-            tooltip = model.data(model.index(row, col), Qt.ToolTipRole, room_id).toString()
-            if len(tooltip) > 0:
-                QToolTip.showText(help.globalPos(), QString(tooltip))
+        if self.params.logged_in:
+            rooms = self.params.static.get('rooms')
+            if event.type() == QEvent.ToolTip and rooms:
+                help = QHelpEvent(event)
+                index = self.indexAt(help.pos())
+                row = index.row()
+                col = index.column()
+                x = help.x() - self.scrolledCellX
+                y = help.y() - self.scrolledCellY
+                w = self.columnWidth(col)
+                cx, cy = self.get_scrolled_coords(self.columnViewportPosition(col),
+                                                  self.rowViewportPosition(row))
+                event_index = (x - cx) / (w / len(rooms))
+                room = rooms[event_index]
+                model = self.model()
+                tooltip = model.data(model.index(row, col), Qt.ToolTipRole, room.get('uuid')).toString()
+                if len(tooltip) > 0:
+                    QToolTip.showText(help.globalPos(), QString(tooltip))
         return QTableView.viewportEvent(self, event)
 
 #from settings import XPM_EVENT_CLOSED
@@ -375,6 +377,7 @@ class QtScheduleDelegate(QItemDelegate):
     def __init__(self, parent=None):
         QItemDelegate.__init__(self, parent)
         self.parent = parent
+        self.params = ParamStorage()
 
         self.settings = QSettings()
         general = TabGeneral(self.parent)
@@ -400,11 +403,14 @@ class QtScheduleDelegate(QItemDelegate):
 
     def paint(self, painter, cell, index):
         """ This method draws the cell. """
+        if not self.params.logged_in:
+            return
+
         painter.save()
 
         model = index.model()
-        rooms = model.rooms
-        count = len(rooms)
+        rooms = self.params.static.get('rooms')
+        room_count = len(rooms)
 
         dx = 0 #self.parent.scrolledCellX
         dy = self.parent.scrolledCellY
@@ -414,22 +420,22 @@ class QtScheduleDelegate(QItemDelegate):
 
         pen_width = 1
 
-        for room_name, room_color, room_id in rooms:
-            event = model.data(index, Qt.DisplayRole, room_id).toPyObject()
+        for room in rooms:
+            event = model.data(index, Qt.DisplayRole, room.get('uuid')).toPyObject()
 
             if isinstance(event, Event):
                 # fill the event's body
                 h = cell.rect.height()
                 if self.parent.showGrid():
-                    w = (cell.rect.width() - pen_width)/ count
+                    w = (cell.rect.width() - pen_width)/ room_count
                 else:
-                    w = cell.rect.width() / count
+                    w = cell.rect.width() / room_count
 
                 x = dx + col * (cell.rect.width() + 1) + \
-                    w * map(lambda x: x[2] == room_id, rooms).index(True)
+                    w * map(lambda x: x == room, rooms).index(True)
                 y = dy + row * (cell.rect.height() + 1)
 
-                painter.fillRect(x, y, w, h, self.parent.string2color(room_color));
+                painter.fillRect(x, y, w, h, self.parent.string2color(room.get('color')));
 
 
                 if event.show_type == 'tail':

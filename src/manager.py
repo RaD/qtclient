@@ -37,19 +37,18 @@ class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         QMainWindow.__init__(self, parent)
 
-        self.params = ParamStorage()
-
         self.mimes = {'team': 'application/x-team-item',
                       'event':  'application/x-calendar-event',
                       }
-        self.rooms = []
         self.tree = []
         self.rfid_id = None
 
-        self.params.http = self.http = Http(self)
-
-        self.work_hours = (8, 24)
-        self.schedule_quant = timedelta(minutes=30)
+        self.params = ParamStorage() # синглтон для хранения данных
+        self.params.logged_in = False
+        self.params.http = Http(self)
+        self.params.work_hours = (8, 24)
+        self.params.quant = timedelta(minutes=30)
+        self.params.multiplier = timedelta(hours=1).seconds / self.params.quant.seconds
 
         self.menus = []
         self.create_menus()
@@ -84,48 +83,29 @@ class MainWindow(QMainWindow):
         self.bpSunday.setText(self.schedule.model().getSunday().strftime('%d/%m/%Y'))
 
     def get_static(self):
-        """ This methods get static information from server. """
-        # get rooms
-        if not self.http.request('/manager/get_rooms/', {}):
-            QMessageBox.critical(self, _('Room info'), _('Unable to fetch: %s') % self.http.error_msg)
-            return
-        default_response = {'rows': []}
-        response = self.http.parse(default_response)
         """
-        {'rows': [{'color': 'FFAAAA', 'text': 'red', 'id': 1},
-                  {'color': 'AAFFAA', 'text': 'green', 'id': 2},
-            ...]}
+        Метод для получения статической информации с сервера.
         """
-
-        self.rooms = tuple( [ (a['title'], a['color'], a['id']) for a in response['rows'] ] )
-        self.schedule.update_static( {'rooms': self.rooms} )
-
-        # сохраняем информацию о залах в синглтон
-        map(lambda r: self.params.rooms.update( { r['id']: r['title'], } ), response['rows'])
-
-        # static info
-        if not self.http.request('/manager/static/', {}):
-            QMessageBox.critical(self, _('Static info'), _('Unable to fetch: %s') % self.http.error_msg)
+        if not self.params.http.request('/api/static/', 'GET', {}):
+            QMessageBox.critical(self, _('Static info'), _('Unable to fetch: %s') % self.params.http.error_msg)
             return
-        response = self.http.parse()
-        self.params.static = self.static = response
-        #print 'Static is', self.static.keys()
-        #import pprint; pprint.pprint(self.static)
-
-        #self.tree = TreeModel(self.static.get('styles', None))
+        return self.params.http.parse()
 
     def update_interface(self):
         """ This method updates application's interface using static
         information obtained in previous method. """
         # rooms
-        if self.rooms and len(self.rooms) > 0:
-            for title, color, id in self.rooms:
+        rooms = self.params.static.get('rooms')
+        if rooms:
+            for item in rooms:
+                uu_id = item.get('uuid')
+                title = item.get('title')
                 buttonFilter = QPushButton(title)
                 buttonFilter.setCheckable(True)
-                buttonFilter.setDisabled(True) # BUG #28
+                buttonFilter.setDisabled(True)
                 self.panelRooms.addWidget(buttonFilter)
                 self.connect(buttonFilter, SIGNAL('clicked()'),
-                             self.prepare_filter(id, title))
+                             self.prepare_filter(uu_id, title))
 
     def printer_init(self, template):
         self.printer = Printer(template=template)
@@ -150,13 +130,7 @@ class MainWindow(QMainWindow):
     def setup_views(self):
         self.panelRooms = QHBoxLayout()
 
-        schedule_params = {
-            'http': self.http,
-            'work_hours': self.work_hours,
-            'quant': self.schedule_quant,
-            'rooms': self.rooms,
-            }
-        self.schedule = QtSchedule(self, schedule_params)
+        self.schedule = QtSchedule(self)
 
         self.bpMonday = QLabel('--/--/----')
         self.bpSunday = QLabel('--/--/----')
@@ -283,7 +257,7 @@ class MainWindow(QMainWindow):
         """ This method get the data from a server. It call periodically using timer. """
 
         # Do nothing until user authoruized
-        if not self.http.is_session_open():
+        if not self.params.http.is_session_open():
             return
         # Just refresh the calendar's model
         self.schedule.model().update
@@ -300,17 +274,28 @@ class MainWindow(QMainWindow):
         dlgStatus = self.dialog.exec_()
 
         if QDialog.Accepted == dlgStatus:
-            if not self.http.request('/api/login/', 'POST', self.credentials):
-                QMessageBox.critical(self, _('Login'), _('Unable to login: %s') % self.http.error_msg)
+            if not self.params.http.request('/api/login/', 'POST', self.credentials):
+                QMessageBox.critical(self, _('Login'), _('Unable to login: %s') % self.params.http.error_msg)
                 return
 
             default_response = None
-            response = self.http.parse(default_response)
+            response = self.params.http.parse(default_response)
             if response and 'id' in response:
+                self.params.logged_in = True
                 self.loggedTitle(response)
 
                 # подгружаем статическую информацию и список залов
-                self.get_static()
+                self.params.static = self.get_static()
+
+                rooms_by_index = {}
+                rooms_by_uuid = {}
+                for index, room in enumerate(self.params.static.get('rooms')):
+                    room_uuid = room.get('uuid')
+                    rooms_by_index[index] = room
+                    rooms_by_uuid[room_uuid] = index
+                self.params.static['rooms_by_index'] = rooms_by_index
+                self.params.static['rooms_by_uuid'] = rooms_by_uuid
+
                 # здесь только правим текстовые метки
                 self.get_dynamic()
                 # изменяем свойства элементов интерфейса
@@ -318,12 +303,12 @@ class MainWindow(QMainWindow):
                 # загружаем информацию о занятиях на расписание
                 self.schedule.model().showCurrWeek()
 
-                # run refresh timer
-                from settings import SCHEDULE_REFRESH_TIMEOUT
-                self.refreshTimer = self.makeTimer(self.refresh_data, SCHEDULE_REFRESH_TIMEOUT, True)
+                # # run refresh timer
+                # from settings import SCHEDULE_REFRESH_TIMEOUT
+                # self.refreshTimer = self.makeTimer(self.refresh_data, SCHEDULE_REFRESH_TIMEOUT, True)
 
-                self.printer_init(template=self.static['printer'])
-                self.interface_disable(False)
+                # self.printer_init(template=self.static['printer'])
+                # self.interface_disable(False)
             else:
                 QMessageBox.warning(self, _('Login failed'),
                                     _('It seems you\'ve entered wrong login/password.'))
@@ -348,23 +333,23 @@ class MainWindow(QMainWindow):
         self.dialog.setModal(True)
         self.dialog.exec_()
         self.get_dynamic()
-        self.http.reconnect()
+        self.params.http.reconnect()
 
     def client_new(self):
-        params = { 'http': self.http, 'static': self.static, }
+        params = { 'http': self.params.http, 'static': self.static, }
         self.dialog = ClientInfo(self, params)
         self.dialog.setModal(True)
         self.dialog.exec_()
 
     def client_search_rfid(self):
-        if not self.http or not self.http.is_session_open():
+        if not self.params.http or not self.params.http.is_session_open():
             return # login first
 
         def callback(rfid):
             self.rfid_id = rfid
 
         params = {
-            'http': self.http,
+            'http': self.params.http,
             'static': self.static,
             'mode': 'client',
             'callback': callback,
@@ -375,11 +360,11 @@ class MainWindow(QMainWindow):
 
         if QDialog.Accepted == dlgStatus and self.rfid_id is not None:
             params = {'rfid_code': self.rfid_id, 'mode': 'client'}
-            if not self.http.request('/manager/get_client_info/', params):
-                QMessageBox.critical(self, _('Client info'), _('Unable to fetch: %s') % self.http.error_msg)
+            if not self.params.http.request('/manager/get_client_info/', params):
+                QMessageBox.critical(self, _('Client info'), _('Unable to fetch: %s') % self.params.http.error_msg)
                 return
             default_response = None
-            response = self.http.parse(default_response)
+            response = self.params.http.parse(default_response)
 
             if not response or response['info'] is None:
                 QMessageBox.warning(self, _('Warning'),
@@ -387,8 +372,7 @@ class MainWindow(QMainWindow):
             else:
                 user_info = response['info']
                 params = {
-                    'http': self.http,
-                    'static': self.static,
+                    'http': self.params.http,
                     }
                 self.dialog = ClientInfo(self, params)
                 self.dialog.setModal(True)
@@ -398,26 +382,26 @@ class MainWindow(QMainWindow):
                 self.rfid_id = None
 
     def client_search_name(self):
-        if not self.http or not self.http.is_session_open():
+        if not self.params.http or not self.params.http.is_session_open():
             return # login first
 
         def callback(user):
             self.user = user
 
-        params = { 'http': self.http, 'static': self.static,
+        params = { 'http': self.params.http, 'static': self.static,
                    'mode': 'client', 'apply_title': _('Show'), }
         self.dialog = Searching(self, params)
         self.dialog.setModal(True)
         self.dialog.setCallback(callback)
         if QDialog.Accepted == self.dialog.exec_():
-            params = { 'http': self.http, 'static': self.static, }
+            params = { 'http': self.params.http, 'static': self.static, }
             self.dialog = ClientInfo(self, params)
             self.dialog.setModal(True)
             self.dialog.initData(self.user)
             self.dialog.exec_()
 
     def renter_new(self):
-        params = { 'http': self.http, 'static': self.static, }
+        params = { 'http': self.params.http, 'static': self.static, }
         self.dialog = RenterInfo(self, params)
         self.dialog.setModal(True)
         self.dialog.exec_()
@@ -427,7 +411,7 @@ class MainWindow(QMainWindow):
             self.user = user
             print 'SEARCHING:', user
 
-        params = { 'http': self.http, 'static': self.static, 'mode': 'renter', }
+        params = { 'http': self.params.http, 'static': self.static, 'mode': 'renter', }
         self.dialog = Searching(self, params)
         self.dialog.setModal(True)
         self.dialog.setCallback(callback)
@@ -497,11 +481,11 @@ class MainWindow(QMainWindow):
             from_range = model.weekRange
             to_range = model.date2range(selected_date)
 
-            if not self.http.request('/manager/fill_week/', {'to_date': to_range[0]}):
-                QMessageBox.critical(self, _('Fill week'), _('Unable to fill: %s') % self.http.error_msg)
+            if not self.params.http.request('/manager/fill_week/', {'to_date': to_range[0]}):
+                QMessageBox.critical(self, _('Fill week'), _('Unable to fill: %s') % self.params.http.error_msg)
                 return
             default_response = None
-            response = self.http.parse(default_response)
+            response = self.params.http.parse(default_response)
             if response and 'saved_id' in response:
                 # inform user
                 info = response['saved_id']
@@ -540,10 +524,10 @@ class MainWindow(QMainWindow):
             timer.start()
         return timer
 
-    def showEventProperties(self, calendar_event, index): #, room_id):
-        self.dialog = EventInfo(self, {'http': self.http})
+    def showEventProperties(self, event, index): #, room_id):
+        self.dialog = EventInfo(self)
         self.dialog.setModal(True)
-        self.dialog.initData(calendar_event, index)
+        self.dialog.initData(event, index)
         self.dialog.exec_()
 
     # Drag'n'Drop section begins
