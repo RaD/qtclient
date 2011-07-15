@@ -214,10 +214,6 @@ class MainWindow(QMainWindow):
                 (_('Search by name'), 'Ctrl+G', 'renter_search_name', _('Search a renter with its name.')),
                 ]
              ),
-            (_('Calendar'), [
-                (_('Fill week'), 'Ctrl+L', 'fillWeek', _('Fill current week.')),
-                ]
-             ),
             # 	    (_('Accounting'), [
             # 		    (_('Add resources'), '',
             # 		     'addResources', _('Add new set of resources into accounting.')),
@@ -470,31 +466,6 @@ class MainWindow(QMainWindow):
         self.dialog.setRooms(self.rooms)
         self.dialog.exec_()
 
-    def fillWeek(self):
-        def callback(selected_date):
-            model = self.schedule.model()
-            from_range = model.weekRange
-            to_range = model.date2range(selected_date)
-
-            if not self.params.http.request('/manager/fill_week/', {'to_date': to_range[0]}):
-                QMessageBox.critical(self, _('Fill week'), _('Unable to fill: %s') % self.params.http.error_msg)
-                return
-            default_response = None
-            response = self.params.http.parse(default_response)
-            if response and 'saved_id' in response:
-                # inform user
-                info = response['saved_id']
-                msg = _('The week has been filled sucessfully. Copied: %(copied)i. Passed: %(passed)i.')
-                self.statusBar().showMessage(msg % info, 3000)
-                # FIXME: pause here, but not just sleep, use timer
-                # update view
-                self.schedule.model().update()
-
-        params = {'title': _('Choose a week to fill')}
-        self.dialog = DlgCalendar(self, **params)
-        self.dialog.setModal(True)
-        self.dialog.setCallback(callback)
-        self.dialog.exec_()
 
     def addResources(self):
         def callback(count, price):
