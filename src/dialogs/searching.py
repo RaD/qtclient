@@ -45,7 +45,7 @@ class Searching(UiDlgTemplate):
     def searchFor(self):
         name = self.editSearch.text().toUtf8()
         http = self.params.http
-        if not http.request('/api/%s/%s/' % (self.mode, name), 'GET'):
+        if not http.request('/api/%s/%s/' % (self.mode, name), 'GET', force=True):
             QMessageBox.critical(self, _('Searching'), _('Unable to search: %s') % http.error_msg)
             return
         response = http.parse()

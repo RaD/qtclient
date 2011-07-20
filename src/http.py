@@ -2,6 +2,7 @@
 # (c) 2009-2011 Ruslan Popov <ruslan.popov@gmail.com>
 
 import sys, httplib, urllib, json
+from datetime import datetime
 
 from dlg_settings import TabNetwork
 
@@ -62,10 +63,11 @@ class Http:
 
         return (host, port)
 
-    def request(self, url, method='POST', params={}): # public
+    def request(self, url, method='POST', params={}, force=False): # public
         if self.session_id and self.session_id not in self.headers:
             self.headers.update( { 'Cookie': 'sessionid=%s' % self.session_id } )
-
+        if force:
+            url = url + '?' + datetime.now().strftime('%y%m%d%H%M%S')
         params = urllib.urlencode(params)
         while True:
             try:
