@@ -360,6 +360,7 @@ class MainWindow(QMainWindow):
                     self.dialog.setModal(True)
                     self.dialog.initData(response[0])
                     self.dialog.exec_()
+                    del(self.dialog)
                     self.rfid_id = None
 
     def client_search_name(self):
@@ -376,6 +377,7 @@ class MainWindow(QMainWindow):
                 self.dialog.setModal(True)
                 self.dialog.initData(self.user)
                 self.dialog.exec_()
+                del(self.dialog)
 
     def renter_new(self):
         params = { 'http': self.params.http, 'static': self.static, }
