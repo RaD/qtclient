@@ -101,19 +101,25 @@ class Http:
             self.debug('session id is %s' % self.session_id)
         return True
 
-    def parse(self, default={}): # public
+    def parse(self, default={}, is_json=True): # public
         if not self.response: # request failed
             return None
         if self.response.status == 200: # http status
             data = self.response.read()
-            if hasattr(json, 'read'):
-                response = json.read(data) # 2.5
+
+            if not is_json:
+                return data # отдаём как есть
+
+            parser = hasattr(json, 'read') and json.read or json.loads # поддержка 2.5 & 2.6
+            try:
+                response = parser(data)
+            except ValueError:
+                return data # не распарсилось, отдаём как есть
             else:
-                response = json.loads(data) # 2.6
-            if 'code' in response and response['code'] != 200:
-                self.error_msg = '[%(code)s] %(desc)s' % response
-                return default
-            return response
+                if 'code' in response and response['code'] != 200:
+                    self.error_msg = '[%(code)s] %(desc)s' % response
+                    return default
+                return response
         elif self.response.status == 302: # authentication
             self.error_msg = _('Authenticate yourself.')
             return default
@@ -124,7 +130,7 @@ class Http:
             self.error_msg = '[%s] %s' % (self.response.status, self.response.reason)
             return default
 
-    def request_full(self, url, params): # public
+    def DEPRECATED_request_full(self, url, params): # public
         if self.session_id and self.session_id not in self.headers:
             self.headers.update( { 'Cookie': 'sessionid=%s' % self.session_id } )
 

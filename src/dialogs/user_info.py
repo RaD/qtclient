@@ -21,8 +21,6 @@ import json
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-#from PyQt4.QtXml import *
-#from PyQt4.QtXmlPatterns import *
 from PyQt4 import uic
 
 ERR_VOUCHER_PAYMENT = 2101
@@ -36,9 +34,10 @@ class ClientInfo(UiDlgTemplate):
     params = ParamStorage()
     title = _('Client\'s information')
     card_model = None
-    user_id = u'0'
+    user_id = None # новые записи обозначаются отсутствием идентификатора
     discounts_by_index = {}
     discounts_by_uuid = {}
+    changed = False
 
     def __init__(self, parent=None):
         UiDlgTemplate.__init__(self, parent)
@@ -95,8 +94,7 @@ class ClientInfo(UiDlgTemplate):
             print 'unknown'
 
     def initData(self, data={}):
-        # новые записи обозначаются нулевым идентификатором
-        self.user_id = data.get('id', '0')
+        self.user_id = data.get('uuid')
 
         # Определение подсказок
         meta = [('last_name', self.editLastName),
@@ -538,11 +536,11 @@ class ClientInfo(UiDlgTemplate):
         """ Apply settings. """
         userinfo, ok = self.checkFields()
         if ok:
-            if self.saveSettings(userinfo):
+            if self.send_to_server(userinfo):
                 self.accept()
-        else:
-            QMessageBox.warning(self, _('Warning'),
-                                _('Please fill all fields.'))
+                return
+        QMessageBox.warning(self, _('Warning'), _('Please fill all fields.'))
+
     def checkFields(self):
         userinfo = {
             'last_name': self.editLastName.text().toUtf8(),
@@ -553,7 +551,8 @@ class ClientInfo(UiDlgTemplate):
             'rfid_code': self.buttonRFID.text().toUtf8(),
             }
 
-        # this may be uninitialized, so remove it from dictionary
+        # RFID может быть не назначен, в этом случае убираем его из
+        # словаря
         if len(userinfo['rfid_code']) != 8:
             del(userinfo['rfid_code'])
 
@@ -565,45 +564,38 @@ class ClientInfo(UiDlgTemplate):
             if len(v) == 0:
                 return (userinfo, False)
 
+        # преобразуем словарь в список двухэлементных кортежей
+        out = []
+        for k,v in userinfo.items():
+            out.append( (k,v) )
+
         # соберём информацию о скидках клиента, сохраняем
         # идентификаторы установленных скидок
-        userinfo['discounts'] = [int(i) for i,(o, desc) in self.discounts.items() if o.checkState() == Qt.Checked]
+        [ out.append( ('discount', i) ) for i,(o, desc) in self.discounts_by_uuid.items() if o.checkState() == Qt.Checked]
 
-        return (userinfo, True)
+        return (out, True)
 
-    def saveSettings(self, userinfo):
-        """ Метод для сохранения информации о клиенте и его ваучерах. """
+    def send_to_server(self, data):
+        """
+        Метод для сохранения информации о клиенте.
 
-        default_response = None
+        @type  data: list of tuples
+        @param data: Список двухэлементных кортежей с данными о клиенте.
 
-        # save client's information
-        params = { 'user_id': self.user_id, }
-        params.update(userinfo)
-        if not self.http.request('/manager/set_client_info/', params):
-            QMessageBox.critical(self, _('Save info'), _('Unable to save: %s') % self.http.error_msg)
-            return
-        response = self.http.parse(default_response)
-        if not response:
-            error_msg = self.http.error_msg
-            message = _('Unable to save client\'s info!\nReason:\n%s') % error_msg
-            QMessageBox.warning(self, _('Saving'), message)
+        @rtype boolean
+        @return: Результат выполнения операции.
+        """
+        # собираем данные
+        data.append( ('uuid', self.user_id) )
+        data.append( ('is_active', True) ) # статусом надо управлять на диалоге
+        data += self.tableHistory.model().get_model_as_formset()
+
+        # передаём на сервер
+        http = self.params.http
+        if not http.request('/api/client/', self.user_id is None and 'POST' or 'PUT', data):
+            QMessageBox.critical(self, _('Save info'), _('Unable to save: %s') % http.error_msg)
             return False
-
-        # сохраняем ваучеры
-        user_id = response['saved_id']
-        model = self.tableHistory.model()
-        params = model.get_model_as_formset(user_id)
-        if not self.http.request('/manager/save_voucher_list/', params):
-            QMessageBox.critical(self, _('Save vouchers'), _('Unable to save: %s') % self.http.error_msg)
-            return
-        response = self.http.parse(default_response)
-        if not response:
-            error_msg = self.http.error_msg
-            message = _('Unable to save client\'s card!\nReason:\n%s') % error_msg
-            QMessageBox.warning(self, _('Saving'), message)
-            return False
-
-        return True
+        return 'OK' == http.parse(is_json=False)
 
 class RenterInfo(UiDlgTemplate):
 

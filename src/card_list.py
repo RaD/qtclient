@@ -61,41 +61,39 @@ class CardListModel(QAbstractTableModel):
     def get_voucher_info(self, index):
         return self.storage[index.row()][-1]
 
-    def current_vouchers(self, client_id):
+    def current_vouchers(self, formset_prefix):
         """ Метод для сбора актуальной информации о ваучерах. """
         out = []
         # пробегаем по хранилищу, берём только последний элемент от
         # каждой записи (там словарь с данными), добавляем
         # идентификатор клиент, конвертируем дату/время и дампим в
         # json.
-        for item in self.storage:
+        for index, item in enumerate(self.storage):
             voucher = item[-1]
             if 'client' not in voucher:
-                voucher['client'] = {'id': client_id,}
                 # перевод дат в строковую форму, перед конвертацией в json
-                for key, value in voucher.items():
-                    if key.endswith('_date') and isinstance(value, date):
-                        voucher[key] = date2str(value)
-                    elif key.endswith('_datetime') and isinstance(value, datetime):
-                        voucher[key] = dt2str(value)
-            out.append( json.dumps(voucher) )
+                for field, value in voucher.items():
+                    if field.endswith('_date') and isinstance(value, date):
+                        value = date2str(value)
+                    elif field.endswith('_datetime') and isinstance(value, datetime):
+                        value = dt2str(value)
+                    elif type(value) is dict:
+                        value = value.get('uuid')
+                    elif value is None:
+                        value = u''
+                    key = '%s-%i-%s' % (formset_prefix, index, field)
+                    out.append( (key, value) )
         return out
 
-    def get_model_as_formset(self, client_id):
+    def get_model_as_formset(self, formset_prefix='voucher'):
         """ Метод для создания набора форм для сохранения данных через
         Django FormSet."""
         # основа
-        voucher_list = self.current_vouchers(client_id)
-        formset = {
-            'form-TOTAL_FORMS': str(len(voucher_list)),
-            'form-INITIAL_FORMS': '0',
-            }
-        # заполнение набора
-        for index, record in enumerate(voucher_list):
-            prefix = 'form-%i' % index
-            row = {'%s-voucher' % prefix: record,}
-            formset.update( row )
-        return formset
+        return [
+            ('%s-INITIAL_FORMS' % formset_prefix, '0'),
+            ('%s-TOTAL_FORMS' % formset_prefix, unicode(len(self.storage)) ),
+            ('%s-MAX_NUM_FORMS' %formset_prefix, unicode(len(self.storage)) ),
+            ] + self.current_vouchers(formset_prefix)
 
     def dump(self, data=None, header=None):
         import pprint
