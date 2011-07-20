@@ -353,7 +353,14 @@ class QtSchedule(QTableView):
                 cx, cy = self.get_scrolled_coords(self.columnViewportPosition(col),
                                                   self.rowViewportPosition(row))
                 event_index = (x - cx) / (w / len(rooms))
-                room = rooms[event_index]
+
+                try:
+                    room = rooms[event_index]
+                except IndexError:
+                    print rooms
+                    print event_index
+                    room = rooms[0]
+
                 model = self.model()
                 tooltip = model.data(model.index(row, col), Qt.ToolTipRole, room.get('uuid')).toString()
                 if len(tooltip) > 0:
