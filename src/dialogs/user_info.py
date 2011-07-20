@@ -37,6 +37,8 @@ class ClientInfo(UiDlgTemplate):
     user_id = None # новые записи обозначаются отсутствием идентификатора
     discounts_by_index = {}
     discounts_by_uuid = {}
+    rfid_id = None
+    rfid_uuid = None
     changed = False
 
     def __init__(self, parent=None):
@@ -114,9 +116,13 @@ class ClientInfo(UiDlgTemplate):
         birth_date = data.get('birth_date', None) # it could be none while testing
         self.dateBirth.setDate(birth_date and str2date(birth_date) or \
                                QDate.currentDate())
-        rfid = data.get('rfid_code')
+
+        rfid = data.get('rfid')
         if rfid:
-            self.buttonRFID.setText(rfid)
+            self.rfid_uuid = rfid.get('uuid')
+            self.rfid_code = rfid.get('code')
+
+            self.buttonRFID.setText(self.rfid_code)
             self.buttonRFID.setToolTip(_('RFID code of this client.'))
             self.buttonRFID.setDisabled(True)
 
@@ -241,7 +247,7 @@ class ClientInfo(UiDlgTemplate):
 
     def assignRFID(self):
         def callback(rfid):
-            self.rfid_id = rfid
+            self.rfid_code = rfid
 
         dialog = WaitingRFID(self, mode='client', callback=callback)
         dialog.setModal(True)
@@ -249,15 +255,15 @@ class ClientInfo(UiDlgTemplate):
 
         if QDialog.Accepted == dlgStatus:
             h = self.params.http
-            if not h.request('/api/client/%s/' % self.rfid_id, 'GET'):
+            if not h.request('/api/rfid/%s/' % self.rfid_code, 'POST'):
                 QMessageBox.critical(self, _('Client info'), _('Unable to fetch: %s') % h.error_msg)
                 return
-            response = h.parse()
-            if response and 'info' in response and response['info'] is not None:
-                QMessageBox.warning(self, _('Warning'),
-                                    _('This RFID is used already!'))
-            else:
-                self.buttonRFID.setText(self.rfid_id)
+            status, response = h.piston()
+            if status == 'DUPLICATE_ENTRY':
+                QMessageBox.warning(self, _('Warning'), _('This RFID is used already!'))
+            elif status == 'CREATED':
+                self.rfid_uuid = response.get('uuid')
+                self.buttonRFID.setText(self.rfid_code)
                 self.buttonRFID.setDisabled(True)
 
     def wizard_dialog(self, dtype, title, data_to_fill, desc=None):
@@ -534,48 +540,12 @@ class ClientInfo(UiDlgTemplate):
 
     def applyDialog(self):
         """ Apply settings. """
-        userinfo, ok = self.checkFields()
-        if ok:
-            if self.send_to_server(userinfo):
-                self.accept()
-                return
+        if self.send_to_server():
+            self.accept()
+            return
         QMessageBox.warning(self, _('Warning'), _('Please fill all fields.'))
 
-    def checkFields(self):
-        userinfo = {
-            'last_name': self.editLastName.text().toUtf8(),
-            'first_name': self.editFirstName.text().toUtf8(),
-            'phone': self.editPhone.text().toUtf8(),
-            'email': self.editEmail.text().toUtf8(),
-            'birth_date': self.dateBirth.date().toPyDate(),
-            'rfid_code': self.buttonRFID.text().toUtf8(),
-            }
-
-        # RFID может быть не назначен, в этом случае убираем его из
-        # словаря
-        if len(userinfo['rfid_code']) != 8:
-            del(userinfo['rfid_code'])
-
-        for k,v in userinfo.items():
-            if k is 'birth_date':
-                continue
-            if type(v) is int:
-                continue
-            if len(v) == 0:
-                return (userinfo, False)
-
-        # преобразуем словарь в список двухэлементных кортежей
-        out = []
-        for k,v in userinfo.items():
-            out.append( (k,v) )
-
-        # соберём информацию о скидках клиента, сохраняем
-        # идентификаторы установленных скидок
-        [ out.append( ('discount', i) ) for i,(o, desc) in self.discounts_by_uuid.items() if o.checkState() == Qt.Checked]
-
-        return (out, True)
-
-    def send_to_server(self, data):
+    def send_to_server(self):
         """
         Метод для сохранения информации о клиенте.
 
@@ -585,9 +555,22 @@ class ClientInfo(UiDlgTemplate):
         @rtype boolean
         @return: Результат выполнения операции.
         """
-        # собираем данные
-        data.append( ('uuid', self.user_id) )
-        data.append( ('is_active', True) ) # статусом надо управлять на диалоге
+        data = [
+            ('uuid', self.user_id),
+            ('is_active', True), # статусом надо управлять на диалоге
+            ('last_name', self.editLastName.text().toUtf8()),
+            ('first_name', self.editFirstName.text().toUtf8()),
+            ('phone', self.editPhone.text().toUtf8()),
+            ('email', self.editEmail.text().toUtf8()),
+            ('birth_date', self.dateBirth.date().toPyDate()),
+            ('rfid', self.rfid_uuid or u''),
+            ]
+
+        # соберём информацию о скидках клиента, сохраняем
+        # идентификаторы установленных скидок
+        [ data.append( ('discount', i) ) for i,(o, desc) in self.discounts_by_uuid.items() if o.checkState() == Qt.Checked]
+
+        # собираем данные о ваучерах
         data += self.tableHistory.model().get_model_as_formset()
 
         # передаём на сервер

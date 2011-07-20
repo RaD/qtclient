@@ -130,6 +130,24 @@ class Http:
             self.error_msg = '[%s] %s' % (self.response.status, self.response.reason)
             return default
 
+    def piston(self):
+        status_list = {
+            200: 'ALL_OK', 201: 'CREATED', 204: 'DELETED',
+            400: 'BAD_REQUEST', 401: 'FORBIDDEN', 404: 'NOT_FOUND', 409: 'DUPLICATE_ENTRY', 410: 'NOT_HERE',
+            501: 'NOT_IMPLEMENTED', 503: 'THROTTLED',
+            }
+        response = self.response.read()
+        try:
+            index = response.index('|') + 1
+        except ValueError:
+            data = response
+        else:
+            try:
+                data = json.loads( response[index:] )
+            except ValueError:
+                data = response
+        return (status_list.get(self.response.status, 'UNKNOWN'), data)
+
     def DEPRECATED_request_full(self, url, params): # public
         if self.session_id and self.session_id not in self.headers:
             self.headers.update( { 'Cookie': 'sessionid=%s' % self.session_id } )
