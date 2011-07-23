@@ -338,7 +338,9 @@ class MainWindow(QMainWindow):
         self.dialog.exec_()
 
     def client_search_rfid(self):
-
+        """
+        Метод для поиска клиента по RFID.
+        """
         def callback(rfid):
             self.rfid_id = rfid
 
@@ -347,7 +349,7 @@ class MainWindow(QMainWindow):
             dialog.setModal(True)
             if QDialog.Accepted == dialog.exec_() and self.rfid_id:
                 h = self.params.http
-                if not h.request('/api/client/%s/' % self.rfid_id, 'GET'):
+                if not h.request('/api/client/%s/' % self.rfid_id, 'GET', force=True):
                     QMessageBox.critical(self, _('Client info'), _('Unable to fetch: %s') % h.error_msg)
                     return
                 response = h.parse()

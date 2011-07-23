@@ -105,31 +105,41 @@ class CardListModel(QAbstractTableModel):
                 print '=== %s ===' % header.upper()
             pprint.pprint(data)
 
+    def is_expired(self, index):
+        """
+        Проверка, что ваучер ещё действует.
+        """
+        voucher = self.get_voucher_info(index)
+        return datetime.strptime(voucher.get('end'), '%Y-%m-%d').date() < datetime.today().date()
+
     def is_cancelled(self, index):
-        obj = self.get_voucher_info(index)
-        return 'cancel_datetime' in obj and obj['cancel_datetime'] is not None
+        """
+        Проверка, что ваучер не отменён.
+        """
+        voucher = self.get_voucher_info(index)
+        return voucher.get('cancelled') is not None
 
     def may_prolongate(self, index):
         """ Метод для определения возможности пролонгации ваучера. """
-        obj = self.get_voucher_info(index)
-        vtype = obj.get('voucher_type', None)
+        voucher = self.get_voucher_info(index)
+        vtype = voucher.get('type')
         return vtype in ('abonement',)
 
-    def is_debt_exist(self, index, debug=False):
+    def is_debt_exist(self, index, *args, **kwargs):
         """ Метод для проверки наличия долга. Метод не позволяет
         производить доплату неполностью оплаченных несохранённых
         ваучеров. Метод учитывает использованые при покупке скидки."""
-        obj = self.get_voucher_info(index)
-        if obj.get('id', None):
-            vtype = obj.get('voucher_type', None)
-            if debug:
-                print 'VOUCHER:', obj
+        voucher = self.get_voucher_info(index)
+        if voucher.get('uuid'):
+            vtype = voucher.get('type')
+            if kwargs.get('debug'):
+                print 'VOUCHER:', voucher
             if vtype in ('abonement', 'club', 'promo'):
-                price = float( obj.get('price', 0.00) )
-                paid = float( obj.get('paid', 0.00) )
-                if 'discount_price' in obj: # abonement
-                    price = float( obj.get('discount_price', 0.00) )
-                if debug:
+                price = float( voucher.get('price', 0.00) )
+                paid = float( voucher.get('paid', 0.00) )
+                if 'discount_price' in voucher: # abonement
+                    price = float( voucher.get('discount_price', 0.00) )
+                if kwargs.get('debug'):
                     print paid < price, price - paid
                 return (paid < price, price - paid)
         # в остальных случаях, считаем, что долга нет
@@ -161,9 +171,9 @@ class CardListModel(QAbstractTableModel):
 
     def insert_new(self, info):
         """ Метод для вставки новой записи в модель. """
-        vtype = info.get('voucher_type', None)
+        vtype = info.get('type')
         template = {
-            'id': 0, 'voucher_title': '',
+            'uuid': None, 'voucher_title': '',
             'category': None, 'price': 0.00,
             'reg_datetime': datetime.now(),
             'cancel_datetime': None,
@@ -271,7 +281,7 @@ class CardListModel(QAbstractTableModel):
             if vtype in ('voucherabonement', 'voucherclub', 'voucherpromo'):
                 # при обработке цены, проверяем долг клиента, если он
                 # есть, то показываем это
-                debt, amount = self.is_debt_exist(index)
+                debt, amount = self.is_debt_exist(index, debug=True)
                 if debt:
                     out.append( _('debt %.02f') % (amount,) )
             if vtype in ('voucherabonement',):
@@ -295,22 +305,19 @@ class CardListModel(QAbstractTableModel):
     def data_ForegroundRole(self, index):
         """ Метод для выдачи цвета шрифта в зависимости от состояния ваучера. """
 
-        color = Qt.black
         info = self.get_voucher_info(index)
-
-        # новые записи
-        if 0 == int( info.get('id', 0) ):
+        if not info.get('uuid'):
+            # новые записи
             return QBrush(Qt.green)
-
-        # проверяем активность ваучера
-        if self.is_cancelled(index):
+        elif self.is_expired(index) or self.is_cancelled(index):
+            # завершённые и отменённые записи показываем серым
             return QBrush(Qt.gray)
-
-        # проверяем наличие долга
-        if self.is_debt_exist(index)[0]:
+        elif self.is_debt_exist(index)[0]:
+            # записи с долгом показываем красным цветом
             return QBrush(Qt.red)
-
-        return QBrush(color)
+        else:
+            # остальный записи показываем чёрным цветом
+            return QBrush(Qt.black)
 
 class CardList(QTableView):
 

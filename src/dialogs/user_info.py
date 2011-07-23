@@ -217,30 +217,33 @@ class ClientInfo(UiDlgTemplate):
                 QMessageBox.critical(self, title, _('Could not prolongate this voucher!'))
 
     def voucher_cancel(self, index):
-        """ Метод для отмены ваучера. Отображает форму "Да/Нет". """
+        """
+        Метод для отмены ваучера. Отображает форму "Да/Нет".
+        """
         title = _('Voucher Cancellation')
         # получаем информацию о ваучере
         model = index.model()
         voucher = model.get_voucher_info(index)
-        voucher_id = voucher.get('id')
-        if not voucher_id:
+        voucher_uuid = voucher.get('uuid')
+        if not voucher_uuid:
             raise Exception('Bad voucher id')
         # удостоверяемся в трезвом уме пользователя
         if QMessageBox.Yes == QMessageBox.question(self, title,
                                                    _('Are you sure to cancel this voucher?'),
                                                    QMessageBox.Yes, QMessageBox.No):
             # отменяем ваучер
-            if not self.http.request('/manager/get_one/',
-                                     {'action': 'voucher_cancel', 'item_id': voucher_id}):
-                QMessageBox.critical(self, title, _('Unable to cancel: %s') % self.http.error_msg)
+            http = self.params.http
+            if not http.request('/api/voucher/', 'PUT',
+                                {'action': 'CANCEL', 'uuid': voucher_uuid}):
+                QMessageBox.critical(self, title, _('Unable to cancel: %s') % http.error_msg)
                 return
-            default_response = None
-            response = self.http.parse(default_response)
-            if response and 'data' in response:
+            response = http.parse()
+
+            if u'OK' == unicode(response):
                 QMessageBox.information(self, title, _('Voucher has been cancelled sucessfully.'))
                 # приводим отображаемую модель к нужному виду
-                if 'cancel_datetime' in voucher:
-                    voucher['cancel_datetime'] = datetime.now()
+                if 'cancelled' in voucher:
+                    voucher['cancelled'] = datetime.now()
                     model.update(index)
             else:
                 QMessageBox.critical(self, title, _('Could not cancel this voucher!'))
@@ -570,8 +573,9 @@ class ClientInfo(UiDlgTemplate):
         # идентификаторы установленных скидок
         [ data.append( ('discount', i) ) for i,(o, desc) in self.discounts_by_uuid.items() if o.checkState() == Qt.Checked]
 
+        # DEPRECATED
         # собираем данные о ваучерах
-        data += self.tableHistory.model().get_model_as_formset()
+        # data += self.tableHistory.model().get_model_as_formset()
 
         # передаём на сервер
         http = self.params.http
