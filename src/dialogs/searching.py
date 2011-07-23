@@ -11,7 +11,16 @@ from PyQt4.QtCore import *
 GET_ID_ROLE = userRoles['getObjectID']
 
 class Searching(UiDlgTemplate):
+    """
+    Класс реализует диалог поиска клиента по имени.
 
+    Информация о подходящих клиентах/арендаторах приходит в ответ на
+    запрос /api/<mode>/<name>/, где mode - режим (client или renter),
+    а name - полное имя или фамилия.
+
+    Пользователь выбирает из списка найденных людей одну запись,
+    информация о которой передаётся в модуль manager.
+    """
     ui_file = 'uis/dlg_searching.ui'
     params = ParamStorage()
     title = None
