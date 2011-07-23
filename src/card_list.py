@@ -132,15 +132,11 @@ class CardListModel(QAbstractTableModel):
         voucher = self.get_voucher_info(index)
         if voucher.get('uuid'):
             vtype = voucher.get('type')
-            if kwargs.get('debug'):
-                print 'VOUCHER:', voucher
             if vtype in ('abonement', 'club', 'promo'):
                 price = float( voucher.get('price', 0.00) )
                 paid = float( voucher.get('paid', 0.00) )
                 if 'discount_price' in voucher: # abonement
                     price = float( voucher.get('discount_price', 0.00) )
-                if kwargs.get('debug'):
-                    print paid < price, price - paid
                 return (paid < price, price - paid)
         # в остальных случаях, считаем, что долга нет
         return (False, float(0))
@@ -281,7 +277,7 @@ class CardListModel(QAbstractTableModel):
             if vtype in ('voucherabonement', 'voucherclub', 'voucherpromo'):
                 # при обработке цены, проверяем долг клиента, если он
                 # есть, то показываем это
-                debt, amount = self.is_debt_exist(index, debug=True)
+                debt, amount = self.is_debt_exist(index)
                 if debt:
                     out.append( _('debt %.02f') % (amount,) )
             if vtype in ('voucherabonement',):
