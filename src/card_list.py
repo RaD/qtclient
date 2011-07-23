@@ -272,26 +272,26 @@ class CardListModel(QAbstractTableModel):
             out = []
             info = self.get_voucher_info(index)
             vtype = info['type']
-            if vtype in ('voucherflyer', 'vouchertest', 'voucheronce'):
+            if vtype in ('flyer', 'test', 'once'):
                 out.append( info.get('is_utilized') and _('Utilized') or _('Not utilized') )
-            if vtype in ('voucherabonement', 'voucherclub', 'voucherpromo'):
+            if vtype in ('abonement', 'club', 'promo'):
                 # при обработке цены, проверяем долг клиента, если он
                 # есть, то показываем это
                 debt, amount = self.is_debt_exist(index)
                 if debt:
                     out.append( _('debt %.02f') % (amount,) )
-            if vtype in ('voucherabonement',):
+            if vtype in ('abonement',):
                 # отображаем скидку, если есть
                 if 'discount_price' in info:
                     price = float( info['price'] )
                     discount_price = float( info['discount_price'] )
                     discount_percent = int( info['discount_percent'] )
                     out.append( _('discount %.02f/%i%%') % (price - discount_price, discount_percent) )
-            if vtype in ('voucherabonement', 'voucherpromo'):
+            if vtype in ('abonement', 'promo'):
                 out.append( 'sold %i' % int( info.get('count_sold', 0) ))
                 out.append( 'used %i' % int( info.get('count_used', 0) ))
                 out.append( 'available %i' % int( info.get('count_available', 0) ))
-            if vtype == 'voucherclub':
+            if vtype == 'club':
                 out.append( 'days %i' % int( info['card'].get('count_days', 0) ))
                 out.append( 'used %i' % int( info.get('count_used', 0) ))
             return QVariant('; '.join(out))
