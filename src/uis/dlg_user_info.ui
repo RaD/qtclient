@@ -139,6 +139,9 @@
      <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="2,3,1,2,2">
       <item>
        <widget class="QPushButton" name="buttonAssign">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="text">
          <string>Assign Card</string>
         </property>
@@ -165,9 +168,9 @@
        </spacer>
       </item>
       <item>
-       <widget class="QPushButton" name="buttonApply">
+       <widget class="QPushButton" name="buttonSave">
         <property name="text">
-         <string>Apply</string>
+         <string>Save</string>
         </property>
        </widget>
       </item>
@@ -191,7 +194,7 @@
   <tabstop>dateBirth</tabstop>
   <tabstop>buttonAssign</tabstop>
   <tabstop>buttonRFID</tabstop>
-  <tabstop>buttonApply</tabstop>
+  <tabstop>buttonSave</tabstop>
   <tabstop>buttonClose</tabstop>
   <tabstop>tableHistory</tabstop>
  </tabstops>

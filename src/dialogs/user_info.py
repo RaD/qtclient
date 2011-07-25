@@ -64,7 +64,7 @@ class ClientInfo(UiDlgTemplate):
 
         self.connect(self.buttonAssign, SIGNAL('clicked()'), self.assign_voucher)
         self.connect(self.buttonRFID,   SIGNAL('clicked()'), self.assignRFID)
-        self.connect(self.buttonApply,  SIGNAL('clicked()'), self.applyDialog)
+        self.connect(self.buttonSave,  SIGNAL('clicked()'), self.saveDialog)
         self.connect(self.buttonClose,  SIGNAL('clicked()'), self, SLOT('reject()'))
 
     def context_menu(self, position):
@@ -96,7 +96,14 @@ class ClientInfo(UiDlgTemplate):
             print 'unknown'
 
     def initData(self, data={}):
+
+        print 'USER_INFO'
+        import pprint;
+        pprint.pprint(data)
+        print
+
         self.user_id = data.get('uuid')
+        self.buttonAssign.setDisabled(self.user_id is None)
 
         # Определение подсказок
         meta = [('last_name', self.editLastName),
@@ -127,14 +134,13 @@ class ClientInfo(UiDlgTemplate):
             self.buttonRFID.setDisabled(True)
 
         # заполняем список приобретённых ваучеров
-        self.tableHistory.model().init_data( data.get('voucher_list', []) )
+        self.tableHistory.model().init_data( data.get('voucher_list') )
 
     def voucher_payment_add(self, index, initial_value=0.00):
         """ Show price dialog and register payment. """
         title = _('Register payment')
 
         def callback(value):
-            print 'callback value is', value
             self.payment = value
 
         params = {
@@ -148,7 +154,7 @@ class ClientInfo(UiDlgTemplate):
         # получаем информацию о выбранном ваучере
         model = index.model()
         voucher = model.get_voucher_info(index)
-        voucher_id = voucher.get('id', 0)
+        voucher_uuid = voucher.get('uuid')
 
         # запрашиваем сумму доплаты
         dialog = PaymentDlg(self, params)
@@ -156,19 +162,18 @@ class ClientInfo(UiDlgTemplate):
 
         if QDialog.Accepted == dialog.exec_():
             # проводим платёж
-            params = {'voucher_id': voucher_id, 'amount': self.payment}
-            if not self.http.request('/manager/payment_add/', params):
-                QMessageBox.critical(self, title, _('Unable to register: %s') % self.http.error_msg)
+            http = self.params.http
+            if not http.request('/api/voucher/', 'PUT',
+                                {'action': 'PAYMENT', 'uuid': voucher_uuid, 'amount': self.payment}):
+                QMessageBox.critical(self, title, _('Unable to register: %s') % http.error_msg)
                 return
-            default_response = None
-            response = self.http.parse(default_response)
-            if response and response.get('saved_id', 0) == voucher_id:
+            response = http.parse()
+            if u'OK' == unicode(response):
                 # если платёж прошёл
                 # приводим отображаемую модель к нужному виду
                 if 'paid' in voucher:
                     voucher['paid'] += self.payment
-                    voucher['count_available'] = self.calculate_available_visits(
-                        voucher['price'], voucher['paid'], voucher['category']['once_price'], voucher['count_sold'])
+                    voucher['available'] = self.calculate_available_visits(voucher)
             else:
                 # иначе сообщаем о проблеме
                 QMessageBox.warning(self, title, '%s: %i\n\n%s\n\n%s' % (
@@ -257,11 +262,11 @@ class ClientInfo(UiDlgTemplate):
         dlgStatus = dialog.exec_()
 
         if QDialog.Accepted == dlgStatus:
-            h = self.params.http
-            if not h.request('/api/rfid/%s/' % self.rfid_code, 'POST'):
-                QMessageBox.critical(self, _('Client info'), _('Unable to fetch: %s') % h.error_msg)
+            http = self.params.http
+            if not http.request('/api/rfid/%s/' % self.rfid_code, 'POST'):
+                QMessageBox.critical(self, _('Client info'), _('Unable to fetch: %s') % http.error_msg)
                 return
-            status, response = h.piston()
+            status, response = http.piston()
             if status == 'DUPLICATE_ENTRY':
                 QMessageBox.warning(self, _('Warning'), _('This RFID is used already!'))
             elif status == 'CREATED':
@@ -290,13 +295,22 @@ class ClientInfo(UiDlgTemplate):
         else:
             raise BreakDialog('Dialog is not accepted')
 
-    def calculate_available_visits(self, price, paid, once_price, count_sold):
+    def calculate_available_visits(self, voucher):
+        """
+        Метод для вычисления количества доступных
+        посещений. Вызывается при регистрации ваучера и после
+        проведения доплаты.
+        """
+        price = 'discount_price' in voucher and voucher.get('discount_price') or voucher.get('price')
+        paid = voucher.get('paid')
+        sold = voucher.get('sold')
+        once = voucher.get('category').get('once')
         if float(price) - float(paid) < 0.01:
             # оплачена полная стоимость ваучера
             return int(count_sold)
         else:
             from math import floor
-            return int(floor(paid / once_price))
+            return int(floor(paid / once))
 
     def possible_voucher_types(self):
         """ Метод для генерации списка возможных типов ваучера для
@@ -337,38 +351,55 @@ class ClientInfo(UiDlgTemplate):
                 raise Exception(_('Error'))
         except BreakDialog:
             # диалог был просто закрыт, покупки нет
-            pass
+            return False
         else:
-            model = self.tableHistory.model()
-            model.insert_new(steps)
+            # передаём информацию на сервер
+            http = self.params.http
+            data = dict(steps, client=self.user_id, card=steps['card'].get('uuid')) # trick: copy and update
+            if not http.request('/api/voucher/', 'POST', data):
+                QMessageBox.critical(self, _('Save info'), _('Unable to save: %s') % http.error_msg)
+                return False
+            status, response = http.piston()
+            if 'CREATED' == status:
+                saved_steps = dict(steps,
+                                   uuid=response.get('uuid'),
+                                   registered=datetime.strptime(response.get('registered'), '%Y-%m-%d %H:%M:%S'))
+                return self.tableHistory.model().insert_new(saved_steps)
+            else:
+                return False
 
     def assign_ordinary(self, voucher_type):
         """ Метод для добавления ваучеров обычного типа. """
-        steps = {'voucher_type': voucher_type}
+        steps = {'type': voucher_type}
+
+        category_list = [ (i['uuid'], i['title']) for i in self.params.static.get('category_team')]
+        discount_list = self.params.static.get('discount_card')
+        steps['card'] = this_card = filter(lambda item: voucher_type == item.get('slug'),
+                                           self.params.static.get('card_ordinary'))[0]
 
         # выделяем нужный тип карт из списка обычных
-        static_info = filter_dictlist(self.params.static.get('card_ordinary'), 'slug', voucher_type)[0]
-        cat_list = [(i['id'], i['title']) for i in static_info['price_categories']]
-        dis_list = [(i['id'], i['title']) for i in static_info['discounts']]
-        cat_dict_id = {}
-        dis_dict_id = {}
-        for i in static_info['price_categories']:
-            cat_dict_id.update( { i['id']: i } )
-        for i in static_info['discounts']:
-            dis_dict_id.update( { i['id']: i } )
+        #static_info = filter_dictlist(self.params.static.get('card_ordinary'), 'slug', voucher_type)[0]
+        #cat_list = [(i['id'], i['title']) for i in static_info['price_categories']]
+        #dis_list = [(i['id'], i['title']) for i in static_info['discounts']]
+        #cat_dict_id = {}
+        #dis_dict_id = {}
+        #for i in static_info['price_categories']:
+        #    cat_dict_id.update( { i['id']: i } )
+        #for i in static_info['discounts']:
+        #    dis_dict_id.update( { i['id']: i } )
 
         if voucher_type in ('flyer', 'test', 'once'):
             # эти типы ваучеров могут регистрироваться на текущий день только
-            steps['begin_date'] = date.today()
-            steps['end_date'] = date.today()
+            steps['begin'] = date.today()
+            steps['end'] = date.today()
         elif voucher_type in ('abonement',):
             # эти типы ваучеров определяют время жизни от первого занятия
-            steps['begin_date'] = None
-            steps['end_date'] = None
+            steps['begin'] = None
+            steps['end'] = None
 
         try:
             if voucher_type in ('once', 'abonement', 'club',):
-                result = self.wizard_dialog('list', _('Price Category'), cat_list)
+                result = self.wizard_dialog('list', _('Price Category'), category_list)
                 if result:
                     steps['category'] = int(result)
             if voucher_type in ('test',):
@@ -432,7 +463,7 @@ class ClientInfo(UiDlgTemplate):
             raise
 
         # рассчитываем количество доступных посещений
-        if not static_info['is_priceless']:
+        if not this_card.get('is_priceless'):
             prices = filter_dictlist(static_info['price_categories'], 'id', steps['category'])[0]
             if voucher_type in ('test', 'once'):
                 # здесь все цены заданы жёстко, никаких отсрочек
@@ -440,10 +471,10 @@ class ClientInfo(UiDlgTemplate):
                 key = '%s_price' % voucher_type
                 price = float(prices[key])
                 steps['price'] = steps['paid'] = price
-                steps['count_sold'] = 1
+                steps['sold'] = 1
 
             once_price = float(prices['once_price'])
-            steps['count_available'] = self.calculate_available_visits(
+            steps['available'] = self.calculate_available_visits(
                 'discount_price' in steps and steps['discount_price'] or steps['price'],
                 steps['paid'], once_price, steps['count_sold']
                 )
@@ -541,12 +572,12 @@ class ClientInfo(UiDlgTemplate):
 
         steps['price'] = price
 
-    def applyDialog(self):
-        """ Apply settings. """
+    def saveDialog(self):
+        """ Save user settings. """
         if self.send_to_server():
-            self.accept()
-            return
-        QMessageBox.warning(self, _('Warning'), _('Please fill all fields.'))
+            self.buttonAssign.setDisabled(False)
+        else:
+            QMessageBox.warning(self, _('Warning'), _('Please fill all fields.'))
 
     def send_to_server(self):
         """
@@ -582,7 +613,12 @@ class ClientInfo(UiDlgTemplate):
         if not http.request('/api/client/', self.user_id is None and 'POST' or 'PUT', data):
             QMessageBox.critical(self, _('Save info'), _('Unable to save: %s') % http.error_msg)
             return False
-        return 'OK' == http.parse(is_json=False)
+        status, response = http.piston()
+        if status == 'ALL_OK':
+            self.user_id = response.get('uuid')
+            return True
+        else:
+            return False
 
 class RenterInfo(UiDlgTemplate):
 

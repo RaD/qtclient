@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # (c) 2009-2011 Ruslan Popov <ruslan.popov@gmail.com>
 
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, time, timedelta
 import json
 
 from library import date2str, dt2str, ParamStorage
@@ -40,23 +40,38 @@ class CardListModel(QAbstractTableModel):
         self.hidden_fields = 1 # from end of following lists
 
     def init_data(self, voucher_list):
+        if not voucher_list:
+            return
         for item in voucher_list:
+            v_type = item.get('type')
             # если халявное посещение использовано, отметим это
-            if item['type'] in ('voucherflyer', 'vouchertest',):
+            if v_type in ('flyer', 'test',):
                 self.free_visit_used = True
 
             record = []
-
+            object_data = {
+                'type': v_type,
+                }
             for name, delegate, title, action, static in MODEL_MAP_RAW:
-                if name != 'object':
-                    value = item.get(name, action == float and '0.00' or '--')
+                if name == 'object':
+                    pass # добавим объект позже
+                elif action is date2str:
+                    value = serialized = item.get(name)
+                    if value:
+                        value = datetime.strptime(value, '%Y-%m-%d').date()
+                elif action is dt2str:
+                    value = item.get(name)
+                    if value:
+                        value = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
                 else:
-                    value = item
+                    value = item.get(name, action == float and '0.00' or '--')
+                object_data[name] = value
                 record.append(value)
-
+            record.append(object_data) # в конце добавляем полное описание объекта
             self.storage.append(record)
         self.emit(SIGNAL('rowsInserted(QModelIndex, int, int)'),
                   QModelIndex(), 1, self.rowCount())
+        self.dump()
 
     def get_voucher_info(self, index):
         return self.storage[index.row()][-1]
@@ -97,20 +112,21 @@ class CardListModel(QAbstractTableModel):
 
     def dump(self, data=None, header=None):
         import pprint
-        if data is None:
-            print 'CardListModel dump is'
-            pprint.pprint(self.storage)
-        else:
+        if data:
             if header:
                 print '=== %s ===' % header.upper()
             pprint.pprint(data)
+        else:
+            print 'CardListModel dump is'
+            pprint.pprint(self.storage)
 
     def is_expired(self, index):
         """
         Проверка, что ваучер ещё действует.
         """
         voucher = self.get_voucher_info(index)
-        return datetime.strptime(voucher.get('end'), '%Y-%m-%d').date() < datetime.today().date()
+        end = voucher.get('end')
+        return voucher.get('end') < date.today()
 
     def is_cancelled(self, index):
         """
@@ -165,57 +181,67 @@ class CardListModel(QAbstractTableModel):
             return Qt.ItemIsEnabled
         return Qt.ItemIsEnabled | Qt.ItemIsEditable
 
-    def insert_new(self, info):
+    def insert_new(self, steps):
         """ Метод для вставки новой записи в модель. """
-        vtype = info.get('type')
-        template = {
-            'uuid': None, 'voucher_title': '',
-            'category': None, 'price': 0.00,
-            'reg_datetime': datetime.now(),
-            'cancel_datetime': None,
+        print 'STEPS TO INSERT', steps
+        v_type = steps.get('type')
+        today = date.today().strftime('%Y-%m-%d')
+        record = []
+        object_data = {
+            'type': v_type,
             }
 
-        # категории нет только у пробных и флаера
-        if vtype in ('once', 'abonement', 'club'):
-            info['category'] = filter(lambda a: a['id'] == info.get('category', None),
-                                      self.params.static.get('category_team')
-                                      )[0]
-            template['category'] = info['category']
+        value = steps['card'].get('title', '')
+        object_data['card'] = value
+        record.append(value)
 
-        # заголовок ваучера
-        if vtype in ('flyer', 'test', 'once', 'abonement', 'club',):
+        try:
+            category = steps['category']
+        except KeyError:
+            value = None
+        else:
+            value = category.get('title', '')
+        object_data['category'] = value
+        record.append(value)
 
-            title = {'flyer': 'Флаер',
-                     'test': 'Пробное',
-                     'once': 'Разовое',
-                     'abonement': 'Абонемент',
-                     'club': 'Клубная',
-                     }[vtype]
-            template['voucher_title'] = title.decode('utf-8')
-        elif vtype == 'promo':
-            template['voucher_title'] = info['card'].get('title', '')
+        value = steps.get('price', 0.0)
+        object_data['price'] = value
+        record.append(value)
 
-        template['price'] = info.get('price', 0.00)
-        template['begin_date'] = info.get('begin_date', None)
-        template['end_date'] = info.get('end_date', None)
+        value = steps.get('begin', today)
+        object_data['begin'] = value
+        record.append(value)
 
-        info.update( {'begin_date': template['begin_date'],
-                      'end_date': template['end_date'],
-                      'reg_datetime': template['reg_datetime'],
-                      } )
+        value = steps.get('end', today)
+        object_data['end'] = value
+        record.append(value)
 
-        # сохраняем весь набор данных
-        template['object'] = info
+        value = steps.get('registered', datetime.now())
+        object_data['registered'] = value
+        record.append(value)
 
-        # пробегаем по списку полей модели и собираем запись
-        record = []
-        for name, delegate, title, action, use_static in MODEL_MAP_RAW:
-            value = template.get(name, None)
-            record.append(value)
+        value = steps.get('cancelled')
+        object_data['cancelled'] = value
+        record.append(value)
 
+        value = steps.get('uuid')
+        object_data['uuid'] = value
+        record.append(value)
+
+        record.append(object_data)
+
+        # # категории нет только у пробных и флаера
+        # if v_type in ('once', 'abonement', 'club'):
+        #     steps['category'] = filter(lambda a: a['id'] == steps.get('category', None),
+        #                               self.params.static.get('category_team')
+        #                               )[0]
+        #     template['category'] = steps['category']
+
+        print '\nRECORD:', record
         self.storage.insert(0, record)
         self.emit(SIGNAL('rowsInserted(QModelIndex, int, int)'),
                   QModelIndex(), 1, 1)
+        return True
 
     def update(self, index):
         """ Метод для обновления полей модели после изменения
@@ -288,9 +314,9 @@ class CardListModel(QAbstractTableModel):
                     discount_percent = int( info['discount_percent'] )
                     out.append( _('discount %.02f/%i%%') % (price - discount_price, discount_percent) )
             if vtype in ('abonement', 'promo'):
-                out.append( 'sold %i' % int( info.get('count_sold', 0) ))
-                out.append( 'used %i' % int( info.get('count_used', 0) ))
-                out.append( 'available %i' % int( info.get('count_available', 0) ))
+                out.append( 'sold %i' % int( info.get('sold', 0) ))
+                out.append( 'used %i' % int( info.get('used', 0) ))
+                out.append( 'available %i' % int( info.get('available', 0) ))
             if vtype == 'club':
                 out.append( 'days %i' % int( info['card'].get('count_days', 0) ))
                 out.append( 'used %i' % int( info.get('count_used', 0) ))

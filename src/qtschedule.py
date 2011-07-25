@@ -222,6 +222,8 @@ class QtSchedule(QTableView):
 
     def mousePressEvent(self, event):
         """ Mouse click handler. Do DnD here. """
+        if not self.params.logged_in:
+            return
         if event.button() == Qt.LeftButton:
             index, row, col, x, y, cx, cy,\
                 room_name, room_color, room_id \
