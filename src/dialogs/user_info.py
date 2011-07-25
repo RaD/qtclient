@@ -355,7 +355,11 @@ class ClientInfo(UiDlgTemplate):
         else:
             # передаём информацию на сервер
             http = self.params.http
-            data = dict(steps, client=self.user_id, card=steps['card'].get('uuid')) # trick: copy and update
+            data = dict(steps, # копируем содержимое steps и корректируем указанные поля
+                        client=self.user_id,
+                        card=steps['card'].get('uuid'),
+                        category=steps['category'].get('uuid')
+                        )
             if not http.request('/api/voucher/', 'POST', data):
                 QMessageBox.critical(self, _('Save info'), _('Unable to save: %s') % http.error_msg)
                 return False
@@ -401,7 +405,9 @@ class ClientInfo(UiDlgTemplate):
             if voucher_type in ('once', 'abonement', 'club',):
                 result = self.wizard_dialog('list', _('Price Category'), category_list)
                 if result:
-                    steps['category'] = int(result)
+                    # из списка категорий выбираем нужную по идентификатору
+                    steps['category'] = filter(lambda x: result == x.get('uuid'),
+                                               self.params.static.get('category_team'))[0]
             if voucher_type in ('test',): # WARNING: судя по таблице ваучеров, у пробного нет категории
                 # назначаем самую дорогую из имеющихся категорий
                 steps['category'] = reduce(lambda a, b: float(a['full']) > float(b['full']) and a or b,
