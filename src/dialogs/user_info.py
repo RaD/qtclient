@@ -307,7 +307,7 @@ class ClientInfo(UiDlgTemplate):
         once = voucher.get('category').get('once')
         if float(price) - float(paid) < 0.01:
             # оплачена полная стоимость ваучера
-            return int(count_sold)
+            return int(sold)
         else:
             from math import floor
             return int(floor(paid / once))
@@ -402,11 +402,10 @@ class ClientInfo(UiDlgTemplate):
                 result = self.wizard_dialog('list', _('Price Category'), category_list)
                 if result:
                     steps['category'] = int(result)
-            if voucher_type in ('test',):
+            if voucher_type in ('test',): # WARNING: судя по таблице ваучеров, у пробного нет категории
                 # назначаем самую дорогую из имеющихся категорий
-                category = reduce(lambda a, b: int(a['full_price']) > int(b['full_price']) and a or b,
-                                  static_info['price_categories'])
-                steps['category'] = int(category['id'])
+                steps['category'] = reduce(lambda a, b: float(a['full']) > float(b['full']) and a or b,
+                                           self.params.static.get('category_team'))
 
             if voucher_type == 'abonement':
                 # количество посещений
@@ -464,20 +463,16 @@ class ClientInfo(UiDlgTemplate):
 
         # рассчитываем количество доступных посещений
         if not this_card.get('is_priceless'):
-            prices = filter_dictlist(static_info['price_categories'], 'id', steps['category'])[0]
+            category = steps.get('category')
             if voucher_type in ('test', 'once'):
                 # здесь все цены заданы жёстко, никаких отсрочек
                 # оплаты не предусмотрено
-                key = '%s_price' % voucher_type
-                price = float(prices[key])
+                price = float(category.get(voucher_type))
                 steps['price'] = steps['paid'] = price
                 steps['sold'] = 1
 
-            once_price = float(prices['once_price'])
-            steps['available'] = self.calculate_available_visits(
-                'discount_price' in steps and steps['discount_price'] or steps['price'],
-                steps['paid'], once_price, steps['count_sold']
-                )
+            once_price = float(category.get('once'))
+            steps['available'] = self.calculate_available_visits(steps)
         return steps
 
     def assign_club(self):
