@@ -143,13 +143,14 @@ class Http:
         response = self.response.read()
         try:
             index = response.index('|') + 1
+            response = response[index:]
+        except ValueError:
+            pass
+
+        try:
+            data = json.loads(response)
         except ValueError:
             data = response
-        else:
-            try:
-                data = json.loads( response[index:] )
-            except ValueError:
-                data = response
         return (status_list.get(self.response.status, 'UNKNOWN'), data)
 
     def prepare(self, data):

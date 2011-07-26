@@ -152,8 +152,7 @@ class ClientInfo(UiDlgTemplate):
             }
 
         # получаем информацию о выбранном ваучере
-        model = index.model()
-        voucher = model.get_voucher_info(index)
+        voucher = index.model().get_voucher_info(index)
         voucher_uuid = voucher.get('uuid')
 
         # запрашиваем сумму доплаты
@@ -167,13 +166,12 @@ class ClientInfo(UiDlgTemplate):
                                 {'action': 'PAYMENT', 'uuid': voucher_uuid, 'amount': self.payment}):
                 QMessageBox.critical(self, title, _('Unable to register: %s') % http.error_msg)
                 return
-            response = http.parse()
-            if u'OK' == unicode(response):
-                # если платёж прошёл
-                # приводим отображаемую модель к нужному виду
-                if 'paid' in voucher:
-                    voucher['paid'] += self.payment
-                    voucher['available'] = self.calculate_available_visits(voucher)
+            status, response = http.piston()
+            if u'ALL_OK' == status:
+                paid = voucher['paid'] = self.payment + voucher.get('paid')
+                available = voucher['available'] = response.get('available')
+                voucher = dict(voucher,
+                               paid=paid, available=available)
             else:
                 # иначе сообщаем о проблеме
                 QMessageBox.warning(self, title, '%s: %i\n\n%s\n\n%s' % (
@@ -368,6 +366,7 @@ class ClientInfo(UiDlgTemplate):
             if 'CREATED' == status:
                 saved_steps = dict(steps, # копируем содержимое steps и корректируем указанные поля
                                    uuid=response.get('uuid'),
+                                   available=response.get('available'),
                                    registered=datetime.strptime(response.get('registered'), '%Y-%m-%d %H:%M:%S'))
                 return self.tableHistory.model().insert_new(saved_steps)
             else:
@@ -444,9 +443,6 @@ class ClientInfo(UiDlgTemplate):
                 price = float(category.get(voucher_type))
                 steps['price'] = steps['paid'] = price
                 steps['sold'] = 1
-
-            # вычисляем количество доступных посещений по приобретённому абонементу
-            steps['available'] = self.calculate_available_visits(steps)
         return steps
 
     def assign_club(self):
