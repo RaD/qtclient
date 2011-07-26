@@ -358,14 +358,15 @@ class ClientInfo(UiDlgTemplate):
             data = dict(steps, # копируем содержимое steps и корректируем указанные поля
                         client=self.user_id,
                         card=steps['card'].get('uuid'),
-                        category=steps['category'].get('uuid')
+                        category=steps['category'].get('uuid'),
+                        is_active=True
                         )
             if not http.request('/api/voucher/', 'POST', data):
                 QMessageBox.critical(self, _('Save info'), _('Unable to save: %s') % http.error_msg)
                 return False
             status, response = http.piston()
             if 'CREATED' == status:
-                saved_steps = dict(steps,
+                saved_steps = dict(steps, # копируем содержимое steps и корректируем указанные поля
                                    uuid=response.get('uuid'),
                                    registered=datetime.strptime(response.get('registered'), '%Y-%m-%d %H:%M:%S'))
                 return self.tableHistory.model().insert_new(saved_steps)
@@ -377,29 +378,15 @@ class ClientInfo(UiDlgTemplate):
         steps = {'type': voucher_type}
 
         category_list = [ (i['uuid'], i['title']) for i in self.params.static.get('category_team')]
-        discount_list = self.params.static.get('discount_card')
         steps['card'] = this_card = filter(lambda item: voucher_type == item.get('slug'),
                                            self.params.static.get('card_ordinary'))[0]
 
-        # выделяем нужный тип карт из списка обычных
-        #static_info = filter_dictlist(self.params.static.get('card_ordinary'), 'slug', voucher_type)[0]
-        #cat_list = [(i['id'], i['title']) for i in static_info['price_categories']]
-        #dis_list = [(i['id'], i['title']) for i in static_info['discounts']]
-        #cat_dict_id = {}
-        #dis_dict_id = {}
-        #for i in static_info['price_categories']:
-        #    cat_dict_id.update( { i['id']: i } )
-        #for i in static_info['discounts']:
-        #    dis_dict_id.update( { i['id']: i } )
-
         if voucher_type in ('flyer', 'test', 'once'):
             # эти типы ваучеров могут регистрироваться на текущий день только
-            steps['begin'] = date.today()
-            steps['end'] = date.today()
+            steps['begin'] = steps['end'] = date.today()
         elif voucher_type in ('abonement',):
             # эти типы ваучеров определяют время жизни от первого занятия
-            steps['begin'] = None
-            steps['end'] = None
+            steps['begin'] = steps['end'] = u''
 
         try:
             if voucher_type in ('once', 'abonement', 'club',):
@@ -414,47 +401,28 @@ class ClientInfo(UiDlgTemplate):
                                            self.params.static.get('category_team'))
 
             if voucher_type == 'abonement':
-                # количество посещений
-                result = self.wizard_dialog('spin', _('Visit Count'), 8)
-                if result:
-                    steps['count_sold'] = int(result)
-
-                # расчёт применяемых скидок, скидки назначаются с 8 посещений
-                if steps['count_sold'] >= 8:
-                    discount_percent = 0
-                    discount_ids = []
-                    # сначала проверяем клиентские скидки
-                    for item_id, (obj, desc) in self.discounts.items():
-                        if obj.checkState() == Qt.Checked:
-                            discount_percent += int(desc.get('percent', 0))
-                            discount_ids.append(item_id)
-                    # потом проверяем скидку по количеству приобретённых посещений
-                    tmp_id = 0
-                    tmp_percent = 0
-                    for discount in sorted(self.params.static.get('discount_card'),
-                                           lambda a,b: cmp(int(a['threshold']), int(b['threshold']))):
-                        if discount['threshold'] <= steps['count_sold']:
-                            tmp_id = discount['id']
-                            tmp_percent = discount['percent']
-                        else:
-                            break # заканчиваем цикл
-                    if not tmp_id == 0:
-                        discount_percent += int(tmp_percent)
-                        discount_ids.append(int(tmp_id))
-
-                steps['discount_percent'] = discount_percent
-                steps['discount_ids'] = discount_ids
-
-                self._price_abonement(steps) # высчитываем стоимость
-
-                category = cat_dict_id.get(steps['category'])
-                once_price = float(category.get('once_price', 0.00))
-                price = float(steps.get('price', 0.00))
+                steps['used'] = 0
+                steps['sold'] = sold = int(self.wizard_dialog('spin', _('Visit Count'), 8))
+                # вычисляем скидки и их суммарный процент
+                discount_percent, discount_list = self._discount_abonement(sold)
+                # вычисляем стоимость абонемента без скидок
+                price = steps['price'] = self._price_abonement(steps['category'], sold)
+                # вычисляем стоимость абонемента с учётом скидки
                 discount_price = price - (price * discount_percent / 100)
-                if discount_price < 2000.00:
+                # если куплен полный абонемент, то стоимость
+                # абонемента со скидкой не может быть ниже 2000
+                # рублей.
+                if sold >= 8 and discount_price < 2000.00:
                     discount_price = 2000.00
+                # сохраняем результаты вычислений
+                steps['discount'] = discount_list
+                steps['discount_percent'] = discount_percent
                 steps['discount_price'] = discount_price
 
+                # отображаем диалог для ввода оплаченной суммы,
+                # которая должна быть в диапазоне от стоимости одного
+                # посещения до полной стоимости абонемента.
+                once_price = steps['category'].get('once')
                 while True:
                     result = float(self.wizard_dialog('price', _('Paid'), discount_price,
                                                       _('Payment range is %(min)0.2f .. %(max)0.2f.' ) % {
@@ -464,7 +432,7 @@ class ClientInfo(UiDlgTemplate):
                         steps['paid'] = result
                         break
         except BreakDialog:
-            # пробрасываем исключение дальше
+            # какой-то из диалогов был прерван, пробрасываем исключение дальше
             raise
 
         # рассчитываем количество доступных посещений
@@ -477,7 +445,7 @@ class ClientInfo(UiDlgTemplate):
                 steps['price'] = steps['paid'] = price
                 steps['sold'] = 1
 
-            once_price = float(category.get('once'))
+            # вычисляем количество доступных посещений по приобретённому абонементу
             steps['available'] = self.calculate_available_visits(steps)
         return steps
 
@@ -554,24 +522,57 @@ class ClientInfo(UiDlgTemplate):
             steps['count_available'] = steps['card'].get('count_available', 0)
         return steps
 
-    def _price_abonement(self, steps):
-        """ This method calculate the abonement price. See logic_clientcard.xml. """
-        prices = filter_dictlist(self.params.static('category_team'), 'id', steps['category'])[0]
+    def _price_abonement(self, category, count):
+        """
+        Метод вычисляет цену абонемента в зависимости от количества купленных посещений.
 
-        count = int(steps['count_sold'])
+        @type  category: dict
+        @param category: Словарь с данными категории.
+        @type  count: integer
+        @param count: Количество купленных посещений.
+
+        @rtype: float
+        @return: Вычисленная стоимость абонемента.
+        """
         if count == 1:
-            price = float(prices['once_price'])
+            price = category.get('once')
         elif count == 4:
-            price = float(prices['half_price'])
+            price = category.get('half')
         elif count == 8:
-            price = float(prices['full_price'])
+            price = category.get('full')
         elif count > 8 and count % 8 == 0:
-            price = float(prices['full_price']) * (count / 8)
+            price = category.get('full') * (count / 8)
         else:
             print _('Invalid usage. Why do you use count=%i' % count)
-            price = float(0.0)
+            price = 0.0
+        return float(price)
 
-        steps['price'] = price
+    def _discount_abonement(self, sold):
+        uuid_list = []
+        percent = 0
+
+        if sold < 8:
+            return percent, uuid_list
+
+        # сначала проверяем клиентские скидки
+        for item_uuid, (obj, desc) in self.discounts_by_uuid.items():
+            if obj.checkState() == Qt.Checked:
+                percent += int(desc.get('percent', 0))
+                uuid_list.append(item_uuid)
+        # потом проверяем скидку по количеству приобретённых посещений
+        tmp_uuid = None
+        tmp_percent = 0
+        for discount in sorted(self.params.static.get('discount_card'),
+                               lambda a,b: cmp(int(a['threshold']), int(b['threshold']))):
+            if discount['threshold'] <= sold:
+                tmp_uuid = discount['uuid']
+                tmp_percent = int(discount['percent'])
+            else:
+                break # заканчиваем цикл
+        if tmp_uuid:
+            percent += tmp_percent
+            uuid_list.append(tmp_uuid)
+        return percent, uuid_list
 
     def saveDialog(self):
         """ Save user settings. """

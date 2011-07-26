@@ -96,7 +96,7 @@ class WizardSpinDlg(WizardDialog):
         self.dialog = dialog
         WizardDialog.setupUi(self, self)
 
-        self.dialog.spinBox.setRange(0, 1000000)
+        self.dialog.spinBox.setRange(4, 1000000)
         self.dialog.spinBox.setSingleStep(self.SPIN_STEP)
         self.connect(self.dialog.spinBox, SIGNAL('editingFinished()'), self.editing_finished)
 
@@ -108,17 +108,16 @@ class WizardSpinDlg(WizardDialog):
 
     def editing_finished(self):
         """
-        The editingFinished() signal handler.
-        The value has to be dividable by SPIN_STEP
+        Обработчик сигнала editingFinished(). Обеспечивает проверку
+        введённого значения, которое должно быть кратно 8.
         """
         value = self.dialog.spinBox.value()
-        if value < self.SPIN_STEP:
+        if value <= self.SPIN_STEP:
             self.dialog.spinBox.setValue(self.SPIN_STEP)
-            return
-
-        reminder = value % (2 * self.SPIN_STEP)
-        if reminder != 0:
-            self.dialog.spinBox.setValue(value - reminder)
+        else:
+            reminder = value % (2 * self.SPIN_STEP)
+            if reminder != 0:
+                self.dialog.spinBox.setValue(value - reminder)
 
 class WizardPriceDlg(WizardDialog):
 

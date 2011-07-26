@@ -67,11 +67,10 @@ class CardListModel(QAbstractTableModel):
                     value = item.get(name, action == float and '0.00' or '--')
                 object_data[name] = value
                 record.append(value)
-            record.append(object_data) # в конце добавляем полное описание объекта
+            record.append(dict(item, **object_data)) # в конце добавляем полное описание объекта
             self.storage.append(record)
         self.emit(SIGNAL('rowsInserted(QModelIndex, int, int)'),
                   QModelIndex(), 1, self.rowCount())
-        self.dump()
 
     def get_voucher_info(self, index):
         return self.storage[index.row()][-1]
@@ -126,6 +125,8 @@ class CardListModel(QAbstractTableModel):
         """
         voucher = self.get_voucher_info(index)
         end = voucher.get('end')
+        if not end:
+            return False # ваучер ещё не активировали (абонемент)
         return voucher.get('end') < date.today()
 
     def is_cancelled(self, index):
@@ -209,11 +210,11 @@ class CardListModel(QAbstractTableModel):
         record.append(value)
 
         value = steps.get('begin', today)
-        object_data['begin'] = value
+        object_data['begin'] = u'' == value and None or value
         record.append(value)
 
         value = steps.get('end', today)
-        object_data['end'] = value
+        object_data['end'] = u'' == value and None or value
         record.append(value)
 
         value = steps.get('registered', datetime.now())
@@ -228,7 +229,7 @@ class CardListModel(QAbstractTableModel):
         object_data['uuid'] = value
         record.append(value)
 
-        record.append(object_data)
+        record.append(dict(steps, **object_data))
 
         # # категории нет только у пробных и флаера
         # if v_type in ('once', 'abonement', 'club'):
@@ -288,7 +289,7 @@ class CardListModel(QAbstractTableModel):
             if type(value) is dict and 'title' in value:
                 return QVariant(value.get('title'))
 
-            if value is None or value == '--':
+            if value is None or value in ('--', ''):
                 return QVariant('--')
             else:
                 return action(value)

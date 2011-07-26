@@ -68,10 +68,11 @@ class Http:
             self.headers.update( { 'Cookie': 'sessionid=%s' % self.session_id } )
         if force:
             url = url + '?' + datetime.now().strftime('%y%m%d%H%M%S')
-        params = urllib.urlencode(params)
+        if type(params) is dict:
+            params = self.prepare(params)
         while True:
             try:
-                self.conn.request(method, url, params, self.headers)
+                self.conn.request(method, url, urllib.urlencode(params), self.headers)
                 break
             except httplib.CannotSendRequest:
                 self.reconnect()
@@ -125,7 +126,10 @@ class Http:
             return default
         elif self.response.status == 500: # error
             self.error_msg = _('Error 500. Check dump!')
-            open('./dump.html', 'w').write(self.response.read())
+            print '='*10, '\nERROR 500\n', '='*10
+            print self.response.read()
+            with open('./dump.html', 'w') as dump:
+                dump.write(self.response.read())
         else:
             self.error_msg = '[%s] %s' % (self.response.status, self.response.reason)
             return default
@@ -147,6 +151,27 @@ class Http:
             except ValueError:
                 data = response
         return (status_list.get(self.response.status, 'UNKNOWN'), data)
+
+    def prepare(self, data):
+        """
+        Метод для предобразования словаря с данными в список
+        двухэлементных кортежей. Необходим для передачи M2M данных.
+
+        @type  data: dictionary
+        @param data: Словарь с данными.
+
+        @rtype: list of tuples
+        @return: Список двухэлементных кортежей с данными.
+        """
+        out = []
+        for key, value in data.items():
+            print key, value
+            if type(value) is list:
+                for item in value:
+                    out.append( (key, item) )
+            else:
+                out.append( (key, value) )
+        return out
 
     def DEPRECATED_request_full(self, url, params): # public
         if self.session_id and self.session_id not in self.headers:
