@@ -375,8 +375,6 @@ class ClientInfo(UiDlgTemplate):
     def assign_ordinary(self, voucher_type):
         """ Метод для добавления ваучеров обычного типа. """
         steps = {'type': voucher_type}
-
-        category_list = [ (i['uuid'], i['title']) for i in self.params.static.get('category_team')]
         steps['card'] = this_card = filter(lambda item: voucher_type == item.get('slug'),
                                            self.params.static.get('card_ordinary'))[0]
 
@@ -388,7 +386,8 @@ class ClientInfo(UiDlgTemplate):
             steps['begin'] = steps['end'] = u''
 
         try:
-            if voucher_type in ('once', 'abonement', 'club',):
+            if voucher_type in ('once', 'abonement',):
+                category_list = [ (i['uuid'], i['title']) for i in self.params.static.get('category_team')]
                 result = self.wizard_dialog('list', _('Price Category'), category_list)
                 if result:
                     # из списка категорий выбираем нужную по идентификатору
