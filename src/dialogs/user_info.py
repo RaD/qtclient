@@ -353,12 +353,14 @@ class ClientInfo(UiDlgTemplate):
         else:
             # передаём информацию на сервер
             http = self.params.http
-            data = dict(steps, # копируем содержимое steps и корректируем указанные поля
-                        client=self.user_id,
-                        card=steps['card'].get('uuid'),
-                        category=steps['category'].get('uuid'),
-                        is_active=True
-                        )
+            kwargs = {
+                'client': self.user_id,
+                'card': steps['card'].get('uuid'),
+                'is_active': u'on',
+                }
+            if 'category' in steps:
+                kwargs['category'] = steps['category'].get('uuid'),
+            data = dict(steps, **kwargs) # копируем содержимое steps и корректируем указанные поля
             if not http.request('/api/voucher/', 'POST', data):
                 QMessageBox.critical(self, _('Save info'), _('Unable to save: %s') % http.error_msg)
                 return False
@@ -446,37 +448,32 @@ class ClientInfo(UiDlgTemplate):
 
     def assign_club(self):
         """ Метод для обработки клубных ваучеров. """
+        steps = {'type': 'club'}
+        steps['begin'] = steps['end'] = u''
 
-        steps = {'voucher_type': 'club'}
-        card_dict = {}
-        for i in self.params.static.get('card_club'):
-            key = i['id']
-            card_dict[key] = i
-        card_list = [(k, d['title']) for k,d in card_dict.items()]
+        try:
+            card_list = [ (i['uuid'], i['title']) for i in self.params.static.get('card_club')]
+            card_uuid = self.wizard_dialog('list', _('Card Type'), card_list)
+            if not card_uuid:
+                raise RuntimeWarning('Wrong Card Type')
+            steps['card'] = this_card = filter(lambda item: card_uuid == item.get('uuid'),
+                                               self.params.static.get('card_club'))[0]
+            steps['price'] = price = this_card.get('price')
 
-        steps['begin_date'] = None
-        steps['end_date'] = None
-
-        result = self.wizard_dialog('list', _('Card Type'), card_list)
-        if not result:
-            raise RuntimeWarning('Wrong Card Type')
-        steps['card'] = card_dict[int(result)]
-        steps['club_type'] = steps['card']['slug']
-        steps['duration'] = int(result)
-
-        card_by_id = dictlist2dict(self.params.static.get('card_club'), 'id')
-        steps['price'] = card_by_id[int(result)]['price']
-
-        cat_list = [(i['id'], i['title']) for i in card_by_id[int(result)]['price_categories']]
-        result = self.wizard_dialog('list', _('Price Category'), cat_list)
-        if not result:
-            raise RuntimeWarning('Wrong Price Category')
-        steps['category'] = int(result)
-
-        result = self.wizard_dialog('price', _('Paid'), steps.get('price', 0.00))
-        if not result:
-            raise RuntimeWarning('Wrong Paid')
-        steps['paid'] = float(result)
+            # отображаем диалог для ввода оплаченной суммы,
+            # которая должна быть в диапазоне от стоимости одного
+            # посещения до полной стоимости абонемента.
+            while True:
+                result = float(self.wizard_dialog('price', _('Paid'), price,
+                                                  _('Payment range is %(min)0.2f .. %(max)0.2f.' ) % {
+                                                      'min': price/2.0, 'max': price
+                                                      }))
+                if result >= price/2.0 and result <= price:
+                    steps['paid'] = result
+                    break
+        except BreakDialog:
+            # какой-то из диалогов был прерван, пробрасываем исключение дальше
+            raise
 
         return steps
 

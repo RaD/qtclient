@@ -127,7 +127,7 @@ class CardListModel(QAbstractTableModel):
         end = voucher.get('end')
         if not end:
             return False # ваучер ещё не активировали (абонемент)
-        return voucher.get('end') < date.today()
+        return end < date.today()
 
     def is_cancelled(self, index):
         """
@@ -193,7 +193,7 @@ class CardListModel(QAbstractTableModel):
             }
 
         value = steps['card'].get('title', '')
-        object_data['card'] = value
+        object_data['card'] = steps['card']
         record.append(value)
 
         try:
@@ -319,8 +319,11 @@ class CardListModel(QAbstractTableModel):
                 out.append( 'used %i' % int( info.get('used', 0) ))
                 out.append( 'available %i' % int( info.get('available', 0) ))
             if vtype == 'club':
-                out.append( 'days %i' % int( info['card'].get('count_days', 0) ))
-                out.append( 'used %i' % int( info.get('count_used', 0) ))
+                out.append( 'days %i' % int( info['card'].get('days', 0) ))
+                out.append( 'used %i' % int( info.get('used', 0) ))
+                available = info.get('available')
+                if available:
+                    out.append('available %i' % int(available))
             return QVariant('; '.join(out))
         else:
             return QVariant()
