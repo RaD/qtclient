@@ -299,7 +299,7 @@ class CardListModel(QAbstractTableModel):
             out = []
             info = self.get_voucher_info(index)
             vtype = info['type']
-            if vtype in ('flyer', 'test', 'once'):
+            if vtype in ('flyer', 'test', 'once',):
                 out.append( info.get('is_utilized') and _('Utilized') or _('Not utilized') )
             if vtype in ('abonement', 'club', 'promo'):
                 # при обработке цены, проверяем долг клиента, если он
@@ -307,14 +307,13 @@ class CardListModel(QAbstractTableModel):
                 debt, amount = self.is_debt_exist(index)
                 if debt:
                     out.append( _('debt %.02f') % (amount,) )
-            if vtype in ('abonement',):
+            if vtype == 'abonement':
                 # отображаем скидку, если есть
                 if 'discount_price' in info:
                     price = float( info['price'] )
                     discount_price = float( info['discount_price'] )
                     discount_percent = int( info['discount_percent'] )
                     out.append( _('discount %.02f/%i%%') % (price - discount_price, discount_percent) )
-            if vtype in ('abonement', 'promo'):
                 out.append( 'sold %i' % int( info.get('sold', 0) ))
                 out.append( 'used %i' % int( info.get('used', 0) ))
                 out.append( 'available %i' % int( info.get('available', 0) ))
@@ -324,6 +323,9 @@ class CardListModel(QAbstractTableModel):
                 available = info.get('available')
                 if available:
                     out.append('available %i' % int(available))
+            if vtype == 'promo':
+                out.append( 'used %i' % int( info.get('used', 0) ))
+                out.append( 'available %i' % int( info.get('available', 0) ))
             return QVariant('; '.join(out))
         else:
             return QVariant()

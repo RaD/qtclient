@@ -480,24 +480,20 @@ class ClientInfo(UiDlgTemplate):
     def assign_promo(self):
         """ Метод для обработки промо ваучеров. """
 
-        steps = {'voucher_type': 'promo'}
-
-        card_dict = {}
-        for i in self.params.static.get('card_promo'):
-            key = i['id']
-            card_dict[key] = i
-        card_list = [(k, d['title']) for k,d in card_dict.items()]
+        steps = {'type': 'promo'}
+        steps['begin'] = steps['end'] = u''
 
         try:
-            result = self.wizard_dialog('list', _('Card Type'), card_list)
-            if result:
-                steps['card'] = card_dict[int(result)]
-                steps['promo_type'] = steps['card']['slug']
-                steps['price'] = steps['card'].get('price', float(0))
+            card_list = [ (i['uuid'], i['title']) for i in self.params.static.get('card_promo')]
+            card_uuid = self.wizard_dialog('list', _('Card Type'), card_list)
+            if not card_uuid:
+                raise RuntimeWarning('Wrong Card Type')
+            steps['card'] = this_card = filter(lambda item: card_uuid == item.get('uuid'),
+                                               self.params.static.get('card_promo'))[0]
+            steps['price'] = price = this_card.get('price')
 
             # требуем оплаты полной суммы
             while True:
-                price = steps.get('price', 0.00)
                 result = self.wizard_dialog('price', _('Paid'), price)
                 if result:
                     if float(result) == float(price):
@@ -507,12 +503,7 @@ class ClientInfo(UiDlgTemplate):
             # пробрасываем исключение дальше
             raise
         else:
-            steps['begin_date'] = steps['card'].get('date_activation')
-            steps['end_date'] = steps['card'].get('date_expiration')
-            steps['count_sold'] = steps['card'].get('count_sold', 0)
-            steps['count_used'] = steps['card'].get('count_used', 0)
-            steps['count_available'] = steps['card'].get('count_available', 0)
-        return steps
+            return steps
 
     def _price_abonement(self, category, count):
         """
