@@ -359,7 +359,7 @@ class ClientInfo(UiDlgTemplate):
                 'is_active': u'on',
                 }
             if 'category' in steps:
-                kwargs['category'] = steps['category'].get('uuid'),
+                kwargs['category'] = steps['category'].get('uuid')
             data = dict(steps, **kwargs) # копируем содержимое steps и корректируем указанные поля
             if not http.request('/api/voucher/', 'POST', data):
                 QMessageBox.critical(self, _('Save info'), _('Unable to save: %s') % http.error_msg)

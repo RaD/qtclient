@@ -78,10 +78,11 @@ class EventInfo(UiDlgTemplate):
 
         # disable controls for events in the past
         is_past = begin < datetime.now()
-        self.buttonRemove.setDisabled(is_past)
-        self.buttonVisitRFID.setDisabled(is_past)
-        self.buttonVisitManual.setDisabled(is_past)
-        self.buttonChange.setDisabled(is_past)
+        self.buttonRemove.setDisabled(is_past or self.s_obj.prototype == self.s_obj.RENT)
+        self.buttonVisitRFID.setDisabled(is_past or self.s_obj.prototype == self.s_obj.RENT)
+        self.buttonVisitManual.setDisabled(is_past or self.s_obj.prototype == self.s_obj.RENT)
+        self.buttonChange.setDisabled(is_past or self.s_obj.prototype == self.s_obj.RENT)
+        self.buttonVisitors.setDisabled(self.s_obj.prototype == self.s_obj.RENT)
 
         #self._init_fix(status)
 
@@ -103,16 +104,24 @@ class EventInfo(UiDlgTemplate):
         соответствующих событию."""
 
         def callback(rfid):
-            self.user_id = 'rfid:%s' % rfid
+            self.rfid_id = rfid
 
         # диалог rfid считывателя
-        params = {'http': self.http, 'callback': callback,}
-        dialog = WaitingRFID(self, params)
+        dialog = WaitingRFID(self, callback=callback)
         dialog.setModal(True)
-        dlgStatus = dialog.exec_()
+        if QDialog.Accepted == dialog.exec_():
+            http = self.params.http
+            if not http.request('/api/client/%s/' % self.rfid_id, 'GET', force=True):
+                QMessageBox.critical(self, _('Client info'), _('Unable to fetch: %s') % http.error_msg)
+                return
+            response = http.parse()
 
-        if QDialog.Accepted == dlgStatus:
-            self.visit_register(self.user_id)
+            if 0 == len(response):
+                QMessageBox.warning(self, _('Warning'), _('This RFID belongs to nobody.'))
+                return False
+            else:
+                self.last_user_uuid = response[0].get('uuid')
+                return self.visit_register(self.last_user_uuid)
 
     def search_by_name(self):
         """ Поиск пользователя по его имени и получение списка карт,
@@ -121,82 +130,74 @@ class EventInfo(UiDlgTemplate):
         def callback(user):
             self.user_id = user['id']
 
-        params = {'http': self.http, 'static': self.parent.static,
-                  'mode': 'client', 'apply_title': _('Register'),}
-        self.dialog = Searching(self, params)
+        self.dialog = Searching(self, mode='client', apply_title=_('Register'))
         self.dialog.setModal(True)
         self.dialog.setCallback(callback)
-        dlgStatus = self.dialog.exec_()
-
-        if QDialog.Accepted == dlgStatus:
+        if QDialog.Accepted == self.dialog.exec_():
             self.visit_register(self.user_id)
 
-    def visit_register(self, user_id):
-        schedule_id = self.schedule.get('id', 0)
-        title = _('Client Registration')
+    def select_voucher_list(self, *args, **kwargs):
         # получаем список подходящих ваучеров
-        params = {'user_id': user_id, 'schedule_id': schedule_id}
-        if not self.http.request('/manager/voucher_list_by_schedule/', params):
-            QMessageBox.warning(self, title, '%s: %i\n\n%s\n\n%s' % (
-                _('Error'), ERR_EVENT_NOVOUCHERLIST1,
-                _('Unable to fetch the list of vouchers: %s') % self.http.error_msg,
-                _('Call support team!')))
-            return
-        default_response = None
-        response = self.http.parse(default_response)
-        if response and 'voucher_list' in response:
-            voucher_list = response['voucher_list'] # есть список
-            if voucher_list == []: # пустой список
-                QMessageBox.information(self, _('Client Registration'),
-                                        _('No voucher for this visit.\n\nBuy one.'))
-                return
-        else:
-            # иначе сообщаем о проблеме
-            QMessageBox.critical(self, title, '%s: %i\n\n%s\n\n%s' % (
-                _('Error'), ERR_EVENT_NOVOUCHERLIST2,
-                _('Server did not send the list of vouchers.'),
-                _('Call support team!')))
-            return
+        http = self.params.http
+        if not http.request('/api/voucher/%(event_id)s/%(client_id)s/%(start)s/' % kwargs, 'GET', force=True):
+            return None
+        status, response = http.piston()
+        return u'ALL_OK' == status and response or None
+
+    def visit_register(self, user_uuid):
+        title = _('Client Registration')
+        event = self.s_obj
+        # получаем список подходящих ваучеров
+        voucher_list = self.select_voucher_list(client_id=user_uuid, event_id=event.uuid,
+                                                start=event.begin.strftime('%Y%m%d%H%M%S'))
+        if not voucher_list or 0 == len(voucher_list):
+            QMessageBox.information(self, title,
+                                    _('No voucher for this visit.\n\nBuy one.'))
+            return False
 
         # показываем список менеджеру, пусть выбирает
-        def callback(voucher_id):
-            self.voucher_id = voucher_id
+        def callback(voucher_uuid):
+            self.voucher_uuid = voucher_uuid
+        def make_title(voucher):
+            out = []
+            card = voucher.get('_card_cache')
+            if card:
+                out.append( card.get('title') )
+            category = voucher.get('_category_cache')
+            if category:
+                out.append( category.get('title') )
+            return ' - '.join(out)
 
         dialog = WizardListDlg(params={'button_back': _('Cancel'), 'button_next': _('Ok')})
         dialog.setModal(True)
-
-        # подготавливаем список подходящих ваучеров
-        prepared_list = []
-        for v in voucher_list:
-            v_id = v['id']
-            if v['voucher_type'] in ('abonement',):
-                v_title = '%s - %s' % (v['voucher_title'],
-                                       v['category']['title'])
-            else:
-                v_title = v['voucher_title']
-            prepared_list.append( (v_id, v_title) )
-        dialog.prefill(_('Choose the Voucher'), prepared_list, callback)
+        dialog.prefill(_('Choose the Voucher'),
+                       [(v['uuid'], make_title(v)) for v in voucher_list],
+                       callback)
+        # ваучер выбран, регистрируем посещение
         if QDialog.Accepted == dialog.exec_():
-            title = _('Register visit')
-            # регистрируем клиента на событие
-            params = {'schedule_id': schedule_id, 'voucher_id': self.voucher_id}
-            if not self.http.request('/manager/register_visit/', params):
-                # иначе сообщаем о проблеме
-                QMessageBox.critical(self, title, '%s: %i\n\n%s\n\n%s' % (
+            http = self.params.http
+            if not http.request('/api/voucher/', 'PUT',
+                                {'action': 'VISIT',
+                                 'uuid': self.voucher_uuid,
+                                 'plan_uuid': event.uuid,
+                                 'room_uuid': event.room_uuid,
+                                 'day': event.begin.strftime('%Y%m%d')}):
+                QMessageBox.warning(self, title, '%s: %i\n\n%s\n\n%s' % (
                     _('Error'), ERR_EVENT_REGISTERVISIT,
-                    _('Unable to register: %s') % self.http.error_msg,
+                    _('Unable to register the visit: %s') % http.error_msg,
                     _('Call support team!')))
-                return
-            default_response = None
-            response = self.http.parse(default_response)
-            if response:
-                message = _('The client is registered on this event.')
-                self.parent.printer.hardcopy(response['print_this'])
+                return False
+            status, response = http.piston()
+            print status, response
+            if u'CREATED' == status:
+                QMessageBox.information(self, title,
+                                        _('The client has been registered for this event.'))
+                # PRINT CHECK HERE
+                return True
             else:
-                error_msg = self.http.error_msg
-                message = _('Unable to register the visit!\nReason:\n%s') % error_msg
-            QMessageBox.information(self, title, message)
-
+                QMessageBox.warning(self, title,
+                                    _('Unable to register!\nStatus: %s') % status)
+        return False
 
     def changeRoom(self, new_index):
         # Room change:
