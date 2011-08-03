@@ -332,8 +332,7 @@ class MainWindow(QMainWindow):
         self.params.http.reconnect()
 
     def client_new(self):
-        params = { 'http': self.params.http, 'static': self.static, }
-        self.dialog = ClientInfo(self, params)
+        self.dialog = ClientInfo(self)
         self.dialog.setModal(True)
         self.dialog.exec_()
 
