@@ -3,6 +3,7 @@
 
 from settings import _, userRoles
 from ui_dialog import UiDlgTemplate
+from library import ParamStorage
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -12,12 +13,12 @@ GET_ID_ROLE = userRoles['getObjectID']
 class ShowVisitors(UiDlgTemplate):
 
     ui_file = 'uis/dlg_event_visitors.ui'
+    params = ParamStorage()
     title = _('Registered visitors')
-    event_id = None
-    visitor_list = None
+    event_uuid = None
 
-    def __init__(self, parent=None, params=dict()):
-        UiDlgTemplate.__init__(self, parent, params)
+    def __init__(self, parent=None):
+        UiDlgTemplate.__init__(self, parent)
 
     def setupUi(self):
         UiDlgTemplate.setupUi(self)
@@ -29,24 +30,33 @@ class ShowVisitors(UiDlgTemplate):
         self.connect(self.buttonClose, SIGNAL('clicked()'), self, SLOT('reject()'))
 
 
-    def initData(self, event_id):
-        self.event_id = event_id
-        if not self.http.request('/manager/get_many/',
-                                 {'action': 'get_visitors', 'item_id': event_id}):
-            QMessageBox.critical(self, _('Visitors'), _('Unable to fetch: %s') % self.http.error_msg)
+    def initData(self, event_uuid):
+        self.event_uuid = event_uuid
+        http = self.params.http
+        if not http.request('/api/history/%s/' % self.event_uuid, 'GET', force=True):
+            QMessageBox.critical(self, _('Visitors'), _('Unable to fetch: %s') % http.error_msg)
             return
-        default_response = None
-        response = self.http.parse(default_response)
-        self.visitor_list = response.get('data', None)
-        for visit_id, last_name, first_name, rfid_code, reg_datetime in self.visitor_list:
-            lastRow = self.tableVisitors.rowCount()
-            self.tableVisitors.insertRow(lastRow)
-            name = QTableWidgetItem(last_name) # data may assign on cells only, use first one
-            name.setData(GET_ID_ROLE, int(visit_id))
-            self.tableVisitors.setItem(lastRow, 0, name)
-            self.tableVisitors.setItem(lastRow, 1, QTableWidgetItem(first_name))
-            self.tableVisitors.setItem(lastRow, 2, QTableWidgetItem(rfid_code))
-            self.tableVisitors.setItem(lastRow, 3, QTableWidgetItem(reg_datetime))
+
+        status, response = http.piston()
+        if 'ALL_OK' == status:
+            for item in response.pop().get('visit_set', []):
+
+                client = item['voucher']['client']
+
+                last_name = client.get('last_name')
+                first_name = client.get('first_name')
+                rfid_code = client.get('rfid')['code']
+                registered = item.get('registered')
+
+                lastRow = self.tableVisitors.rowCount()
+                self.tableVisitors.insertRow(lastRow)
+                name = QTableWidgetItem(last_name)
+                # data may assign on cells only, use first one
+                name.setData(GET_ID_ROLE, self.event_uuid)
+                self.tableVisitors.setItem(lastRow, 0, name)
+                self.tableVisitors.setItem(lastRow, 1, QTableWidgetItem(first_name))
+                self.tableVisitors.setItem(lastRow, 2, QTableWidgetItem(rfid_code))
+                self.tableVisitors.setItem(lastRow, 3, QTableWidgetItem(registered))
 
     def context_menu(self, position):
         """ Create context menu."""

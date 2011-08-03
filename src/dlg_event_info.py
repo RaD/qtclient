@@ -32,21 +32,21 @@ def dump(value):
 class EventInfo(UiDlgTemplate):
 
     ui_file = 'uis/dlg_event_info.ui'
+    params = ParamStorage()
     title = _('Event\'s information')
     schedule = None # кэшируем здесь данные от сервера
     all_coaches = None # кэш с данными о преподавателях
-    s_obj = None
-    s_idx = None
+    event_object = None
+    event_index = None
 
     def __init__(self, parent=None):
         UiDlgTemplate.__init__(self, parent)
-        self.params = ParamStorage()
 
     def setupUi(self):
         UiDlgTemplate.setupUi(self)
 
         self.connect(self.buttonClose,       SIGNAL('clicked()'), self.close)
-        self.connect(self.buttonVisitors,    SIGNAL('clicked()'), self.showVisitors)
+        self.connect(self.buttonVisitors,    SIGNAL('clicked()'), self.show_visitors)
         self.connect(self.buttonVisitRFID,   SIGNAL('clicked()'), self.search_by_rfid)
         self.connect(self.buttonVisitManual, SIGNAL('clicked()'), self.search_by_name)
         self.connect(self.buttonRemove,      SIGNAL('clicked()'), self.removeEvent)
@@ -57,32 +57,32 @@ class EventInfo(UiDlgTemplate):
 
     def initData(self, obj, index):
         """ Use this method to initialize the dialog. """
-        self.s_obj = obj
-        self.s_idx = index
+        self.event_object = obj
+        self.event_index = index
 
         title =  _('Event info')
 
-        self.editStyle.setText(self.s_obj.styles)
-        self.editPriceCategory.setText(self.s_obj.category)
-        self.editCoaches.setText(self.s_obj.coaches)
+        self.editStyle.setText(self.event_object.styles)
+        self.editPriceCategory.setText(self.event_object.category)
+        self.editCoaches.setText(self.event_object.coaches)
 
-        begin = self.s_obj.begin
-        end = self.s_obj.end
+        begin = self.event_object.begin
+        end = self.event_object.end
         self.editBegin.setDateTime(QDateTime(begin))
         self.editEnd.setDateTime(QDateTime(end))
 
         for index, room in self.params.static.get('rooms_by_index').items():
             self.comboRoom.addItem(room.get('title'), QVariant(index))
 
-        self.comboRoom.setCurrentIndex(self.params.static.get('rooms_by_uuid').get(self.s_obj.room_uuid))
+        self.comboRoom.setCurrentIndex(self.params.static.get('rooms_by_uuid').get(self.event_object.room_uuid))
 
         # disable controls for events in the past
         is_past = begin < datetime.now()
-        self.buttonRemove.setDisabled(is_past or self.s_obj.prototype == self.s_obj.RENT)
-        self.buttonVisitRFID.setDisabled(is_past or self.s_obj.prototype == self.s_obj.RENT)
-        self.buttonVisitManual.setDisabled(is_past or self.s_obj.prototype == self.s_obj.RENT)
-        self.buttonChange.setDisabled(is_past or self.s_obj.prototype == self.s_obj.RENT)
-        self.buttonVisitors.setDisabled(self.s_obj.prototype == self.s_obj.RENT)
+        self.buttonRemove.setDisabled(is_past or self.event_object.prototype == self.event_object.RENT)
+        self.buttonVisitRFID.setDisabled(is_past or self.event_object.prototype == self.event_object.RENT)
+        self.buttonVisitManual.setDisabled(is_past or self.event_object.prototype == self.event_object.RENT)
+        self.buttonChange.setDisabled(is_past or self.event_object.prototype == self.event_object.RENT)
+        self.buttonVisitors.setDisabled(self.event_object.prototype == self.event_object.RENT)
 
         #self._init_fix(status)
 
@@ -93,10 +93,10 @@ class EventInfo(UiDlgTemplate):
         self.comboFix.setCurrentIndex(int(current))
         self.buttonFix.setDisabled(True)
 
-    def showVisitors(self):
-        dialog = ShowVisitors(self, {'http': self.http})
+    def show_visitors(self):
+        dialog = ShowVisitors(self)
         dialog.setModal(True)
-        dialog.initData(self.schedule['id'])
+        dialog.initData(self.event_object.uuid)
         dialog.exec_()
 
     def search_by_rfid(self):
@@ -146,7 +146,7 @@ class EventInfo(UiDlgTemplate):
 
     def visit_register(self, user_uuid):
         title = _('Client Registration')
-        event = self.s_obj
+        event = self.event_object
         # получаем список подходящих ваучеров
         voucher_list = self.select_voucher_list(client_id=user_uuid, event_id=event.uuid,
                                                 start=event.begin.strftime('%Y%m%d%H%M%S'))
@@ -228,7 +228,7 @@ class EventInfo(UiDlgTemplate):
                 index = self.comboRoom.currentIndex()
                 room_id, ok = self.comboRoom.itemData(index).toInt()
                 model = self.parent.schedule.model()
-                model.remove(self.s_obj, self.s_idx, True)
+                model.remove(self.event_object, self.event_index, True)
                 QMessageBox.information(self, _('Event removing'),
                                         _('Complete.'))
                 self.accept()
@@ -250,9 +250,9 @@ class EventInfo(UiDlgTemplate):
         if response:
             message = _('The event has been fixed.')
 
-            self.s_obj.set_fixed(fix_id)
+            self.event_object.set_fixed(fix_id)
             model = self.parent.schedule.model()
-            model.change(self.s_obj, self.s_idx)
+            model.change(self.event_object, self.event_index)
             self.buttonFix.setDisabled(True)
         else:
             message = _('Unable to fix this event.')
@@ -282,7 +282,7 @@ class EventInfo(UiDlgTemplate):
             from library import filter_dictlist
             # get the coach descriptions' list using its id list
             coaches_dictlist = filter_dictlist(self.parent.static['coaches'], 'id', coach_id_list)
-            self.s_obj.set_coaches(coaches_dictlist)
+            self.event_object.set_coaches(coaches_dictlist)
 
         dialog = ShowCoaches(self, {'http': self.http})
         dialog.setCallback(coaches_callback)
@@ -293,8 +293,8 @@ class EventInfo(UiDlgTemplate):
         # очищаем кэш и заново запрашиваем информацию о событии, чтобы
         # показать изменения списка преподавателей.
         self.schedule = None
-        self.initData(self.s_obj, self.s_idx)
+        self.initData(self.event_object, self.event_index)
 
         # update schedule model to immediate refresh this event
         model = self.parent.schedule.model()
-        model.change(self.s_obj, self.s_idx)
+        model.change(self.event_object, self.event_index)
