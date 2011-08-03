@@ -568,10 +568,7 @@ class ClientInfo(UiDlgTemplate):
         """
         Метод для сохранения информации о клиенте.
 
-        @type  data: list of tuples
-        @param data: Список двухэлементных кортежей с данными о клиенте.
-
-        @rtype boolean
+        @rtype: boolean
         @return: Результат выполнения операции.
         """
         data = [

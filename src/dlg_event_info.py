@@ -35,7 +35,6 @@ class EventInfo(UiDlgTemplate):
     params = ParamStorage()
     title = _('Event\'s information')
     schedule = None # кэшируем здесь данные от сервера
-    all_coaches = None # кэш с данными о преподавателях
     event_object = None
     event_index = None
 
@@ -51,7 +50,7 @@ class EventInfo(UiDlgTemplate):
         self.connect(self.buttonVisitManual, SIGNAL('clicked()'), self.search_by_name)
         self.connect(self.buttonRemove,      SIGNAL('clicked()'), self.removeEvent)
         self.connect(self.buttonFix,         SIGNAL('clicked()'), self.fixEvent)
-        self.connect(self.buttonChange,      SIGNAL('clicked()'), self.changeCoaches)
+        self.connect(self.buttonChange,      SIGNAL('clicked()'), self.change_coaches)
         self.connect(self.comboFix, SIGNAL('currentIndexChanged(int)'),
                      lambda: self.buttonFix.setDisabled(False))
 
@@ -258,43 +257,30 @@ class EventInfo(UiDlgTemplate):
             message = _('Unable to fix this event.')
         QMessageBox.information(self, _('Event fix registration'), message)
 
-    def changeCoaches(self):
-        """ Метод реализует функционал замены преподавателей для события. """
-        # если данных в кэше нет, то получаем их от сервера
-        if self.all_coaches is None:
-            # получаем информацию о преподавателях
-            title = _('Coaches')
-            if not self.http.request('/manager/get_all/',
-                                     {'action': 'coaches',}):
-                QMessageBox.critical(self, title,
-                                     _('Unable to fetch: %s') % self.http.error_msg)
-                return
-            default_response = None
-            response = self.http.parse(default_response)
-            if not (response and 'data' in response):
-                QMessageBox.critical(self, title,
-                                     _('Unable to fetch: %s') % self.http.error_msg)
-                return
-            # сохраняем данные в кэше
-            self.all_coaches = response['data']
+    def change_coaches(self, title=_('Coaches')):
+        """
+        Метод реализует функционал замены преподавателей для события.
+        """
+        http = self.params.http
+        if not http.request('/api/coach/', 'GET'):
+            QMessageBox.critical(self, title, _('Unable to fetch: %s') % http.error_msg)
+            return
+        status, coach_list = http.piston()
+        if 'ALL_OK' == status:
 
-        def coaches_callback(coach_id_list):
-            from library import filter_dictlist
-            # get the coach descriptions' list using its id list
-            coaches_dictlist = filter_dictlist(self.parent.static['coaches'], 'id', coach_id_list)
-            self.event_object.set_coaches(coaches_dictlist)
+            def coaches_callback(uuid_list):
+                self.event_object.set_coaches(
+                    filter(lambda x: x.get('uuid') in uuid_list, coach_list)
+                    )
 
-        dialog = ShowCoaches(self, {'http': self.http})
-        dialog.setCallback(coaches_callback)
-        dialog.setModal(True)
-        dialog.initData(self.schedule, self.all_coaches)
-        dialog.exec_()
+            dialog = ShowCoaches(self, callback=coaches_callback)
+            dialog.setModal(True)
+            dialog.initData(self.event_object, coach_list)
+            if QDialog.Accepted == dialog.exec_():
+                # отображаем изменения на интерфейсе
+                self.initData(self.event_object, self.event_index)
 
-        # очищаем кэш и заново запрашиваем информацию о событии, чтобы
-        # показать изменения списка преподавателей.
-        self.schedule = None
-        self.initData(self.event_object, self.event_index)
+                # update schedule model to immediate refresh this event
+                model = self.event_index.model()
+                model.change(self.event_object, self.event_index)
 
-        # update schedule model to immediate refresh this event
-        model = self.parent.schedule.model()
-        model.change(self.event_object, self.event_index)

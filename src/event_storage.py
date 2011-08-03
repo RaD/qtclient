@@ -24,6 +24,8 @@ class Event(object):
     Модель активности для представления всех её параметров в нужном
     виде.
     """
+    params = ParamStorage()
+
     TEAM = 0; RENT = 1;
 
     monday = None
@@ -44,10 +46,14 @@ class Event(object):
         self.activity = info.get('activity')
         self.room_uuid = info.get('room__uuid')
         self.prototype = self.RENT if 'renter' in self.activity else self.TEAM
-        self.coaches_list = self.activity.get('coaches')
         self.styles_list = self.activity.get('dance_style')
 
-        self.params = ParamStorage()
+        self.coaches_list = self.activity.get('coaches')
+        history = info.get('history_set')
+        for event in history:
+            leaders = event.get('leaders')
+            if leaders and len(leaders) > 0:
+                self.coaches_list = leaders
 
     def __unicode__(self):
         return self.title
