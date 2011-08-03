@@ -127,13 +127,13 @@ class EventInfo(UiDlgTemplate):
         соответствующих событию."""
 
         def callback(user):
-            self.user_id = user['id']
+            self.last_user_uuid = user.get('uuid')
 
         self.dialog = Searching(self, mode='client', apply_title=_('Register'))
         self.dialog.setModal(True)
         self.dialog.setCallback(callback)
         if QDialog.Accepted == self.dialog.exec_():
-            self.visit_register(self.user_id)
+            return self.visit_register(self.last_user_uuid)
 
     def select_voucher_list(self, *args, **kwargs):
         # получаем список подходящих ваучеров
