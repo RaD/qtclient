@@ -214,6 +214,10 @@ class MainWindow(QMainWindow):
                 (_('Search by name'), 'Ctrl+G', 'renter_search_name', _('Search a renter with its name.')),
                 ]
              ),
+            (_('Help'), [
+                (_('About'), '', 'help_about', _('About application dialog.')),
+                ]
+             ),
             # 	    (_('Accounting'), [
             # 		    (_('Add resources'), '',
             # 		     'addResources', _('Add new set of resources into accounting.')),
@@ -224,7 +228,7 @@ class MainWindow(QMainWindow):
         for topic, info in data:
             menu = self.menuBar().addMenu(topic)
             # Disable the following menu actions, until user will be authorized.
-            if topic != _('File'):
+            if not topic in (_('File'), _('Help')):
                 menu.setDisabled(True)
             for item in info:
                 if item is None:
@@ -398,6 +402,16 @@ class MainWindow(QMainWindow):
             self.dialog.setModal(True)
             self.dialog.initData(self.user)
             self.dialog.exec_()
+
+    def help_about(self):
+        version = '.'.join(map(str, self.params.version))
+        msg = """
+           <p>Клиентское приложение учётной системы.</p>
+           <p>Версия %(version)s</p>
+           <p>Сайт: <a href="http://snegiri.dontexist.org/projects/advisor/client/">Учётная система: Клиент</a>.</p>
+           <p>Поддержка: <a href="mailto:ruslan.popov@gmail.com">Написать письмо</a>.</p>
+           """ % locals()
+        QMessageBox.about(self, _('About application dialog'), msg.decode('utf-8'))
 
     def eventTraining(self):
         def callback(e_date, e_time, room_tuple, team):

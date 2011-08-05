@@ -83,6 +83,7 @@ class ParamStorage(object):
 
     __metaclass__ = Singleton
 
+    version = (0, 4, 1)
     rooms = {}
     static = None
     http = None
