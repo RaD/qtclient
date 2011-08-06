@@ -30,9 +30,43 @@ from library import ParamStorage
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
+MENU_DISABLED = 1
+MENU_LOGGED_IN = 2
+MENU_LOGGED_OUT = 4
+MENU_LOGGED_ANY = MENU_LOGGED_IN | MENU_LOGGED_OUT
+MENU_RFID = 8
+MENU_PRINTER = 16
+
 class MainWindow(QMainWindow):
 
-    params = None
+    params = ParamStorage() # синглтон для хранения данных
+    menu_actions = []
+    menu_desc = [
+        (_('File'), [
+            (_('Log in'), 'Ctrl+I', 'login', _('Start user session.'), MENU_LOGGED_OUT),
+            (_('Log out'), '', 'logout', _('End user session.'), MENU_LOGGED_IN),
+            None,
+            (_('Application settings'), 'Ctrl+S', 'setupApp', _('Manage the application settings.'), MENU_LOGGED_ANY),
+            None,
+            (_('Exit'), '', 'close', _('Close the application.'), MENU_LOGGED_ANY),
+            ]
+         ),
+        (_('Client'), [
+            (_('New'), 'Ctrl+N', 'client_new', _('Register new client.'), MENU_LOGGED_IN),
+            (_('Search by RFID'), 'Ctrl+D', 'client_search_rfid', _('Search a client with its RFID card.'), MENU_LOGGED_IN | MENU_RFID),
+            (_('Search by name'), 'Ctrl+F', 'client_search_name', _('Search a client with its name.'), MENU_LOGGED_IN),
+            ]
+         ),
+        (_('Renter'), [
+            (_('New'), 'Ctrl+M', 'renter_new', _('Register new renter.'), MENU_DISABLED),
+            (_('Search by name'), 'Ctrl+G', 'renter_search_name', _('Search a renter with its name.'), MENU_DISABLED),
+            ]
+          ),
+        (_('Help'), [
+            (_('About'), '', 'help_about', _('About application dialog.'), MENU_LOGGED_ANY),
+            ]
+         ),
+        ]
 
     def __init__(self, parent=None):
         QMainWindow.__init__(self, parent)
@@ -43,7 +77,6 @@ class MainWindow(QMainWindow):
         self.tree = []
         self.rfid_id = None
 
-        self.params = ParamStorage() # синглтон для хранения данных
         self.params.logged_in = False
         self.params.http = Http(self)
         self.params.work_hours = (8, 24)
@@ -51,7 +84,8 @@ class MainWindow(QMainWindow):
         self.params.multiplier = timedelta(hours=1).seconds / self.params.quant.seconds
 
         self.menus = []
-        self.create_menus()
+        self.create_menus(self.menu_desc)
+        self.menu_state(MENU_LOGGED_OUT | MENU_RFID | MENU_PRINTER)
         self.setup_views()
 
         settings = QSettings()
@@ -189,69 +223,86 @@ class MainWindow(QMainWindow):
     def getMime(self, name):
         return self.mimes.get(name, None)
 
-    def create_menus(self):
-        """ This method generates the application menu. Usage:
-        Describe the menu with all its action in data block and
-        realize handlers for each action."""
-        data = [
-            (_('File'), [
-                (_('Log in'), 'Ctrl+I', 'login', _('Start user session.')),
-                (_('Log out'), '', 'logout', _('End user session.')),
-                None,
-                (_('Application settings'), 'Ctrl+S', 'setupApp', _('Manage the application settings.')),
-                None,
-                (_('Exit'), '', 'close', _('Close the application.')),
-                ]
-             ),
-            (_('Client'), [
-                (_('New'), 'Ctrl+N', 'client_new', _('Register new client.')),
-                (_('Search by RFID'), 'Ctrl+D', 'client_search_rfid', _('Search a client with its RFID card.')),
-                (_('Search by name'), 'Ctrl+F', 'client_search_name', _('Search a client with its name.')),
-                ]
-             ),
-            (_('Renter'), [
-                (_('New'), 'Ctrl+M', 'renter_new', _('Register new renter.')),
-                (_('Search by name'), 'Ctrl+G', 'renter_search_name', _('Search a renter with its name.')),
-                ]
-             ),
-            (_('Help'), [
-                (_('About'), '', 'help_about', _('About application dialog.')),
-                ]
-             ),
-            # 	    (_('Accounting'), [
-            # 		    (_('Add resources'), '',
-            # 		     'addResources', _('Add new set of resources into accounting.')),
-            #                     ]
-            #              ),
-            ]
+    def create_menus(self, desc):
+        """
+        Метод генерирует по переданному описанию меню приложения.
 
-        for topic, info in data:
+        Использование: Опишите меню со всеми его действиями,
+        реализуйте обработчики для каждого элемента меню, передайте
+        описание в данный метод.
+        """
+        for topic, info in desc:
+            action_handlers = []
             menu = self.menuBar().addMenu(topic)
-            # Disable the following menu actions, until user will be authorized.
-            if not topic in (_('File'), _('Help')):
-                menu.setDisabled(True)
             for item in info:
                 if item is None:
                     menu.addSeparator()
                     continue
-                title, short, name, desc = item
-                setattr(self, 'act_%s' % name, QAction(title, self))
-                action = getattr(self, 'act_%s' % name)
-                action.setShortcut(short)
-                action.setStatusTip(desc)
-                self.connect(action, SIGNAL('triggered()'), getattr(self, name))
-                menu.addAction(action)
-                self.menus.append(menu)
+                else:
+                    title, short, name, desc, state = item
+                    setattr(self, 'act_%s' % name, QAction(title, self))
+                    action = getattr(self, 'act_%s' % name)
+                    action.setShortcut(short)
+                    action.setStatusTip(desc)
+                    self.connect(action, SIGNAL('triggered()'), getattr(self, name))
+                    menu.addAction(action)
+                    self.menus.append(menu)
+                    action_handlers.append( (action, state,) )
+            self.menu_actions.append( action_handlers )
 
-    def interface_disable(self, state): # True = disabled, False = enabled
+    def menu_state(self, state):
+        """
+        Метод для смены состояния меню.
+        """
+        BITS = {
+            'DISABLED': 0,
+            'LOGGED_IN': 1,
+            'LOGGED_OUT': 2,
+            'RFID': 3,
+            'PRINTER': 4,
+            }
+
+        def is_bit_set(value, bitname):
+            try:
+                bitnum = BITS[bitname]
+            except KeyError:
+                return False
+            else:
+                return (state & (1 << bitnum)) != 0
+
+        for actions in self.menu_actions:
+            for action, state in actions:
+                if is_bit_set(state, 'DISABLED'):
+                    action.setDisabled(True)
+                    continue
+
+                if not self.params.logged_in:
+                    if is_bit_set(state, 'LOGGED_OUT'):
+                        action.setDisabled(False)
+                    else:
+                        action.setDisabled(True)
+                    continue
+
+                if self.params.logged_in:
+                    if is_bit_set(state, 'LOGGED_IN'):
+                        disable = False
+                        if is_bit_set(state, 'RFID'): # and RFID not present
+                            disable = True
+                        elif is_bit_set(state, 'PRINTER'): # and PRINTER not present
+                            disable = True
+                        action.setDisabled(disable)
+                    else:
+                        action.setDisabled(True)
+                    continue
+
+
+    def interface_disable(self, state):
         # Enable menu's action
-        for menu in self.menus:
-            if menu.title() != _('File'):
-                menu.setDisabled(state)
+        self.menu_state(state)
         # Enable the navigation buttons
-        self.buttonPrev.setDisabled(state)
-        self.buttonNext.setDisabled(state)
-        self.buttonToday.setDisabled(state)
+        self.buttonPrev.setDisabled(not self.params.logged_in)
+        self.buttonNext.setDisabled(not self.params.logged_in)
+        self.buttonToday.setDisabled(not self.params.logged_in)
 
     def refresh_data(self):
         """ This method get the data from a server. It call periodically using timer. """
@@ -308,13 +359,13 @@ class MainWindow(QMainWindow):
                 self.refreshTimer = self.makeTimer(self.refresh_data, SCHEDULE_REFRESH_TIMEOUT, True)
 
                 self.printer_init(template=self.params.static.get('printer'))
-                self.interface_disable(False)
+                self.interface_disable(MENU_LOGGED_IN | MENU_RFID | MENU_PRINTER)
             else:
                 QMessageBox.warning(self, _('Login failed'),
                                     _('It seems you\'ve entered wrong login/password.'))
 
     def logout(self):
-        self.interface_disable(True)
+        self.interface_disable(MENU_LOGGED_OUT | MENU_RFID | MENU_PRINTER)
         self.setWindowTitle('%s : %s' % (self.baseTitle, _('Login to start session')))
         self.schedule.model().storage_init()
 
