@@ -4,16 +4,13 @@ VERSION=0.4.1
 BASEDIR=$(shell pwd)
 BUILD=$(BASEDIR)/build
 DST=$(BUILD)/client
-DEBINFO=$(BASEDIR)/debian
 LCL=locale/ru/LC_MESSAGES
-DEBBASE=$(BASEDIR)/debianize
-PACKDIR=$(DEBBASE)/$(PROJECT)-$(VERSION)
 
 all:
 	echo "Usage: make dist"
 
 clean:
-	rm -rf ./build ./debianize
+	rm -rf ./build
 
 build: dist debianize
 
@@ -29,28 +26,15 @@ dist:
 	cd $(BUILD); python setup.py sdist; cd -
 
 debianize:
-	mkdir -p $(PACKDIR)/debian/
-
-	cp $(DEBINFO)/client.makefile $(PACKDIR)/Makefile
-	cp $(DEBINFO)/rules $(PACKDIR)/debian/
-
-	sed -e "s/<PROJECT>/$(PROJECT)/" \
-	    -e "s/<FULLNAME>/$(DEBFULLNAME)/" \
-	    -e "s/<EMAIL>/<$(DEBEMAIL)>/" \
-	    < $(DEBINFO)/control > $(PACKDIR)/debian/control
-	sed -e "s/<DATE>/`LANG=C date`/" \
-	    -e "s/<FULLNAME>/$(DEBFULLNAME)/" \
-	    -e "s/<EMAIL>/<$(DEBEMAIL)>/" \
-	    < $(DEBINFO)/copyright > $(PACKDIR)/debian/copyright
-
-	cd $(DEBBASE); tar xzf $(BUILD)/dist/$(PROJECT)-$(VERSION).tar.gz; cd -
-	cd $(PACKDIR)/; \
-	test -f debian/changelog || debchange --create --package $(PROJECT) -v $(VERSION); \
-	test -f debian/compat || (test -f /etc/debian_version && echo "7" || echo "6") >> ./debian/compat; \
+	cd $(BASEDIR)/build/dist; \
+    cp $(PROJECT)-$(VERSION).tar.gz $(PROJECT)_$(VERSION).orig.tar.gz; \
+	tar xzf $(PROJECT)-$(VERSION).tar.gz; \
 	cd -
 
-	echo "Now you're ready to build the package."
-	echo "Just do:"
-	echo "    cd $(PACKDIR)"
-	echo "    debuild -k<YOUR_PGP_KEY>"
+	dch -i
 
+	cp -r $(BASEDIR)/debian $(BASEDIR)/build/dist/$(PROJECT)-$(VERSION)/
+
+	cd $(BASEDIR)/build/dist/$(PROJECT)-$(VERSION); \
+	debuild -k4A43B8D0; \
+	cd -

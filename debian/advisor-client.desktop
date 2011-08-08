@@ -1,0 +1,14 @@
+[Desktop Entry]
+Name=Advisor Client
+GenericName=Advisor Client
+GenericName[ru]=Клиент учётной системы
+Comment=Access to Advisor System
+Comment[ru]=Доступ к учётной системе
+Encoding=UTF-8
+TryExec=advisor-client
+Exec=advisor-client
+Icon=advisor-client.png
+Terminal=false
+StartupNotify=false
+Type=Application
+Categories=Application;

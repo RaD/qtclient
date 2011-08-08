@@ -1,5 +1,5 @@
-advisor-client (0.4.1) UNRELEASED; urgency=low
+advisor-client (0.4.1-1ubuntu1) unstable; urgency=low
 
-  * Initial release. (Closes: #XXXXXX)
+  * Initial release.
 
- -- Ruslan Popov <ruslan.popov@gmail.com>  Sat, 06 Aug 2011 01:59:27 +0400
+ -- Ruslan Popov <ruslan.popov@gmail.com>  Mon, 08 Aug 2011 10:19:51 +0400

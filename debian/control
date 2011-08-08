@@ -1,13 +1,15 @@
-Source: <PROJECT>
+Source: advisor-client
 Section: python
 Priority: extra
-Maintainer: <FULLNAME> <EMAIL>
-Build-Depends: debhelper (>=6.0.0), python-support (>= 0.6)
-Standards-Version: 3.8.1
-
-Package: <PROJECT>
-Architecture: all
+Maintainer: Ruslan Popov <ruslan.popov@gmail.com>
+Build-Depends: debhelper (>= 7.0.50~), python-support, python (>= 2.6)
+Standards-Version: 3.8.4
 Homepage: http://snegiri.dontexist.org/projects/advisor/client/
-Depends: python-qt4 (>= 4.4), python-cjson, python-serial (>=2.3)
-Description: Manager interface of <PROJECT> system
- A lot of description will be here later.
+#Vcs-Git: git://git.debian.org/collab-maint/advisor-client.git
+#Vcs-Browser: http://git.debian.org/?p=collab-maint/advisor-client.git;a=summary
+
+Package: advisor-client
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, python-qt4 (>= 4.4), python-cjson, python-serial (>=2.3)
+Description: Manager interface of advisor-client system
+ <insert long description, indented with spaces>

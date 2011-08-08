@@ -1,0 +1,2 @@
+?package(advisor-client):needs=X11 section="Applications/Data Management" \
+        title="Advisor Client" command="/usr/bin/advisor-client"

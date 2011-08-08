@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# application launcher
+
+cd /lib/python2.6/site-packages/advisor-client
+python manager.pyc
+
+exit $?

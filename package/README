@@ -4,4 +4,3 @@ Depends on:
     python-qt4
     python-json
     python-serial
-    python-dateutil

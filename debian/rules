@@ -1,53 +1,22 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
 
 PROJECT=advisor-client
 
-configure: configure-stamp
+%:
+	dh $@
 
-configure-stamp:
-	dh_testdir
-	touch configure-stamp
+override_dh_install:
+	dh_install debian/$(PROJECT).desktop /usr/share/applications/
+	dh_install debian/$(PROJECT).launcher /usr/bin/
+	dh_install debian/$(PROJECT).xpm /usr/share/pixmaps/
 
-build: build-stamp
-
-build-stamp: configure-stamp
-	dh_testdir
-	# it is already build
-	touch $@
-
-clean:
-	dh_testdir
-	dh_testroot
-	rm -f build-stamp configure-stamp
-	dh_clean
-
-install: build
-	dh_testdir
-	dh_testroot
-	#dh_prep
-	dh_installdirs
-	$(MAKE) DESTDIR=$(CURDIR)/debian/$(PROJECT) install
-
-binary-arch: build install
-	# emptyness
-
-binary-indep: build install
-	dh_testdir
-	dh_testroot
-	dh_installchangelogs
-	dh_installdocs
-	dh_installexamples
-	dh_pysupport
-	dh_link
-	dh_fixperms
-	dh_installdeb
-	dh_shlibdeps
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
-
-binary: binary-indep
-
-.PHONY: build clean binary-indep binary install configure
-
+.PHONY: override_dh_install
