@@ -21,6 +21,7 @@ from PyQt4.QtCore import *
 ERR_EVENT_NOVOUCHERLIST1 = 2201
 ERR_EVENT_NOVOUCHERLIST2 = 2202
 ERR_EVENT_REGISTERVISIT = 2203
+ERR_EVENT_PRINTLABEL = 2204
 
 EVENT_TYPE_TEAM = '1'
 EVENT_TYPE_RENT = '2'
@@ -191,12 +192,26 @@ class EventInfo(UiDlgTemplate):
             if u'CREATED' == status:
                 QMessageBox.information(self, title,
                                         _('The client has been registered for this event.'))
-                # PRINT CHECK HERE
+                # распечатаем чек
+                visit_uuid = response.get('uuid')
+                self.print_label(visit_uuid)
                 return True
             else:
                 QMessageBox.warning(self, title,
                                     _('Unable to register!\nStatus: %s') % status)
         return False
+
+    def print_label(self, visit_uuid, title=_('Print')):
+        http = self.params.http
+        if not http.request('/api/visit/%s/' % visit_uuid, 'GET', force=True):
+            QMessageBox.warning(self, title, '%s: %i\n\n%s\n\n%s' % (
+                _('Error'), ERR_EVENT_PRINTLABEL,
+                _('Unable to prepare label: %s') % http.error_msg,
+                _('Call support team!')))
+            return False
+        status, response = http.piston()
+        print status, response
+        self.params.printer.hardcopy(response)
 
     def changeRoom(self, new_index):
         # Room change:

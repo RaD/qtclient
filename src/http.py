@@ -166,7 +166,6 @@ class Http:
         """
         out = []
         for key, value in data.items():
-            print key, value
             if type(value) is list:
                 for item in value:
                     out.append( (key, item) )

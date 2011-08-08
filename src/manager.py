@@ -142,10 +142,10 @@ class MainWindow(QMainWindow):
                              self.prepare_filter(uu_id, title))
 
     def printer_init(self, template):
-        self.printer = Printer(template=template)
+        self.params.printer = Printer(template=template)
         run_it = True
         def show_printer_status():
-            ok, tip = self.printer.get_status()
+            ok, tip = self.params.printer.get_status()
             self.printer_widget.setToolTip(tip)
             if ok:
                 msg = _('Printer is ready')
@@ -153,7 +153,7 @@ class MainWindow(QMainWindow):
                 msg = _('Printer is not ready')
             self.printer_widget.setText(msg)
         self.printer_refresh = self.makeTimer(show_printer_status,
-                                              self.printer.refresh_timeout,
+                                              self.params.printer.refresh_timeout,
                                               run_it)
 
     def prepare_filter(self, id, title):

@@ -2,10 +2,10 @@
 # (c) 2009-2011 Ruslan Popov <ruslan.popov@gmail.com>
 
 from datetime import datetime, date, timedelta
-from settings import _, DEBUG, userRoles
+from settings import _, DEBUG, userRoles, VERSION
 from http import HttpException
 
-import json, pprint
+import os, json, pprint
 
 def dumpobj(title, value):
     print title
@@ -83,7 +83,7 @@ class ParamStorage(object):
 
     __metaclass__ = Singleton
 
-    version = (0, 4, 1)
+    version = VERSION
     rooms = {}
     static = None
     http = None
@@ -93,7 +93,7 @@ class ParamStorage(object):
     cache = {}
 
     def __init__(self, *args, **kwargs):
-        LOG_FILENAME = 'debug.log'
+        LOG_FILENAME = os.path.expanduser('~/advisor-client.debug.log')
         logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
 
     def debug(self, msg):
