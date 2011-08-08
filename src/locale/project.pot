@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-08-04 02:10+0400\n"
+"POT-Creation-Date: 2011-08-08 11:25+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -39,12 +39,12 @@ msgstr ""
 msgid "End"
 msgstr ""
 
-#: card_list.py:20 dlg_event_info.py:132
+#: card_list.py:20 dlg_event_info.py:133
 msgid "Register"
 msgstr ""
 
 #: card_list.py:21 dlg_accounting.py:110 dlg_calendar.py:30
-#: dlg_event_assign.py:74 dlg_event_info.py:170 dlg_login.py:36
+#: dlg_event_assign.py:74 dlg_event_info.py:171 dlg_login.py:36
 #: dlg_rent_assign.py:70 dlg_settings.py:25
 msgid "Cancel"
 msgstr ""
@@ -111,8 +111,8 @@ msgstr ""
 msgid "Add resource"
 msgstr ""
 
-#: dlg_accounting.py:137 dlg_event_assign.py:148 dlg_event_info.py:119
-#: dlg_show_visitors.py:72 manager.py:357
+#: dlg_accounting.py:137 dlg_event_assign.py:148 dlg_event_info.py:120
+#: dlg_show_visitors.py:72 manager.py:412
 msgid "Warning"
 msgstr ""
 
@@ -148,7 +148,7 @@ msgstr ""
 msgid "Assign"
 msgstr ""
 
-#: dlg_event_assign.py:82 event_storage.py:101 manager.py:212
+#: dlg_event_assign.py:82 event_storage.py:101 manager.py:60
 msgid "Renter"
 msgstr ""
 
@@ -189,126 +189,135 @@ msgstr ""
 msgid "Choose the team on the team's tree."
 msgstr ""
 
-#: dlg_event_info.py:36
+#: dlg_event_info.py:37
 msgid "Event's information"
 msgstr ""
 
-#: dlg_event_info.py:62
+#: dlg_event_info.py:63
 msgid "Event info"
 msgstr ""
 
-#: dlg_event_info.py:114 manager.py:352
+#: dlg_event_info.py:115 manager.py:407
 msgid "Client info"
 msgstr ""
 
-#: dlg_event_info.py:114 dlg_event_info.py:266 dlg_show_visitors.py:37
-#: dlg_show_visitors.py:88 library.py:137 manager.py:90 manager.py:352
+#: dlg_event_info.py:115 dlg_event_info.py:281 dlg_show_visitors.py:37
+#: dlg_show_visitors.py:88 library.py:138 manager.py:124 manager.py:407
 #, python-format
 msgid "Unable to fetch: %s"
 msgstr ""
 
-#: dlg_event_info.py:119 manager.py:358
+#: dlg_event_info.py:120 manager.py:413
 msgid "This RFID belongs to nobody."
 msgstr ""
 
-#: dlg_event_info.py:147
+#: dlg_event_info.py:148
 msgid "Client Registration"
 msgstr ""
 
-#: dlg_event_info.py:154
+#: dlg_event_info.py:155
 msgid ""
 "No voucher for this visit.\n"
 "\n"
 "Buy one."
 msgstr ""
 
-#: dlg_event_info.py:170 dlg_login.py:35
+#: dlg_event_info.py:171 dlg_login.py:35
 msgid "Ok"
 msgstr ""
 
-#: dlg_event_info.py:172
+#: dlg_event_info.py:173
 msgid "Choose the Voucher"
 msgstr ""
 
-#: dlg_event_info.py:185
+#: dlg_event_info.py:186 dlg_event_info.py:208
 msgid "Error"
 msgstr ""
 
-#: dlg_event_info.py:186
+#: dlg_event_info.py:187
 #, python-format
 msgid "Unable to register the visit: %s"
 msgstr ""
 
-#: dlg_event_info.py:187
+#: dlg_event_info.py:188 dlg_event_info.py:210
 msgid "Call support team!"
 msgstr ""
 
-#: dlg_event_info.py:193
+#: dlg_event_info.py:194
 msgid "The client has been registered for this event."
 msgstr ""
 
-#: dlg_event_info.py:198
+#: dlg_event_info.py:201
 #, python-format
 msgid ""
 "Unable to register!\n"
 "Status: %s"
 msgstr ""
 
-#: dlg_event_info.py:216
+#: dlg_event_info.py:204
+msgid "Print"
+msgstr ""
+
+#: dlg_event_info.py:209
+#, python-format
+msgid "Unable to prepare label: %s"
+msgstr ""
+
+#: dlg_event_info.py:231
 msgid "Event remove"
 msgstr ""
 
-#: dlg_event_info.py:217
+#: dlg_event_info.py:232
 msgid "Are you sure to remove this event from the calendar?"
 msgstr ""
 
-#: dlg_event_info.py:222
+#: dlg_event_info.py:237
 msgid "Event deletion"
 msgstr ""
 
-#: dlg_event_info.py:222
+#: dlg_event_info.py:237
 #, python-format
 msgid "Unable to delete: %s"
 msgstr ""
 
-#: dlg_event_info.py:231 dlg_event_info.py:235
+#: dlg_event_info.py:246 dlg_event_info.py:250
 msgid "Event removing"
 msgstr ""
 
-#: dlg_event_info.py:232 qtschedule.py:219
+#: dlg_event_info.py:247 qtschedule.py:219
 msgid "Complete."
 msgstr ""
 
-#: dlg_event_info.py:236
+#: dlg_event_info.py:251
 msgid "Unable to remove this event!"
 msgstr ""
 
-#: dlg_event_info.py:245
+#: dlg_event_info.py:260
 msgid "Register fix"
 msgstr ""
 
-#: dlg_event_info.py:245
+#: dlg_event_info.py:260
 #, python-format
 msgid "Unable to fix: %s"
 msgstr ""
 
-#: dlg_event_info.py:250
+#: dlg_event_info.py:265
 msgid "The event has been fixed."
 msgstr ""
 
-#: dlg_event_info.py:257
+#: dlg_event_info.py:272
 msgid "Unable to fix this event."
 msgstr ""
 
-#: dlg_event_info.py:258
+#: dlg_event_info.py:273
 msgid "Event fix registration"
 msgstr ""
 
-#: dlg_event_info.py:260
+#: dlg_event_info.py:275
 msgid "Coaches"
 msgstr ""
 
-#: dlg_login.py:18 manager.py:274
+#: dlg_login.py:18 manager.py:329
 msgid "Login"
 msgstr ""
 
@@ -447,145 +456,161 @@ msgstr ""
 msgid "Key \"%s\" does not exists. Check dictionary."
 msgstr ""
 
-#: library.py:136
+#: library.py:137
 msgid "Categories of Rent"
 msgstr ""
 
+#: manager.py:45
+msgid "File"
+msgstr ""
+
+#: manager.py:46
+msgid "Log in"
+msgstr ""
+
+#: manager.py:46
+msgid "Start user session."
+msgstr ""
+
+#: manager.py:47
+msgid "Log out"
+msgstr ""
+
+#: manager.py:47
+msgid "End user session."
+msgstr ""
+
+#: manager.py:49
+msgid "Application settings"
+msgstr ""
+
+#: manager.py:49
+msgid "Manage the application settings."
+msgstr ""
+
+#: manager.py:51
+msgid "Exit"
+msgstr ""
+
+#: manager.py:51
+msgid "Close the application."
+msgstr ""
+
+#: manager.py:54
+msgid "Client"
+msgstr ""
+
+#: manager.py:55 manager.py:61
+msgid "New"
+msgstr ""
+
+#: manager.py:55
+msgid "Register new client."
+msgstr ""
+
+#: manager.py:56
+msgid "Search by RFID"
+msgstr ""
+
+#: manager.py:56
+msgid "Search a client with its RFID card."
+msgstr ""
+
+#: manager.py:57 manager.py:62
+msgid "Search by name"
+msgstr ""
+
+#: manager.py:57
+msgid "Search a client with its name."
+msgstr ""
+
+#: manager.py:61
+msgid "Register new renter."
+msgstr ""
+
+#: manager.py:62
+msgid "Search a renter with its name."
+msgstr ""
+
 #: manager.py:65
+msgid "Help"
+msgstr ""
+
+#: manager.py:66
+msgid "About"
+msgstr ""
+
+#: manager.py:66
+msgid "About application dialog."
+msgstr ""
+
+#: manager.py:99
 msgid "Manager's interface"
 msgstr ""
 
-#: manager.py:67 printer.py:72
+#: manager.py:101 printer.py:81
 msgid "Ready"
 msgstr ""
 
-#: manager.py:79 manager.py:314
+#: manager.py:113 manager.py:369
 msgid "Login to start session"
 msgstr ""
 
-#: manager.py:90
+#: manager.py:124
 msgid "Static info"
 msgstr ""
 
-#: manager.py:117
+#: manager.py:151
 msgid "Printer is ready"
 msgstr ""
 
-#: manager.py:119
+#: manager.py:153
 msgid "Printer is not ready"
 msgstr ""
 
-#: manager.py:127
+#: manager.py:161
 #, python-format
 msgid "Filter: Room \"%s\" is changed its state"
 msgstr ""
 
-#: manager.py:137
+#: manager.py:171
 msgid "<<"
 msgstr ""
 
-#: manager.py:138
+#: manager.py:172
 msgid ">>"
 msgstr ""
 
-#: manager.py:139
+#: manager.py:173
 msgid "Today"
 msgstr ""
 
-#: manager.py:160
+#: manager.py:194
 msgid "Week:"
 msgstr ""
 
-#: manager.py:197 manager.py:227 manager.py:245
-msgid "File"
-msgstr ""
-
-#: manager.py:198
-msgid "Log in"
-msgstr ""
-
-#: manager.py:198
-msgid "Start user session."
-msgstr ""
-
-#: manager.py:199
-msgid "Log out"
-msgstr ""
-
-#: manager.py:199
-msgid "End user session."
-msgstr ""
-
-#: manager.py:201
-msgid "Application settings"
-msgstr ""
-
-#: manager.py:201
-msgid "Manage the application settings."
-msgstr ""
-
-#: manager.py:203
-msgid "Exit"
-msgstr ""
-
-#: manager.py:203
-msgid "Close the application."
-msgstr ""
-
-#: manager.py:206
-msgid "Client"
-msgstr ""
-
-#: manager.py:207 manager.py:213
-msgid "New"
-msgstr ""
-
-#: manager.py:207
-msgid "Register new client."
-msgstr ""
-
-#: manager.py:208
-msgid "Search by RFID"
-msgstr ""
-
-#: manager.py:208
-msgid "Search a client with its RFID card."
-msgstr ""
-
-#: manager.py:209 manager.py:214
-msgid "Search by name"
-msgstr ""
-
-#: manager.py:209
-msgid "Search a client with its name."
-msgstr ""
-
-#: manager.py:213
-msgid "Register new renter."
-msgstr ""
-
-#: manager.py:214
-msgid "Search a renter with its name."
-msgstr ""
-
-#: manager.py:274
+#: manager.py:329
 #, python-format
 msgid "Unable to login: %s"
 msgstr ""
 
-#: manager.py:309
+#: manager.py:364
 msgid "Login failed"
 msgstr ""
 
-#: manager.py:310
+#: manager.py:365
 msgid "It seems you've entered wrong login/password."
 msgstr ""
 
-#: manager.py:419
+#: manager.py:465
+msgid "About application dialog"
+msgstr ""
+
+#: manager.py:484
 msgid "Waiting for update."
 msgstr ""
 
-#: manager.py:463
+#: manager.py:528
 msgid "The week has been copied sucessfully."
 msgstr ""
 
@@ -633,7 +658,7 @@ msgstr ""
 msgid "No ribbon"
 msgstr ""
 
-#: printer.py:85 printer.py:96
+#: printer.py:94 printer.py:105
 msgid "No device"
 msgstr ""
 
@@ -665,31 +690,31 @@ msgstr ""
 msgid "Hours"
 msgstr ""
 
-#: settings.py:37
+#: settings.py:38
 msgid "Monday"
 msgstr ""
 
-#: settings.py:37
+#: settings.py:38
 msgid "Tuesday"
 msgstr ""
 
-#: settings.py:38
+#: settings.py:39
 msgid "Wednesday"
 msgstr ""
 
-#: settings.py:38
+#: settings.py:39
 msgid "Thursday"
 msgstr ""
 
-#: settings.py:39
+#: settings.py:40
 msgid "Friday"
 msgstr ""
 
-#: settings.py:39
+#: settings.py:40
 msgid "Saturday"
 msgstr ""
 
-#: settings.py:40
+#: settings.py:41
 msgid "Sunday"
 msgstr ""
 

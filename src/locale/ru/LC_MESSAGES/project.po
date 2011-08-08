@@ -6,9 +6,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 4\n"
-"Report-Msgid-Bugs-To: ruslan.popov@gmail.com\n"
-"POT-Creation-Date: 2011-08-04 02:10+0400\n"
-"PO-Revision-Date: 2011-08-04 02:20+0400\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-08-08 11:25+0400\n"
+"PO-Revision-Date: 2011-08-08 11:27+0400\n"
 "Last-Translator: Ruslan Popov <ruslan.popov@gmail.com>\n"
 "Language-Team: LANGUAGE <RU@li.org>\n"
 "Language: \n"
@@ -38,12 +38,12 @@ msgstr "Начало"
 msgid "End"
 msgstr "Конец"
 
-#: card_list.py:20 dlg_event_info.py:132
+#: card_list.py:20 dlg_event_info.py:133
 msgid "Register"
 msgstr "Зарегистрирован"
 
 #: card_list.py:21 dlg_accounting.py:110 dlg_calendar.py:30
-#: dlg_event_assign.py:74 dlg_event_info.py:170 dlg_login.py:36
+#: dlg_event_assign.py:74 dlg_event_info.py:171 dlg_login.py:36
 #: dlg_rent_assign.py:70 dlg_settings.py:25
 msgid "Cancel"
 msgstr "Отмена"
@@ -110,8 +110,8 @@ msgstr "Применить"
 msgid "Add resource"
 msgstr "Добавить ресурс"
 
-#: dlg_accounting.py:137 dlg_event_assign.py:148 dlg_event_info.py:119
-#: dlg_show_visitors.py:72 manager.py:357
+#: dlg_accounting.py:137 dlg_event_assign.py:148 dlg_event_info.py:120
+#: dlg_show_visitors.py:72 manager.py:412
 msgid "Warning"
 msgstr "Внимание"
 
@@ -147,7 +147,7 @@ msgstr "Доступные группы"
 msgid "Assign"
 msgstr "Назначить"
 
-#: dlg_event_assign.py:82 event_storage.py:101 manager.py:212
+#: dlg_event_assign.py:82 event_storage.py:101 manager.py:60
 msgid "Renter"
 msgstr "Арендатор"
 
@@ -188,33 +188,33 @@ msgstr "Какую команду вы собирались назначить?"
 msgid "Choose the team on the team's tree."
 msgstr "Выберите команду на дереве команд."
 
-#: dlg_event_info.py:36
+#: dlg_event_info.py:37
 msgid "Event's information"
 msgstr "Информация события"
 
-#: dlg_event_info.py:62
+#: dlg_event_info.py:63
 msgid "Event info"
 msgstr "Информация о событии"
 
-#: dlg_event_info.py:114 manager.py:352
+#: dlg_event_info.py:115 manager.py:407
 msgid "Client info"
 msgstr "Информация о клиенте"
 
-#: dlg_event_info.py:114 dlg_event_info.py:266 dlg_show_visitors.py:37
-#: dlg_show_visitors.py:88 library.py:137 manager.py:90 manager.py:352
+#: dlg_event_info.py:115 dlg_event_info.py:281 dlg_show_visitors.py:37
+#: dlg_show_visitors.py:88 library.py:138 manager.py:124 manager.py:407
 #, python-format
 msgid "Unable to fetch: %s"
 msgstr "Невозможно получить: %s"
 
-#: dlg_event_info.py:119 manager.py:358
+#: dlg_event_info.py:120 manager.py:413
 msgid "This RFID belongs to nobody."
 msgstr "Данная RFID метка никому не принадлежит."
 
-#: dlg_event_info.py:147
+#: dlg_event_info.py:148
 msgid "Client Registration"
 msgstr "Регистрация клиента"
 
-#: dlg_event_info.py:154
+#: dlg_event_info.py:155
 msgid ""
 "No voucher for this visit.\n"
 "\n"
@@ -224,32 +224,32 @@ msgstr ""
 "\n"
 "Купите его."
 
-#: dlg_event_info.py:170 dlg_login.py:35
+#: dlg_event_info.py:171 dlg_login.py:35
 msgid "Ok"
 msgstr "ОК"
 
-#: dlg_event_info.py:172
+#: dlg_event_info.py:173
 msgid "Choose the Voucher"
 msgstr "Выберите ваучер"
 
-#: dlg_event_info.py:185
+#: dlg_event_info.py:186 dlg_event_info.py:208
 msgid "Error"
 msgstr "Ошибка"
 
-#: dlg_event_info.py:186
+#: dlg_event_info.py:187
 #, python-format
 msgid "Unable to register the visit: %s"
 msgstr "Невозможно зарегистрировать посещение: %s"
 
-#: dlg_event_info.py:187
+#: dlg_event_info.py:188 dlg_event_info.py:210
 msgid "Call support team!"
 msgstr "Позвоните в поддержку!"
 
-#: dlg_event_info.py:193
+#: dlg_event_info.py:194
 msgid "The client has been registered for this event."
 msgstr "Клиент зарегистрирован на это событие."
 
-#: dlg_event_info.py:198
+#: dlg_event_info.py:201
 #, python-format
 msgid ""
 "Unable to register!\n"
@@ -258,62 +258,71 @@ msgstr ""
 "Невозможно зарегистрировать!\n"
 "Статус: %s"
 
-#: dlg_event_info.py:216
+#: dlg_event_info.py:204
+msgid "Print"
+msgstr "Печать"
+
+#: dlg_event_info.py:209
+#, python-format
+msgid "Unable to prepare label: %s"
+msgstr "Невозможно подготовить чек: %s"
+
+#: dlg_event_info.py:231
 msgid "Event remove"
 msgstr "Удаление события"
 
-#: dlg_event_info.py:217
+#: dlg_event_info.py:232
 msgid "Are you sure to remove this event from the calendar?"
 msgstr "Вы уверены, что желаете удалить это событие с календаря?"
 
-#: dlg_event_info.py:222
+#: dlg_event_info.py:237
 msgid "Event deletion"
 msgstr "Удаление события"
 
-#: dlg_event_info.py:222
+#: dlg_event_info.py:237
 #, python-format
 msgid "Unable to delete: %s"
 msgstr "Невозможно удалить: %s"
 
-#: dlg_event_info.py:231 dlg_event_info.py:235
+#: dlg_event_info.py:246 dlg_event_info.py:250
 msgid "Event removing"
 msgstr "Удаление событие"
 
-#: dlg_event_info.py:232 qtschedule.py:219
+#: dlg_event_info.py:247 qtschedule.py:219
 msgid "Complete."
 msgstr "Выполнено."
 
-#: dlg_event_info.py:236
+#: dlg_event_info.py:251
 msgid "Unable to remove this event!"
 msgstr "Невозможно удалить это событие!"
 
-#: dlg_event_info.py:245
+#: dlg_event_info.py:260
 #, fuzzy
 msgid "Register fix"
 msgstr "Зарегистрировано"
 
-#: dlg_event_info.py:245
+#: dlg_event_info.py:260
 #, fuzzy, python-format
 msgid "Unable to fix: %s"
 msgstr "Невозможно закрыть это событие."
 
-#: dlg_event_info.py:250
+#: dlg_event_info.py:265
 msgid "The event has been fixed."
 msgstr "Событие было закрыто."
 
-#: dlg_event_info.py:257
+#: dlg_event_info.py:272
 msgid "Unable to fix this event."
 msgstr "Невозможно закрыть это событие."
 
-#: dlg_event_info.py:258
+#: dlg_event_info.py:273
 msgid "Event fix registration"
 msgstr "Регистрация закрытия события"
 
-#: dlg_event_info.py:260
+#: dlg_event_info.py:275
 msgid "Coaches"
 msgstr "Преподаватели"
 
-#: dlg_login.py:18 manager.py:274
+#: dlg_login.py:18 manager.py:329
 msgid "Login"
 msgstr "Логин"
 
@@ -452,145 +461,161 @@ msgstr "Ожидался словарь, но получен %s"
 msgid "Key \"%s\" does not exists. Check dictionary."
 msgstr "Ключ \"%s\" не существует. Проверьте словарь."
 
-#: library.py:136
+#: library.py:137
 msgid "Categories of Rent"
 msgstr "Категории аренды"
 
+#: manager.py:45
+msgid "File"
+msgstr "Файл"
+
+#: manager.py:46
+msgid "Log in"
+msgstr "Подключить"
+
+#: manager.py:46
+msgid "Start user session."
+msgstr "Начать пользовательскую сессию"
+
+#: manager.py:47
+msgid "Log out"
+msgstr "Отключить"
+
+#: manager.py:47
+msgid "End user session."
+msgstr "Завершить пользовательскую сессию"
+
+#: manager.py:49
+msgid "Application settings"
+msgstr "Настройки приложения"
+
+#: manager.py:49
+msgid "Manage the application settings."
+msgstr "Управление настройками приложения."
+
+#: manager.py:51
+msgid "Exit"
+msgstr "Выход"
+
+#: manager.py:51
+msgid "Close the application."
+msgstr "Закрыть приложение"
+
+#: manager.py:54
+msgid "Client"
+msgstr "Клиент"
+
+#: manager.py:55 manager.py:61
+msgid "New"
+msgstr "Новый"
+
+#: manager.py:55
+msgid "Register new client."
+msgstr "Регистрация нового клиента."
+
+#: manager.py:56
+msgid "Search by RFID"
+msgstr "Поиск по RFID"
+
+#: manager.py:56
+msgid "Search a client with its RFID card."
+msgstr "Поиск клиента по его RFID метке."
+
+#: manager.py:57 manager.py:62
+msgid "Search by name"
+msgstr "Поиск по имени"
+
+#: manager.py:57
+msgid "Search a client with its name."
+msgstr "Найти клиента по его имени."
+
+#: manager.py:61
+msgid "Register new renter."
+msgstr "Регистрация нового арендатора."
+
+#: manager.py:62
+msgid "Search a renter with its name."
+msgstr "Найти арендатора по его имени."
+
 #: manager.py:65
+msgid "Help"
+msgstr "Помощь"
+
+#: manager.py:66
+msgid "About"
+msgstr "О приложении"
+
+#: manager.py:66
+msgid "About application dialog."
+msgstr "Информационный диалог приложения"
+
+#: manager.py:99
 msgid "Manager's interface"
 msgstr "Интерфейс менеджера"
 
-#: manager.py:67 printer.py:72
+#: manager.py:101 printer.py:81
 msgid "Ready"
 msgstr "Готовность"
 
-#: manager.py:79 manager.py:314
+#: manager.py:113 manager.py:369
 msgid "Login to start session"
 msgstr "Зарегистрируйтесь для начала сессии"
 
-#: manager.py:90
+#: manager.py:124
 msgid "Static info"
 msgstr "Статическая информация"
 
-#: manager.py:117
+#: manager.py:151
 msgid "Printer is ready"
 msgstr "Принтер готов"
 
-#: manager.py:119
+#: manager.py:153
 msgid "Printer is not ready"
 msgstr "Принтер не готов"
 
-#: manager.py:127
+#: manager.py:161
 #, python-format
 msgid "Filter: Room \"%s\" is changed its state"
 msgstr "Фильтрация: Зал \"%s\" изменил своё состояние"
 
-#: manager.py:137
+#: manager.py:171
 msgid "<<"
 msgstr "<<"
 
-#: manager.py:138
+#: manager.py:172
 msgid ">>"
 msgstr ">>"
 
-#: manager.py:139
+#: manager.py:173
 msgid "Today"
 msgstr "Сегодня"
 
-#: manager.py:160
+#: manager.py:194
 msgid "Week:"
 msgstr "Неделя:"
 
-#: manager.py:197 manager.py:227 manager.py:245
-msgid "File"
-msgstr "Файл"
-
-#: manager.py:198
-msgid "Log in"
-msgstr "Подключить"
-
-#: manager.py:198
-msgid "Start user session."
-msgstr "Начать пользовательскую сессию"
-
-#: manager.py:199
-msgid "Log out"
-msgstr "Отключить"
-
-#: manager.py:199
-msgid "End user session."
-msgstr "Завершить пользовательскую сессию"
-
-#: manager.py:201
-msgid "Application settings"
-msgstr "Настройки приложения"
-
-#: manager.py:201
-msgid "Manage the application settings."
-msgstr "Управление настройками приложения."
-
-#: manager.py:203
-msgid "Exit"
-msgstr "Выход"
-
-#: manager.py:203
-msgid "Close the application."
-msgstr "Закрыть приложение"
-
-#: manager.py:206
-msgid "Client"
-msgstr "Клиент"
-
-#: manager.py:207 manager.py:213
-msgid "New"
-msgstr "Новый"
-
-#: manager.py:207
-msgid "Register new client."
-msgstr "Регистрация нового клиента."
-
-#: manager.py:208
-msgid "Search by RFID"
-msgstr "Поиск по RFID"
-
-#: manager.py:208
-msgid "Search a client with its RFID card."
-msgstr "Поиск клиента по его RFID метке."
-
-#: manager.py:209 manager.py:214
-msgid "Search by name"
-msgstr "Поиск по имени"
-
-#: manager.py:209
-msgid "Search a client with its name."
-msgstr "Найти клиента по его имени."
-
-#: manager.py:213
-msgid "Register new renter."
-msgstr "Регистрация нового арендатора."
-
-#: manager.py:214
-msgid "Search a renter with its name."
-msgstr "Найти арендатора по его имени."
-
-#: manager.py:274
+#: manager.py:329
 #, python-format
 msgid "Unable to login: %s"
 msgstr "Не могу авторизоваться: %s"
 
-#: manager.py:309
+#: manager.py:364
 msgid "Login failed"
 msgstr "Логин не прошёл"
 
-#: manager.py:310
+#: manager.py:365
 msgid "It seems you've entered wrong login/password."
 msgstr "Кажется, вы ввели неправильный логин/пароль."
 
-#: manager.py:419
+#: manager.py:465
+msgid "About application dialog"
+msgstr "Информационный диалог приложения"
+
+#: manager.py:484
 msgid "Waiting for update."
 msgstr "Ожидаем обновление."
 
-#: manager.py:463
+#: manager.py:528
 msgid "The week has been copied sucessfully."
 msgstr "Неделя была скопирована успешно."
 
@@ -638,7 +663,7 @@ msgstr "Закройте крышку"
 msgid "No ribbon"
 msgstr "Нет ленты"
 
-#: printer.py:85 printer.py:96
+#: printer.py:94 printer.py:105
 msgid "No device"
 msgstr "Нет устройства"
 
@@ -670,31 +695,31 @@ msgstr "Неизвестно"
 msgid "Hours"
 msgstr "Часы"
 
-#: settings.py:37
+#: settings.py:38
 msgid "Monday"
 msgstr "Понедельник"
 
-#: settings.py:37
+#: settings.py:38
 msgid "Tuesday"
 msgstr "Вторник"
 
-#: settings.py:38
+#: settings.py:39
 msgid "Wednesday"
 msgstr "Среда"
 
-#: settings.py:38
+#: settings.py:39
 msgid "Thursday"
 msgstr "Четверг"
 
-#: settings.py:39
+#: settings.py:40
 msgid "Friday"
 msgstr "Пятница"
 
-#: settings.py:39
+#: settings.py:40
 msgid "Saturday"
 msgstr "Суббота"
 
-#: settings.py:40
+#: settings.py:41
 msgid "Sunday"
 msgstr "Воскресенье"
 
