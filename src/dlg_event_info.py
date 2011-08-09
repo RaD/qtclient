@@ -196,6 +196,9 @@ class EventInfo(UiDlgTemplate):
                 visit_uuid = response.get('uuid')
                 self.print_label(visit_uuid)
                 return True
+            elif u'DUPLICATE_ENTRY' == status:
+                QMessageBox.warning(self, title,
+                                    _('The client is already registered for this event.'))
             else:
                 QMessageBox.warning(self, title,
                                     _('Unable to register!\nStatus: %s') % status)
