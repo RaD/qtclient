@@ -79,6 +79,8 @@ class MainWindow(QMainWindow):
         self.tree = []
         self.rfid_id = None
 
+        self.params.init_settings(obj=QSettings(), main_window=self)
+
         self.params.logged_in = False
         self.params.http = Http(self)
         self.params.work_hours = (8, 24)
@@ -143,8 +145,8 @@ class MainWindow(QMainWindow):
                 self.connect(buttonFilter, SIGNAL('clicked()'),
                              self.prepare_filter(uu_id, title))
 
-    def printer_init(self, template):
-        self.params.printer = Printer(template=template)
+    def printer_init(self):
+        self.params.printer = Printer(template=self.params.static.get('printer'))
         run_it = True
         def show_printer_status():
             ok, tip = self.params.printer.get_status()
@@ -360,7 +362,7 @@ class MainWindow(QMainWindow):
                 from settings import SCHEDULE_REFRESH_TIMEOUT
                 self.refreshTimer = self.makeTimer(self.refresh_data, SCHEDULE_REFRESH_TIMEOUT, True)
 
-                self.printer_init(template=self.params.static.get('printer'))
+                self.printer_init()
                 self.interface_disable(MENU_LOGGED_IN | MENU_RFID | MENU_PRINTER)
             else:
                 QMessageBox.warning(self, _('Login failed'),

@@ -18,7 +18,7 @@
     <rect>
      <x>9</x>
      <y>19</y>
-     <width>394</width>
+     <width>451</width>
      <height>271</height>
     </rect>
    </property>
@@ -72,17 +72,36 @@
      </layout>
     </item>
     <item>
-     <spacer name="verticalSpacer">
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
+     <widget class="QLabel" name="label_4">
+      <property name="text">
+       <string>Управление отладкой (для разработчиков):</string>
       </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>20</width>
-        <height>40</height>
-       </size>
-      </property>
-     </spacer>
+     </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="debugLayout">
+      <item>
+       <widget class="QCheckBox" name="debug_app">
+        <property name="text">
+         <string>Приложение</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="debug_reader">
+        <property name="text">
+         <string>Считыватель</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="debug_printer">
+        <property name="text">
+         <string>Принтер</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>

@@ -84,9 +84,11 @@ class ParamStorage(object):
     __metaclass__ = Singleton
 
     version = VERSION
+    main_window = None
     rooms = {}
     static = None
     http = None
+    settings = None
 
     yesterday = datetime.now() - timedelta(days=1)
     cache_timeout = timedelta(minutes=15)
@@ -95,9 +97,19 @@ class ParamStorage(object):
     def __init__(self, *args, **kwargs):
         LOG_FILENAME = os.path.expanduser('~/advisor-client.debug.log')
         logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
+    def init_settings(self, *args, **kwargs):
+        self.settings = kwargs.get('obj')
+        self.main_window = kwargs.get('main_window')
 
     def debug(self, msg):
         logging.debug(msg)
+
+    def app_config(self, *args, **kwargs):
+        key = kwargs.get('key')
+        if self.main_window and key:
+            return self.settings.value(key).toPyObject()
+        else:
+            return None
 
     def dict_tuple(self, dictionary, key_list):
         """ Метод для конвертации словаря в кортеж по указанному

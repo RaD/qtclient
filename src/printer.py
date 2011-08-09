@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 # (c) 2009-2011 Ruslan Popov <ruslan.popov@gmail.com>
 
-from settings import _, DEBUG, PRINTER_REFRESH_TIMEOUT
-DEBUG_COMMON, DEBUG_RFID, DEBUG_PRINTER = DEBUG
+from settings import _, PRINTER_REFRESH_TIMEOUT
+from library import ParamStorage
 
 import re
 
 class Printer:
 
     device_file = '/dev/usblp0'
+    params = ParamStorage()
     is_ready = False
     error_msg = _('No error')
     refresh_timeout = 1000 # one second
@@ -33,8 +34,9 @@ class Printer:
         self.refresh_timeout = kwargs.get('refresh_timeout', PRINTER_REFRESH_TIMEOUT)
         self.template = kwargs.get('template', '')
 
-        print 'PRINTER FILE'
-        print self.device_file
+        self.DEBUG_PRINTER = 'true' == self.params.app_config(key='General/debug_printer')
+        if self.DEBUG_PRINTER:
+            print 'PRINTER DEVICE is', self.device_file
 
         #if not DEBUG_PRINTER:
         #    self.RESET()
@@ -58,7 +60,7 @@ class Printer:
         error_list = []
 
         #import pdb; pdb.set_trace()
-        if DEBUG_PRINTER:
+        if self.DEBUG_PRINTER:
             out = ['\x02030,0,0,1032,000,0,0,0,000,0,0,0\x03\r\n',
                    '\x02000,0,0,0,0,2,6,0,00000000,1,000\x03\r\n',
                    '\x021234,0\x03\r\n']
@@ -107,7 +109,7 @@ class Printer:
             return None
 
     def hardcopy(self, params):
-        if DEBUG_PRINTER:
+        if self.DEBUG_PRINTER:
             print 'DEBUG_PRINTER'
             import pprint; pprint.pprint(params)
         else:

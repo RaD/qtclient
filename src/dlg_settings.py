@@ -8,17 +8,24 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
 class DlgSettings(QDialog):
+    """
+    Класс диалога настроек приложения.
+    """
 
     def __init__(self, parent=None):
+        """
+        Конструктор диалога.
+        """
         QDialog.__init__(self, parent)
 
         self.parent = parent
 
+        # определяем вкладки диалога
         self.tabWidget = QTabWidget()
         self.tabWidget.addTab(TabGeneral(self), _('General'))
         self.tabWidget.addTab(TabNetwork(self), _('Network'))
         self.tabWidget.addTab(TabPrinter(self), _('Printer'))
-
+        # и их последовательность
         self.tabIndex = ['general', 'network', 'printer']
 
         applyButton = QPushButton(_('Apply'))
@@ -41,41 +48,64 @@ class DlgSettings(QDialog):
 
         self.setWindowTitle(_('Settings'))
 
-        # load settings
+        # подгружаем настройки
         self.settings = QSettings()
         self.loadSettings()
 
     def applyDialog(self):
-        """ Apply settings. """
+        """
+        Метод для применения диалога.
+        """
         self.saveSettings()
         self.accept()
 
     def loadSettings(self):
-        """ Load settings. """
+        """
+        Метод загрузки настроек в диалог.
+        """
         for index in xrange(self.tabWidget.count()):
             tab = self.tabWidget.widget(index)
             tab.loadSettings(self.settings)
 
     def saveSettings(self):
-        """ Save settings. """
+        """
+        Метод сохранения настроек из диалога.
+        """
         for index in xrange(self.tabWidget.count()):
             tab = self.tabWidget.widget(index)
             data = tab.saveSettings(self.settings)
 
 class TabAbstract(QWidget):
+    """
+    Класс абстрактной вкладки диалога.
 
+    Предоставляет методы загрузки и сохранения настроек из вкладок
+    диалога.
+
+    Каждый класс вкладки должен определять атрибут defaults (словарь),
+    в котором описаны поля и их значения по умолчанию.
+    """
     def __init__(self, parent=None):
         self.parent = parent
 
     def saveSettings(self, settings):
+        """
+        Метод сохранения настроек из вкладки диалога.
+        """
         is_changed = False
         settings.beginGroup(self.groupName)
         for name in self.defaults.keys():
             field = getattr(self, name)
+
             if type(field) is QLineEdit:
                 value = field.text()
             elif type(field) is QCheckBox:
                 value = field.isChecked()
+            elif type(field) is QSpinBox:
+                value = field.value()
+            elif type(field) is QToolButton:
+                value = self.borderColor_value.name()
+
             original_value = self.defaults[name]
             if original_value != value:
                 is_changed = True
@@ -84,6 +114,9 @@ class TabAbstract(QWidget):
         return is_changed
 
     def loadSettings(self, settings):
+        """
+        Метод загрузки настроек во вкладку диалога.
+        """
         settings.beginGroup(self.groupName)
         for name in self.defaults.keys():
             field = getattr(self, name)
@@ -98,62 +131,36 @@ class TabAbstract(QWidget):
                 value, ok = raw_value.toInt()
                 if ok:
                     field.setValue(value)
+            elif type(field) is QToolButton:
+                value = raw_value.toString()
+                setattr(self, '%s_value' % name, QColor(value))
+
             # keep for compare when saving
             self.defaults[name] = value
         settings.endGroup()
 
-class TabGeneral(UiDlgTemplate):
-
+class TabGeneral(UiDlgTemplate, TabAbstract):
+    """
+    Класс вкладки "Общие настройки".
+    """
     ui_file = 'uis/dlg_settings_general.ui'
+    groupName = 'general'
+
+    defaults = {
+        'borderWidth': 2,
+        'borderColor': '#ff0000',
+        'debug_app': False,
+        'debug_reader': False,
+        'debug_printer': False,
+        }
 
     def __init__(self, parent):
         UiDlgTemplate.__init__(self, parent)
 
     def setupUi(self):
         UiDlgTemplate.setupUi(self)
-
-        self.groupName = 'general'
-
-        self.defaults = {
-            'borderWidth': 2,
-            'borderColor': '#ff0000',
-            }
-
         self.connect(self.borderColor, SIGNAL('clicked()'), self.getBorderColor)
-
         self.borderWidth.setRange(0, 4)
-
-    def loadSettings(self, settings):
-        settings.beginGroup(self.groupName)
-        for name in self.defaults.keys():
-            field = getattr(self, name)
-            raw_value = settings.value(name, QVariant(self.defaults[name]))
-            if type(field) is QSpinBox:
-                value, ok = raw_value.toInt()
-                if ok:
-                    field.setValue(value)
-            if type(field) is QToolButton:
-                value = raw_value.toString()
-                setattr(self, '%s_value' % name, QColor(value))
-            # keep for compare when saving
-            self.defaults[name] = value
-        settings.endGroup()
-
-    def saveSettings(self, settings):
-        is_changed = False
-        settings.beginGroup(self.groupName)
-        for name in self.defaults.keys():
-            field = getattr(self, name)
-            if type(field) is QSpinBox:
-                value = field.value()
-            elif type(field) is QToolButton:
-                value = self.borderColor_value.name()
-            original_value = self.defaults[name]
-            if original_value != value:
-                is_changed = True
-            settings.setValue(name, QVariant(value))
-        settings.endGroup()
-        return is_changed
 
     def getBorderColor(self):
 
