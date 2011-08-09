@@ -87,7 +87,7 @@ class MainWindow(QMainWindow):
 
         self.menus = []
         self.create_menus(self.menu_desc)
-        self.menu_state(MENU_LOGGED_OUT | MENU_RFID | MENU_PRINTER)
+        self.menu_state(MENU_LOGGED_OUT)
         self.setup_views()
 
         settings = QSettings()
@@ -367,7 +367,8 @@ class MainWindow(QMainWindow):
                                     _('It seems you\'ve entered wrong login/password.'))
 
     def logout(self):
-        self.interface_disable(MENU_LOGGED_OUT | MENU_RFID | MENU_PRINTER)
+        self.params.logged_in = False
+        self.interface_disable(MENU_LOGGED_OUT)
         self.setWindowTitle('%s : %s' % (self.baseTitle, _('Login to start session')))
         self.schedule.model().storage_init()
 
