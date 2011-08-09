@@ -13,8 +13,8 @@ userRoles = {
 }
 
 import gettext
-from os.path import dirname, join
-gettext.bindtextdomain('project', join(dirname(__file__), 'locale'))
+from os.path import abspath, dirname, join
+gettext.bindtextdomain('project', join(abspath(dirname(__file__)), 'locale'))
 gettext.textdomain('project')
 _ = lambda a: unicode(gettext.gettext(a), 'utf8')
 
