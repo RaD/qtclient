@@ -71,6 +71,8 @@ class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         QMainWindow.__init__(self, parent)
 
+        self.setWindowIcon(QIcon('/usr/share/pixmaps/advisor-client.xpm'))
+
         self.mimes = {'team': 'application/x-team-item',
                       'event':  'application/x-calendar-event',
                       }
