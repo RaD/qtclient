@@ -58,8 +58,8 @@ class MainWindow(QMainWindow):
             ]
          ),
         (_('Renter'), [
-            (_('New'), 'Ctrl+M', 'renter_new', _('Register new renter.'), MENU_DISABLED),
-            (_('Search by name'), 'Ctrl+G', 'renter_search_name', _('Search a renter with its name.'), MENU_DISABLED),
+            (_('New'), 'Ctrl+M', 'renter_new', _('Register new renter.'), MENU_LOGGED_IN),
+            (_('Search by name'), 'Ctrl+G', 'renter_search_name', _('Search a renter with its name.'), MENU_LOGGED_IN),
             ]
           ),
         (_('Help'), [
@@ -391,12 +391,31 @@ class MainWindow(QMainWindow):
         self.get_dynamic()
         self.params.http.reconnect()
 
-    def client_new(self):
-        self.dialog = ClientInfo(self)
+    def client_new(self, klass=ClientInfo):
+        self.user_new(klass)
+
+    def renter_new(self, klass=RenterInfo):
+        self.user_new(klass)
+
+    def client_search_name(self, klass=ClientInfo, mode='client'):
+        self.user_search_name(klass, mode)
+
+    def renter_search_name(self, klass=RenterInfo, mode='renter'):
+        self.user_search_name(klass, mode)
+
+    def client_search_rfid(self, klass=ClientInfo, mode='client'):
+        self.user_search_rfid(klass, mode)
+
+    def renter_search_rfid(self, klass=RenterInfo, mode='renter'):
+        return
+        self.user_search_rfid(klass, mode)
+
+    def user_new(self, klass):
+        self.dialog = klass(self)
         self.dialog.setModal(True)
         self.dialog.exec_()
 
-    def client_search_rfid(self):
+    def user_search_rfid(self, klass, mode):
         """
         Метод для поиска клиента по RFID.
         """
@@ -404,11 +423,11 @@ class MainWindow(QMainWindow):
             self.rfid_id = rfid
 
         if self.params.logged_in:
-            dialog = WaitingRFID(self, mode='client', callback=callback)
+            dialog = WaitingRFID(self, mode=mode, callback=callback)
             dialog.setModal(True)
             if QDialog.Accepted == dialog.exec_() and self.rfid_id:
                 h = self.params.http
-                if not h.request('/api/client/%s/' % self.rfid_id, 'GET', force=True):
+                if not h.request('/api/%s/%s/' % (mode, self.rfid_id), 'GET', force=True):
                     QMessageBox.critical(self, _('Client info'), _('Unable to fetch: %s') % h.error_msg)
                     return
                 response = h.parse()
@@ -417,47 +436,27 @@ class MainWindow(QMainWindow):
                     QMessageBox.warning(self, _('Warning'),
                                         _('This RFID belongs to nobody.'))
                 else:
-                    self.dialog = ClientInfo(self)
+                    self.dialog = klass(self)
                     self.dialog.setModal(True)
                     self.dialog.initData(response[0])
                     self.dialog.exec_()
                     del(self.dialog)
                     self.rfid_id = None
 
-    def client_search_name(self):
-
+    def user_search_name(self, klass, mode):
         def callback(user):
             self.user = user
 
         if self.params.logged_in:
-            self.dialog = Searching(self, mode='client')
+            self.dialog = Searching(self, mode=mode)
             self.dialog.setModal(True)
             self.dialog.setCallback(callback)
             if QDialog.Accepted == self.dialog.exec_():
-                self.dialog = ClientInfo(self)
+                self.dialog = klass(self)
                 self.dialog.setModal(True)
                 self.dialog.initData(self.user)
                 self.dialog.exec_()
                 del(self.dialog)
-
-    def renter_new(self):
-        params = { 'http': self.params.http, 'static': self.static, }
-        self.dialog = RenterInfo(self, params)
-        self.dialog.setModal(True)
-        self.dialog.exec_()
-
-    def renter_search_name(self):
-        def callback(user):
-            self.user = user
-
-        self.dialog = Searching(self, mode='renter')
-        self.dialog.setModal(True)
-        self.dialog.setCallback(callback)
-        if QDialog.Accepted == self.dialog.exec_():
-            self.dialog = RenterInfo(self)
-            self.dialog.setModal(True)
-            self.dialog.initData(self.user)
-            self.dialog.exec_()
 
     def help_about(self):
         version = '.'.join(map(str, self.params.version))
