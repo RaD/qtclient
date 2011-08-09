@@ -2,18 +2,14 @@
 # (c) 2009-2011 Ruslan Popov <ruslan.popov@gmail.com>
 
 from settings import _, DEBUG, userRoles
-
+from card_list import CardListModel
+from rent_list import RentListModel
 from dialogs import BreakDialog, WizardDialog, WizardListDlg, WizardSpinDlg, WizardPriceDlg, PaymentDlg
 from dialogs.rfid_wait import WaitingRFID
 
-#from model_sorting import SortClientTeams
-from card_list import CardListModel
-from rent_list import RentListModel
 from dialogs.assign_rent import AssignRent
-from settings import _, userRoles
 from ui_dialog import UiDlgTemplate
-from library import dictlist2dict, filter_dictlist, ParamStorage
-from http import HttpException
+from library import ParamStorage
 
 from datetime import datetime, date, timedelta
 
@@ -21,19 +17,17 @@ import json
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-from PyQt4 import uic
 
 ERR_VOUCHER_PAYMENT = 2101
 
 def str2date(value):
     return datetime.strptime(value, '%Y-%m-%d').date()
 
-class ClientInfo(UiDlgTemplate):
+class BaseUserInfo(UiDlgTemplate):
 
     ui_file = 'uis/dlg_user_info.ui'
     params = ParamStorage()
-    title = _('Client\'s information')
-    card_model = None
+    model = None
     user_id = None # новые записи обозначаются отсутствием идентификатора
     discounts_by_index = {}
     discounts_by_uuid = {}
@@ -44,28 +38,174 @@ class ClientInfo(UiDlgTemplate):
     def __init__(self, parent=None):
         UiDlgTemplate.__init__(self, parent)
 
-    def setupUi(self):
+    def setupUi(self, *args, **kwargs):
         UiDlgTemplate.setupUi(self)
 
         self.tableHistory.setSelectionBehavior(QAbstractItemView.SelectRows)
-
-        self.card_model = CardListModel(self)
-        self.tableHistory.setModel(self.card_model)
         self.tableHistory.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableHistory.customContextMenuRequested.connect(self.context_menu)
 
         # добавляем на диалог все зарегистрированные виды скидок
-        for index, item in enumerate(self.params.static.get('discount_client')):
+        discount_list = kwargs.get('discount', [])
+        for index, item in enumerate(discount_list):
             checkbox = QCheckBox('%(title)s (%(percent)s%%)' % item)
             self.discounts_by_index[index] = (checkbox, item)
             self.discounts_by_uuid[item.get('uuid')] = (checkbox, item)
             self.discountLayout.addWidget(checkbox)
         self.discountLayout.addStretch(10)
 
-        self.connect(self.buttonAssign, SIGNAL('clicked()'), self.assign_voucher)
-        self.connect(self.buttonRFID,   SIGNAL('clicked()'), self.assignRFID)
-        self.connect(self.buttonSave,  SIGNAL('clicked()'), self.saveDialog)
+        self.connect(self.buttonAssign, SIGNAL('clicked()'), self.assign_item)
+        self.connect(self.buttonRFID,   SIGNAL('clicked()'), self.assign_rfid)
+        self.connect(self.buttonSave,  SIGNAL('clicked()'), self.save_dialog)
         self.connect(self.buttonClose,  SIGNAL('clicked()'), self, SLOT('reject()'))
+
+    def context_menu(self, position):
+        raise RuntimeWarning('Reimplement method: context_menu().')
+
+    def assign_rfid(self):
+        """
+        Метод для назначения пользователю RFID идентификатора.
+        """
+        def callback(rfid):
+            self.rfid_code = rfid
+
+        dialog = WaitingRFID(self, mode='client', callback=callback)
+        dialog.setModal(True)
+        dlgStatus = dialog.exec_()
+
+        if QDialog.Accepted == dlgStatus:
+            http = self.params.http
+            if not http.request('/api/rfid/%s/' % self.rfid_code, 'POST'):
+                QMessageBox.critical(self, _('Client info'), _('Unable to fetch: %s') % http.error_msg)
+                return
+            status, response = http.piston()
+            if status == 'DUPLICATE_ENTRY':
+                QMessageBox.warning(self, _('Warning'), _('This RFID is used already!'))
+            elif status == 'CREATED':
+                self.rfid_uuid = response.get('uuid')
+                self.buttonRFID.setText(self.rfid_code)
+                self.buttonRFID.setDisabled(True)
+
+    def assign_item(self):
+        raise RuntimeWarning('Reimplement method: assign_item().')
+
+    def save_user(self, *args, **kwargs):
+        """
+        Метод для сохранения информации о пользователе.
+
+        @rtype: boolean
+        @return: Результат выполнения операции.
+        """
+        mode = kwargs.get('mode', 'client')
+        data = [
+            ('uuid', self.user_id),
+            ('is_active', True), # статусом надо управлять на диалоге
+            ('last_name', self.editLastName.text().toUtf8()),
+            ('first_name', self.editFirstName.text().toUtf8()),
+            ('phone', self.editPhone.text().toUtf8()),
+            ('email', self.editEmail.text().toUtf8()),
+            ('birth_date', self.dateBirth.date().toPyDate()),
+            ('rfid', self.rfid_uuid or u''),
+            ]
+
+        # соберём информацию о скидках клиента, сохраняем
+        # идентификаторы установленных скидок
+        data += [ ('discount', i) for i,(o, desc) in self.discounts_by_uuid.items() if o.checkState() == Qt.Checked]
+
+        # передаём на сервер
+        http = self.params.http
+        if not http.request('/api/%s/' % mode,
+                            self.user_id is None and 'POST' or 'PUT',
+                            data):
+            QMessageBox.critical(self, _('Saving User'), _('Unable to save: %s') % http.error_msg)
+            return False
+        status, response = http.piston()
+        if status == 'ALL_OK':
+            self.user_id = response.get('uuid')
+            return True
+        else:
+            return False
+
+class RenterInfo(BaseUserInfo):
+
+    title = _('Renter\'s information')
+
+    def setupUi(self):
+        super(RenterInfo, self).setupUi(discount=self.params.static.get('discount_renter'))
+        self.model = RentListModel(self)
+        self.tableHistory.setModel(self.model)
+
+    def context_menu(self, position):
+        """
+        Метод для регистрации контекстного меню.
+        """
+        index = self.tableHistory.indexAt(position)
+        model = index.model()
+        menu = QMenu()
+
+    def initData(self, data={}):
+        # новые записи обозначаются нулевым идентификатором
+        self.user_id = data.get('id', '0')
+
+        # Определение подсказок
+        meta = [('last_name', self.editLastName),
+                ('first_name', self.editFirstName),
+                ('email', self.editEmail),
+                ('phone', self.editPhone),
+                ]
+        for key, obj in meta:
+            text = data.get(key, '')
+            obj.setText(text)
+            obj.setToolTip(text)
+
+        for i in data.get('discount'):
+            item, desc = self.discounts[i['id']]
+            item.setCheckState(Qt.Checked)
+
+        birth_date = data.get('birth_date') # it could be none while testing
+        self.dateBirth.setDate(birth_date and str2date(birth_date) or \
+                               QDate.currentDate())
+
+        # заполняем список зарегистрированных аренд
+        self.tableHistory.model().init_data(data.get('activity_list', []))
+
+    def assign_rent(self):
+        """ Метод отображает диалог регистрации аренды. """
+
+        # определяем обработчик результатов диалога
+        def handle(info):
+            errors = []
+            for k,v in info.items():
+                if type(v) is str and len(v) == 0:
+                    errors.append(k)
+            if len(errors) > 0:
+                msg = '%s\n%s' % ( _('Check the following fields:'), ', '.join(errors) )
+                QMessageBox.warning(self, _('Assign Rent'), msg)
+                return False
+            else:
+                self.tableHistory.model().insert_new(info)
+                return True
+
+        dialog = AssignRent(self, handle)
+        dialog.setModal(True)
+        dialog.init_data( {'rent_item_list': [], } )
+        dialog.exec_()
+
+    def save_dialog(self):
+        """ Save user settings. """
+        if self.save_user(mode='renter'):
+            self.buttonAssign.setDisabled(False)
+        else:
+            QMessageBox.warning(self, _('Warning'), _('Please fill all fields.'))
+
+class ClientInfo(BaseUserInfo):
+
+    title = _('Client\'s information')
+
+    def setupUi(self):
+        super(ClientInfo, self).setupUi(discount=self.params.static.get('discount_client'))
+        self.model = CardListModel(self)
+        self.tableHistory.setModel(self.model)
 
     def context_menu(self, position):
         """ Create context menu."""
@@ -135,6 +275,14 @@ class ClientInfo(UiDlgTemplate):
 
         # заполняем список приобретённых ваучеров
         self.tableHistory.model().init_data( data.get('voucher_list') )
+
+    def save_dialog(self):
+        """
+        Метод для сохранения информации Save user settings. """
+        if self.save_user(mode='client'):
+            self.buttonAssign.setDisabled(False)
+        else:
+            QMessageBox.warning(self, _('Warning'), _('Please fill all fields.'))
 
     def voucher_payment_add(self, index, initial_value=0.00):
         """ Show price dialog and register payment. """
@@ -251,27 +399,6 @@ class ClientInfo(UiDlgTemplate):
             else:
                 QMessageBox.critical(self, title, _('Could not cancel this voucher!'))
 
-    def assignRFID(self):
-        def callback(rfid):
-            self.rfid_code = rfid
-
-        dialog = WaitingRFID(self, mode='client', callback=callback)
-        dialog.setModal(True)
-        dlgStatus = dialog.exec_()
-
-        if QDialog.Accepted == dlgStatus:
-            http = self.params.http
-            if not http.request('/api/rfid/%s/' % self.rfid_code, 'POST'):
-                QMessageBox.critical(self, _('Client info'), _('Unable to fetch: %s') % http.error_msg)
-                return
-            status, response = http.piston()
-            if status == 'DUPLICATE_ENTRY':
-                QMessageBox.warning(self, _('Warning'), _('This RFID is used already!'))
-            elif status == 'CREATED':
-                self.rfid_uuid = response.get('uuid')
-                self.buttonRFID.setText(self.rfid_code)
-                self.buttonRFID.setDisabled(True)
-
     def wizard_dialog(self, dtype, title, data_to_fill, desc=None):
         self.wizard_data = None
 
@@ -329,7 +456,7 @@ class ClientInfo(UiDlgTemplate):
             card_list.append(item)
         return card_list
 
-    def assign_voucher(self):
+    def assign_item(self):
         """ Общий метод для добавления ваучера клиенту. Далее, в
         зависимости от выбора менеджера, происходит вызов нужного
         функционала."""
@@ -557,174 +684,3 @@ class ClientInfo(UiDlgTemplate):
             uuid_list.append(tmp_uuid)
         return percent, uuid_list
 
-    def saveDialog(self):
-        """ Save user settings. """
-        if self.send_to_server():
-            self.buttonAssign.setDisabled(False)
-        else:
-            QMessageBox.warning(self, _('Warning'), _('Please fill all fields.'))
-
-    def send_to_server(self):
-        """
-        Метод для сохранения информации о клиенте.
-
-        @rtype: boolean
-        @return: Результат выполнения операции.
-        """
-        data = [
-            ('uuid', self.user_id),
-            ('is_active', True), # статусом надо управлять на диалоге
-            ('last_name', self.editLastName.text().toUtf8()),
-            ('first_name', self.editFirstName.text().toUtf8()),
-            ('phone', self.editPhone.text().toUtf8()),
-            ('email', self.editEmail.text().toUtf8()),
-            ('birth_date', self.dateBirth.date().toPyDate()),
-            ('rfid', self.rfid_uuid or u''),
-            ]
-
-        # соберём информацию о скидках клиента, сохраняем
-        # идентификаторы установленных скидок
-        [ data.append( ('discount', i) ) for i,(o, desc) in self.discounts_by_uuid.items() if o.checkState() == Qt.Checked]
-
-        # DEPRECATED
-        # собираем данные о ваучерах
-        # data += self.tableHistory.model().get_model_as_formset()
-
-        # передаём на сервер
-        http = self.params.http
-        if not http.request('/api/client/', self.user_id is None and 'POST' or 'PUT', data):
-            QMessageBox.critical(self, _('Save info'), _('Unable to save: %s') % http.error_msg)
-            return False
-        status, response = http.piston()
-        if status == 'ALL_OK':
-            self.user_id = response.get('uuid')
-            return True
-        else:
-            return False
-
-class RenterInfo(UiDlgTemplate):
-
-    ui_file = 'uis/dlg_user_info.ui'
-    params = None
-    title = _('Renter\'s information')
-    rent_model = None
-    user_id = u'0'
-
-    def __init__(self, parent=None):
-        self.params = ParamStorage()
-        UiDlgTemplate.__init__(self, parent)
-
-    def setupUi(self):
-        UiDlgTemplate.setupUi(self)
-
-        self.tableHistory.setSelectionBehavior(QAbstractItemView.SelectRows)
-
-        self.rent_model = RentListModel(self)
-        self.tableHistory.setModel(self.rent_model)
-        #self.tableHistory.setContextMenuPolicy(Qt.CustomContextMenu)
-        #self.tableHistory.customContextMenuRequested.connect(self.context_menu)
-
-        # # добавляем на диалог все зарегистрированные виды скидок
-        # for discount in self.static.get('discount_client', None): # see params
-        #     item = QCheckBox('%(title)s (%(percent)s%%)' % discount)
-        #     self.discounts[int(discount['id'])] = (item, discount)
-        #     self.discountLayout.addWidget(item)
-        # self.discountLayout.addStretch(10)
-
-        self.buttonAssign.setText(_('Assign a rent'))
-        self.connect(self.buttonAssign, SIGNAL('clicked()'), self.assign_rent)
-        self.connect(self.buttonApply,  SIGNAL('clicked()'), self.apply_dialog)
-        self.connect(self.buttonClose,  SIGNAL('clicked()'), self, SLOT('reject()'))
-
-        self.buttonRFID.setDisabled(True)
-
-    def initData(self, data={}):
-        # новые записи обозначаются нулевым идентификатором
-        self.user_id = data.get('id', '0')
-
-        # Определение подсказок
-        meta = [('last_name', self.editLastName),
-                ('first_name', self.editFirstName),
-                ('email', self.editEmail),
-                ('phone', self.editPhone),
-                ]
-        for key, obj in meta:
-            text = data.get(key, '')
-            obj.setText(text)
-            obj.setToolTip(text)
-
-        for i in data.get('discount'):
-            item, desc = self.discounts[i['id']]
-            item.setCheckState(Qt.Checked)
-
-        birth_date = data.get('birth_date') # it could be none while testing
-        self.dateBirth.setDate(birth_date and str2date(birth_date) or \
-                               QDate.currentDate())
-
-        # заполняем список зарегистрированных аренд
-        self.tableHistory.model().init_data(data.get('activity_list', []))
-
-    def assign_rent(self):
-        """ Метод отображает диалог регистрации аренды. """
-
-        # определяем обработчик результатов диалога
-        def handle(info):
-            errors = []
-            for k,v in info.items():
-                if type(v) is str and len(v) == 0:
-                    errors.append(k)
-            if len(errors) > 0:
-                msg = '%s\n%s' % ( _('Check the following fields:'), ', '.join(errors) )
-                QMessageBox.warning(self, _('Assign Rent'), msg)
-                return False
-            else:
-                self.tableHistory.model().insert_new(info)
-                return True
-
-        dialog = AssignRent(self, handle)
-        dialog.setModal(True)
-        dialog.init_data( {'rent_item_list': [], } )
-        dialog.exec_()
-
-    def apply_dialog(self):
-        userinfo = {
-            'last_name': self.editLastName.text().toUtf8(),
-            'first_name': self.editFirstName.text().toUtf8(),
-            'phone': self.editPhone.text().toUtf8(),
-            'email': self.editEmail.text().toUtf8(),
-            }
-        if self.save_settings(userinfo):
-            self.accept()
-
-    def save_settings(self, userinfo):
-        """ Метод для сохранения информации об арендаторе и его
-        заказах."""
-
-        default_response = None
-
-        # сохраняем информацию об арендаторе
-        params = { 'user_id': self.user_id, 'discounts': json.dumps( [] ) }
-        params.update(userinfo)
-        try:
-            response = self.params.http.request_full('/manager/set_renter_info/', params)
-        except HttpException, e:
-            QMessageBox.critical(self, _('Save info'), _('Unable to save: %s') % e)
-            return False
-        else:
-            user_id = response['saved_id']
-
-        # сохраняем аренды
-        title = _('Save rents')
-        model = self.tableHistory.model()
-        params = model.formset( initial={'user_id': user_id,} )
-        print 'USERINFO:', params
-
-        try:
-            response = self.params.http.request_full('/manager/save_rent_list/', params)
-        except HttpException, e:
-            QMessageBox.critical(self, _('Save info'), _('Unable to save: %s') % e)
-            return False
-        else:
-            print 'RESPONSE', response
-
-        return True
