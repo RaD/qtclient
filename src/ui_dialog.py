@@ -18,6 +18,8 @@ class UiDlgTemplate(QDialog):
         QDialog.__init__(self, parent)
 
         self.parent = parent
+        if not self.ui_file:
+            raise RuntimeError( _('There is no UI file.') )
         uic.loadUi(self.ui_file, self)
         self.setupUi()
 
