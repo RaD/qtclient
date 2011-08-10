@@ -2,7 +2,7 @@
 
 # application launcher
 
-cd /lib/python2.6/site-packages/advisor-client
+cd /usr/share/pyshared/advisor-client
 python manager.pyc
 
 exit $?

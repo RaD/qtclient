@@ -1,4 +1,10 @@
-advisor-client (0.4.1-1ubuntu1) unstable; urgency=low
+advisor-client (0.4.1-1ubuntu2) maverick; urgency=low
+
+  * Small changes in code.
+
+ -- Ruslan Popov <ruslan.popov@gmail.com>  Wed, 10 Aug 2011 17:39:54 +0400
+
+advisor-client (0.4.1-1ubuntu1) maverick; urgency=low
 
   * Initial release.
 
