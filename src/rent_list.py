@@ -11,8 +11,9 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
 class BaseModel(QAbstractTableModel):
-
-    """ Базовая модель."""
+    """
+    Базовая модель.
+    """
 
     # описание модели
     FIELDS = ()
@@ -20,11 +21,10 @@ class BaseModel(QAbstractTableModel):
     storage = []
 
     # синглтон с параметрами приложения
-    params = None
+    params = ParamStorage()
 
     def __init__(self, parent=None):
         QAbstractTableModel.__init__(self, parent)
-        self.params = ParamStorage()
 
     def init_data(self, event_list):
         """ Метод для заполнения модели. """
@@ -104,10 +104,10 @@ class BaseModel(QAbstractTableModel):
         else:
             return QVariant()
 
-class RentPlace(BaseModel):
-
-    """ Модель для представления списка событий из которых состоит
-    аренда."""
+class RentEvent(BaseModel):
+    """
+    Модель для представления списка событий из которых состоит аренда.
+    """
 
     # описание модели
     FIELDS = (_('Week Day'), _('Room'), _('Category'), _('Begin'), _('End'), None)

@@ -6,7 +6,7 @@ from library import ParamStorage
 from ui_dialog import UiDlgTemplate
 from dlg_calendar import DlgCalendar
 from http import Http
-from rent_list import RentPlace
+from rent_list import RentEvent
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -168,7 +168,7 @@ class AssignRent(UiDlgTemplate):
         self.spinPaid.setMaximum(1000000)
 
         # настраиваем отображение событий аренды
-        self.model = RentPlace(self)
+        self.model = RentEvent(self)
         self.tableItems.setModel(self.model)
         self.tableItems.setSelectionBehavior(QAbstractItemView.SelectRows)
 
