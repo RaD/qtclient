@@ -64,13 +64,20 @@ class Searching(UiDlgTemplate):
 
         for index, user in enumerate(user_list):
             self.user_list[index] = user
+
+            name_text = '%(last_name)s %(first_name)s' % user
+            rfid_obj = user.get('rfid')
+            rfid_code = rfid_obj.get('code') if type(rfid_obj) is dict else '--'
+
             lastRow = self.tableUsers.rowCount()
             self.tableUsers.insertRow(lastRow)
-            name = QTableWidgetItem(user['last_name']) # data may assign on cells only, use first one
-            name.setData(GET_ID_ROLE, index)
-            self.tableUsers.setItem(lastRow, 0, name)
-            self.tableUsers.setItem(lastRow, 1, QTableWidgetItem(user['first_name']))
-            self.tableUsers.setItem(lastRow, 2, QTableWidgetItem(user['email']))
+            name_field = QTableWidgetItem(name_text)
+            # данные нельзя назначать на строку, только на ячейку, используем первую
+            name_field.setData(GET_ID_ROLE, index)
+            self.tableUsers.setItem(lastRow, 0, name_field)
+            self.tableUsers.setItem(lastRow, 1, QTableWidgetItem(user['email']))
+            self.tableUsers.setItem(lastRow, 2, QTableWidgetItem(rfid_code))
+            self.tableUsers.setItem(lastRow, 3, QTableWidgetItem(user['registered']))
 
         if len(user_list) > 0:
             self.tableUsers.selectRow(0)

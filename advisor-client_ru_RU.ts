@@ -124,7 +124,7 @@ Please fill all fields.</source>
 <context>
     <name>ClientInfo</name>
     <message>
-        <location filename="src/dialogs/user_info.py" line="292"/>
+        <location filename="src/dialogs/user_info.py" line="286"/>
         <source>Payment</source>
         <translation>Оплата</translation>
     </message>
@@ -134,154 +134,154 @@ Please fill all fields.</source>
         <translation>Продление</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="411"/>
+        <location filename="src/dialogs/user_info.py" line="405"/>
         <source>Cancel</source>
         <translation>Отмена</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="272"/>
+        <location filename="src/dialogs/user_info.py" line="266"/>
         <source>RFID code of this client.</source>
         <translation>Код RFID для этого клиента</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="286"/>
+        <location filename="src/dialogs/user_info.py" line="280"/>
         <source>Register payment</source>
         <translation>Регистрация платежа</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="294"/>
+        <location filename="src/dialogs/user_info.py" line="288"/>
         <source>Apply</source>
         <translation>Применить</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="473"/>
+        <location filename="src/dialogs/user_info.py" line="467"/>
         <source>Error</source>
         <translation>Ошибка</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="322"/>
+        <location filename="src/dialogs/user_info.py" line="316"/>
         <source>Server could not receive that payment.</source>
         <translation>Сервер не может принять данный платёж.</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="322"/>
+        <location filename="src/dialogs/user_info.py" line="316"/>
         <source>Call support team!</source>
         <translation>Звоните в поддержку!</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="332"/>
+        <location filename="src/dialogs/user_info.py" line="326"/>
         <source>Voucher Prolongation</source>
         <translation>Продление ваучера</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="344"/>
+        <location filename="src/dialogs/user_info.py" line="338"/>
         <source>Choose the prolongation date:</source>
         <translation>Выберите дату продления:</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="358"/>
+        <location filename="src/dialogs/user_info.py" line="352"/>
         <source>Voucher has been prolongated sucessfully.</source>
         <translation>Ваучер был успешно продлён.</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="365"/>
+        <location filename="src/dialogs/user_info.py" line="359"/>
         <source>Could not prolongate this voucher!</source>
         <translation>Не могу продлить данный ваучер!</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="371"/>
+        <location filename="src/dialogs/user_info.py" line="365"/>
         <source>Voucher Cancellation</source>
         <translation>Отмена ваучера</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="379"/>
+        <location filename="src/dialogs/user_info.py" line="373"/>
         <source>Are you sure to cancel this voucher?</source>
         <translation>Вы точно желаете отменить данный ваучер?</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="391"/>
+        <location filename="src/dialogs/user_info.py" line="385"/>
         <source>Voucher has been cancelled sucessfully.</source>
         <translation>Ваучер был успешно отменён.</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="397"/>
+        <location filename="src/dialogs/user_info.py" line="391"/>
         <source>Could not cancel this voucher!</source>
         <translation>Не могу отменить данный ваучер!</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="449"/>
+        <location filename="src/dialogs/user_info.py" line="443"/>
         <source>Club Card</source>
         <translation>Клубная карта</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="452"/>
+        <location filename="src/dialogs/user_info.py" line="446"/>
         <source>Promo Card</source>
         <translation>Промо карта</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="462"/>
+        <location filename="src/dialogs/user_info.py" line="456"/>
         <source>Choose the voucher&apos;s type</source>
         <translation>Укажите тип ваучера</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="489"/>
+        <location filename="src/dialogs/user_info.py" line="483"/>
         <source>Save info</source>
         <translation>Сохранение</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="517"/>
+        <location filename="src/dialogs/user_info.py" line="511"/>
         <source>Price Category</source>
         <translation>Ценовая категория</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="529"/>
+        <location filename="src/dialogs/user_info.py" line="523"/>
         <source>Visit Count</source>
         <translation>Количество посещений</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="621"/>
+        <location filename="src/dialogs/user_info.py" line="615"/>
         <source>Paid</source>
         <translation>Оплата</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="591"/>
+        <location filename="src/dialogs/user_info.py" line="585"/>
         <source>Payment range is %(min)0.2f .. %(max)0.2f.</source>
         <translation>Диапазон платежа от %(min)0.2f до %(max)0.2f.</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="612"/>
+        <location filename="src/dialogs/user_info.py" line="606"/>
         <source>Card Type</source>
         <translation>Тип карты</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="653"/>
+        <location filename="src/dialogs/user_info.py" line="647"/>
         <source>Invalid usage. Why do you use count=%i</source>
         <translation>Неправильное использование. Зачем вы используете количество = %i</translation>
     </message>
     <message>
         <location filename="src/dialogs/user_info.py" line="204"/>
         <source>Client Information</source>
-        <translation type="unfinished">Информация о клиенте</translation>
+        <translation>Информация о клиенте</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="312"/>
+        <location filename="src/dialogs/user_info.py" line="306"/>
         <source>Unable to register: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно зарегистрировать: %1</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="352"/>
+        <location filename="src/dialogs/user_info.py" line="346"/>
         <source>Unable to prolongate: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно продлить: %1</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="386"/>
+        <location filename="src/dialogs/user_info.py" line="380"/>
         <source>Unable to cancel: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно отменить: %1</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="489"/>
+        <location filename="src/dialogs/user_info.py" line="483"/>
         <source>Unable to save: %1</source>
-        <translation type="unfinished">Невозможно сохранить: %1</translation>
+        <translation>Невозможно сохранить: %1</translation>
     </message>
 </context>
 <context>
@@ -392,7 +392,7 @@ Please fill all fields.</source>
         <translation>Фамилия</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_user_info.ui" line="59"/>
+        <location filename="src/uis/dlg_searching.ui" line="61"/>
         <source>E-mail</source>
         <translation>Е-почта</translation>
     </message>
@@ -559,67 +559,72 @@ Please fill all fields.</source>
     <message>
         <location filename="src/uis/dlg_login.ui" line="14"/>
         <source>Authentication Dialog</source>
-        <translation type="unfinished"></translation>
+        <translation>Диалог авторизации</translation>
     </message>
     <message>
         <location filename="src/uis/dlg_date.ui" line="17"/>
         <source>Date Dialog</source>
-        <translation type="unfinished"></translation>
+        <translation>Диалог ввода даты</translation>
     </message>
     <message>
         <location filename="src/uis/dlg_rfid_wait.ui" line="14"/>
         <source>Waiting Dialog</source>
-        <translation type="unfinished"></translation>
+        <translation>Ожидание</translation>
     </message>
     <message>
         <location filename="src/uis/dlg_list.ui" line="17"/>
         <source>List Dialog</source>
-        <translation type="unfinished"></translation>
+        <translation>Диалог выбора в списке</translation>
     </message>
     <message>
         <location filename="src/uis/dlg_settings_general.ui" line="14"/>
         <source>General Settings Tab</source>
-        <translation type="unfinished"></translation>
+        <translation>Настройки: Общая вкладка</translation>
     </message>
     <message>
         <location filename="src/uis/dlg_user_info.ui" line="14"/>
         <source>User Information</source>
-        <translation type="unfinished"></translation>
+        <translation>Информация о пользователе</translation>
     </message>
     <message>
         <location filename="src/uis/dlg_price.ui" line="17"/>
         <source>Price Dialog</source>
-        <translation type="unfinished"></translation>
+        <translation>Диалог ввода цены</translation>
     </message>
     <message>
         <location filename="src/uis/dlg_event_coaches.ui" line="14"/>
         <source>Coaches Dialog</source>
-        <translation type="unfinished"></translation>
+        <translation>Диалог со списком преподавателей</translation>
     </message>
     <message>
         <location filename="src/uis/dlg_settings_printer.ui" line="14"/>
         <source>Printer Settings Tab</source>
-        <translation type="unfinished"></translation>
+        <translation>Настройки: Вкладка принтера</translation>
     </message>
     <message>
         <location filename="src/uis/dlg_searching.ui" line="14"/>
         <source>Search Dialog</source>
-        <translation type="unfinished"></translation>
+        <translation>Диалог поиска</translation>
     </message>
     <message>
         <location filename="src/uis/dlg_event_visitors.ui" line="14"/>
         <source>Visitors Dialog</source>
-        <translation type="unfinished"></translation>
+        <translation>Диалог посетителей</translation>
     </message>
     <message>
         <location filename="src/uis/dlg_spin.ui" line="17"/>
         <source>Number Dialog</source>
-        <translation type="unfinished"></translation>
+        <translation>Диалог ввода цифр</translation>
     </message>
     <message>
         <location filename="src/uis/dlg_datetime.ui" line="17"/>
         <source>DateTime Dialog</source>
-        <translation type="unfinished"></translation>
+        <translation>Диалог ввода даты и времени</translation>
+    </message>
+    <message>
+        <location filename="src/uis/dlg_searching.ui" line="56"/>
+        <source>Name</source>
+        <translation>Имя</translation>
     </message>
 </context>
 <context>
@@ -1732,7 +1737,7 @@ Status: %s</source>
     <message>
         <location filename="src/uis/dlg_event_info.ui" line="201"/>
         <source>Remove</source>
-        <translation type="unfinished"></translation>
+        <translation>Удалить</translation>
     </message>
     <message>
         <location filename="src/uis/dlg_event_info.ui" line="221"/>

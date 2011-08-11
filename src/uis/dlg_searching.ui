@@ -53,12 +53,12 @@
       </attribute>
       <column>
        <property name="text">
-        <string>Last name</string>
+        <string>Name</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>First name</string>
+        <string>E-mail</string>
        </property>
       </column>
       <column>
