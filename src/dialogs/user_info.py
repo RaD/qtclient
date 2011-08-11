@@ -113,17 +113,20 @@ class BaseUserInfo(UiDlgTemplate):
         data += [ ('discount', i) for i,(o, desc) in self.discounts_by_uuid.items() if o.checkState() == Qt.Checked]
 
         # передаём на сервер
+        dialog_title = self.tr('Saving')
         http = self.params.http
         if not http.request('/api/%s/' % mode,
                             self.user_id is None and 'POST' or 'PUT',
                             data):
-            QMessageBox.critical(self, self.tr('Saving User'), self.tr('Unable to save: %1').arg(http.error_msg))
+            QMessageBox.critical(self, dialog_title, self.tr('Unable to save: %1').arg(http.error_msg))
             return False
         status, response = http.piston()
         if status == 'ALL_OK':
             self.user_id = response.get('uuid')
+            QMessageBox.information(self, dialog_title, self.tr('Information is saved.'))
             return True
         else:
+            QMessageBox.warning(self, dialog_title, self.tr('Warning!\nPlease fill all fields.'))
             return False
 
 class RenterInfo(BaseUserInfo):
@@ -194,8 +197,6 @@ class RenterInfo(BaseUserInfo):
         """ Save user settings. """
         if self.save_user(mode='renter'):
             self.buttonAssign.setDisabled(False)
-        else:
-            QMessageBox.warning(self, self.tr('Warning'), self.tr('Please fill all fields.'))
 
 class ClientInfo(BaseUserInfo):
 
@@ -279,8 +280,6 @@ class ClientInfo(BaseUserInfo):
         Метод для сохранения информации Save user settings. """
         if self.save_user(mode='client'):
             self.buttonAssign.setDisabled(False)
-        else:
-            QMessageBox.warning(self, self.tr('Warning'), self.tr('Please fill all fields.'))
 
     def voucher_payment_add(self, index, initial_value=0.00):
         """ Show price dialog and register payment. """
