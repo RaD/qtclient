@@ -1,4 +1,4 @@
-TRANSLATIONS = project_ru.ts
+TRANSLATIONS = advisor-client_ru_RU.ts
 
 SOURCES = src/http.py \
 src/event_storage.py \
