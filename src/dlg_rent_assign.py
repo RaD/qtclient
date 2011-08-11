@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # (c) 2009-2010 Ruslan Popov <ruslan.popov@gmail.com>
 
-from settings import _
-
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
@@ -15,38 +13,38 @@ class DlgRentAssign(QDialog):
         self.setMinimumWidth(600)
 
         self.rentTitle = QLineEdit()
-        labelTitle = QLabel(_('Title'))
+        labelTitle = QLabel(self.tr('Title'))
         labelTitle.setBuddy(self.rentTitle)
 
         self.rentDesc = QTextEdit()
         self.rentDesc.setAcceptRichText(False)
         self.rentDesc.setTabChangesFocus(True)
-        labelDesc = QLabel(_('Description'))
+        labelDesc = QLabel(self.tr('Description'))
         labelDesc.setBuddy(self.rentDesc)
 
         self.rentStatus = QComboBox()
-        for i in [_('Reserved'), _('Paid partially'), _('Paid')]:
+        for i in [self.tr('Reserved'), self.tr('Paid partially'), self.tr('Paid')]:
             self.rentStatus.addItem(i)
-        labelStatus = QLabel(_('Status'))
+        labelStatus = QLabel(self.tr('Status'))
         labelStatus.setBuddy(self.rentStatus)
 
         self.rentPaid = QLineEdit()
         self.rentPaid.setText('0')
-        labelPaid = QLabel(_('Paid'))
+        labelPaid = QLabel(self.tr('Paid'))
         labelPaid.setBuddy(self.rentPaid)
 
         self.rentBegin = QDateEdit()
         current = QDate.currentDate()
         self.rentBegin.setDate(current)
         self.rentBegin.setMinimumDate(current)
-        labelBegin = QLabel(_('Begin'))
+        labelBegin = QLabel(self.tr('Begin'))
         labelBegin.setBuddy(self.rentBegin)
 
         self.rentEnd = QDateEdit()
         current = QDate.currentDate()
         self.rentEnd.setDate(current)
         self.rentEnd.setMinimumDate(current)
-        labelEnd = QLabel(_('End'))
+        labelEnd = QLabel(self.tr('End'))
         labelEnd.setBuddy(self.rentEnd)
 
         groupLayout = QGridLayout()
@@ -66,8 +64,8 @@ class DlgRentAssign(QDialog):
         groupLayout.addWidget(labelEnd, 5, 0)
         groupLayout.addWidget(self.rentEnd, 5, 1)
 
-        self.buttonAssign = QPushButton(_('Assign'))
-        self.buttonCancel = QPushButton(_('Cancel'))
+        self.buttonAssign = QPushButton(self.tr('Assign'))
+        self.buttonCancel = QPushButton(self.tr('Cancel'))
 
         buttonLayout = QHBoxLayout()
         buttonLayout.addStretch(1)
@@ -79,7 +77,7 @@ class DlgRentAssign(QDialog):
         mainLayout.addLayout(buttonLayout)
 
         self.setLayout(mainLayout)
-        self.setWindowTitle(_('Rent registration'))
+        self.setWindowTitle(self.tr('Rent registration'))
         self.setSignals()
 
     def setCallback(self, callback):

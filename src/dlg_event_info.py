@@ -4,7 +4,7 @@
 import time
 from datetime import datetime
 
-from settings import _, DEBUG
+from settings import DEBUG
 from event_storage import Event
 from ui_dialog import UiDlgTemplate
 from dialogs import WizardListDlg
@@ -34,7 +34,6 @@ class EventInfo(UiDlgTemplate):
 
     ui_file = 'uis/dlg_event_info.ui'
     params = ParamStorage()
-    title = _('Event\'s information')
     schedule = None # кэшируем здесь данные от сервера
     event_object = None
     event_index = None
@@ -59,8 +58,6 @@ class EventInfo(UiDlgTemplate):
         """ Use this method to initialize the dialog. """
         self.event_object = obj
         self.event_index = index
-
-        title =  _('Event info')
 
         self.editStyle.setText(self.event_object.styles)
         self.editPriceCategory.setText(self.event_object.category)
@@ -112,12 +109,12 @@ class EventInfo(UiDlgTemplate):
         if QDialog.Accepted == dialog.exec_():
             http = self.params.http
             if not http.request('/api/client/%s/' % self.rfid_id, 'GET', force=True):
-                QMessageBox.critical(self, _('Client info'), _('Unable to fetch: %s') % http.error_msg)
+                QMessageBox.critical(self, self.tr('Client info'), self.tr('Unable to fetch: %s') % http.error_msg)
                 return
             response = http.parse()
 
             if 0 == len(response):
-                QMessageBox.warning(self, _('Warning'), _('This RFID belongs to nobody.'))
+                QMessageBox.warning(self, self.tr('Warning'), self.tr('This RFID belongs to nobody.'))
                 return False
             else:
                 self.last_user_uuid = response[0].get('uuid')
@@ -130,7 +127,7 @@ class EventInfo(UiDlgTemplate):
         def callback(user):
             self.last_user_uuid = user.get('uuid')
 
-        self.dialog = Searching(self, mode='client', apply_title=_('Register'))
+        self.dialog = Searching(self, mode='client', apply_title=self.tr('Register'))
         self.dialog.setModal(True)
         self.dialog.setCallback(callback)
         if QDialog.Accepted == self.dialog.exec_():
@@ -145,14 +142,14 @@ class EventInfo(UiDlgTemplate):
         return u'ALL_OK' == status and response or None
 
     def visit_register(self, user_uuid):
-        title = _('Client Registration')
+        title = self.tr('Client Registration')
         event = self.event_object
         # получаем список подходящих ваучеров
         voucher_list = self.select_voucher_list(client_id=user_uuid, event_id=event.uuid,
                                                 start=event.begin.strftime('%Y%m%d%H%M%S'))
         if not voucher_list or 0 == len(voucher_list):
             QMessageBox.information(self, title,
-                                    _('No voucher for this visit.\n\nBuy one.'))
+                                    self.tr('No voucher for this visit.\n\nBuy one.'))
             return False
 
         # показываем список менеджеру, пусть выбирает
@@ -168,9 +165,9 @@ class EventInfo(UiDlgTemplate):
                 out.append( category.get('title') )
             return ' - '.join(out)
 
-        dialog = WizardListDlg(params={'button_back': _('Cancel'), 'button_next': _('Ok')})
+        dialog = WizardListDlg(params={'button_back': self.tr('Cancel'), 'button_next': self.tr('Ok')})
         dialog.setModal(True)
-        dialog.prefill(_('Choose the Voucher'),
+        dialog.prefill(self.tr('Choose the Voucher'),
                        [(v['uuid'], make_title(v)) for v in voucher_list],
                        callback)
         # ваучер выбран, регистрируем посещение
@@ -183,34 +180,35 @@ class EventInfo(UiDlgTemplate):
                                  'room_uuid': event.room_uuid,
                                  'day': event.begin.strftime('%Y%m%d')}):
                 QMessageBox.warning(self, title, '%s: %i\n\n%s\n\n%s' % (
-                    _('Error'), ERR_EVENT_REGISTERVISIT,
-                    _('Unable to register the visit: %s') % http.error_msg,
-                    _('Call support team!')))
+                    self.tr('Error'), ERR_EVENT_REGISTERVISIT,
+                    self.tr('Unable to register the visit: %s') % http.error_msg,
+                    self.tr('Call support team!')))
                 return False
             status, response = http.piston()
             print status, response
             if u'CREATED' == status:
                 QMessageBox.information(self, title,
-                                        _('The client has been registered for this event.'))
+                                        self.tr('The client has been registered for this event.'))
                 # распечатаем чек
                 visit_uuid = response.get('uuid')
                 self.print_label(visit_uuid)
                 return True
             elif u'DUPLICATE_ENTRY' == status:
                 QMessageBox.warning(self, title,
-                                    _('The client is already registered for this event.'))
+                                    self.tr('The client is already registered for this event.'))
             else:
                 QMessageBox.warning(self, title,
-                                    _('Unable to register!\nStatus: %s') % status)
+                                    self.tr('Unable to register!\nStatus: %s') % status)
         return False
 
-    def print_label(self, visit_uuid, title=_('Print')):
+    def print_label(self, visit_uuid):
+        title=self.tr('Print')
         http = self.params.http
         if not http.request('/api/visit/%s/' % visit_uuid, 'GET', force=True):
             QMessageBox.warning(self, title, '%s: %i\n\n%s\n\n%s' % (
-                _('Error'), ERR_EVENT_PRINTLABEL,
-                _('Unable to prepare label: %s') % http.error_msg,
-                _('Call support team!')))
+                self.tr('Error'), ERR_EVENT_PRINTLABEL,
+                self.tr('Unable to prepare label: %s') % http.error_msg,
+                self.tr('Call support team!')))
             return False
         status, response = http.piston()
         print status, response
@@ -231,13 +229,13 @@ class EventInfo(UiDlgTemplate):
 
     def removeEvent(self):
         reply = QMessageBox.question(
-            self, _('Event remove'),
-            _('Are you sure to remove this event from the calendar?'),
+            self, self.tr('Event remove'),
+            self.tr('Are you sure to remove this event from the calendar?'),
             QMessageBox.Yes, QMessageBox.No)
         if reply == QMessageBox.Yes:
             params = {'id': self.schedule['id']}
             if not self.http.request('/manager/cal_event_del/', params):
-                QMessageBox.critical(self, _('Event deletion'), _('Unable to delete: %s') % self.http.error_msg)
+                QMessageBox.critical(self, self.tr('Event deletion'), self.tr('Unable to delete: %s') % self.http.error_msg)
                 return
             default_response = None
             response = self.http.parse(default_response)
@@ -246,12 +244,12 @@ class EventInfo(UiDlgTemplate):
                 room_id, ok = self.comboRoom.itemData(index).toInt()
                 model = self.parent.schedule.model()
                 model.remove(self.event_object, self.event_index, True)
-                QMessageBox.information(self, _('Event removing'),
-                                        _('Complete.'))
+                QMessageBox.information(self, self.tr('Event removing'),
+                                        self.tr('Complete.'))
                 self.accept()
             else:
-                QMessageBox.information(self, _('Event removing'),
-                                        _('Unable to remove this event!'))
+                QMessageBox.information(self, self.tr('Event removing'),
+                                        self.tr('Unable to remove this event!'))
 
     def fixEvent(self):
         index = self.comboFix.currentIndex()
@@ -260,28 +258,29 @@ class EventInfo(UiDlgTemplate):
         params = {'event_id': self.schedule['id'],
                   'fix_id': fix_id}
         if not self.http.request('/manager/register_fix/', params):
-            QMessageBox.critical(self, _('Register fix'), _('Unable to fix: %s') % self.http.error_msg)
+            QMessageBox.critical(self, self.tr('Register fix'), self.tr('Unable to fix: %s') % self.http.error_msg)
             return
         default_response = None
         response = self.http.parse(default_response)
         if response:
-            message = _('The event has been fixed.')
+            message = self.tr('The event has been fixed.')
 
             self.event_object.set_fixed(fix_id)
             model = self.parent.schedule.model()
             model.change(self.event_object, self.event_index)
             self.buttonFix.setDisabled(True)
         else:
-            message = _('Unable to fix this event.')
-        QMessageBox.information(self, _('Event fix registration'), message)
+            message = self.tr('Unable to fix this event.')
+        QMessageBox.information(self, self.tr('Event fix registration'), message)
 
-    def change_coaches(self, title=_('Coaches')):
+    def change_coaches(self):
         """
         Метод реализует функционал замены преподавателей для события.
         """
+        title=self.tr('Coaches')
         http = self.params.http
         if not http.request('/api/coach/', 'GET'):
-            QMessageBox.critical(self, title, _('Unable to fetch: %s') % http.error_msg)
+            QMessageBox.critical(self, title, self.tr('Unable to fetch: %s') % http.error_msg)
             return
         status, coach_list = http.piston()
         if 'ALL_OK' == status:

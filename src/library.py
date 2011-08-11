@@ -2,7 +2,7 @@
 # (c) 2009-2011 Ruslan Popov <ruslan.popov@gmail.com>
 
 from datetime import datetime, date, timedelta
-from settings import _, DEBUG, userRoles, VERSION
+from settings import DEBUG, userRoles, VERSION
 from http import HttpException
 
 import os, json, pprint
@@ -16,9 +16,9 @@ def dictlist2dict(dictlist, key_field):
     используя указанное поле в качестве ключа."""
     def _convertor(listitem):
         if type(listitem) is not dict:
-            raise ValueError(_('It expexts a dictionary but took %s') % type(key_field))
+            raise ValueError(self.tr('It expects a dictionary but took %1').arg(type(key_field)))
         if key_field not in listitem:
-            raise KeyError(_('Key "%s" does not exists. Check dictionary.') % key_field)
+            raise KeyError(self.tr('Key "%1" does not exists. Check dictionary.').arg(key_field))
 
         result.update( {listitem[key_field]: listitem} )
         return True
@@ -33,9 +33,9 @@ def filter_dictlist(dictlist, key_field, value):
     equals the given value or values."""
     def _search(listitem):
         if type(listitem) is not dict:
-            raise ValueError(_('It expexts a dictionary but took %s') % type(key_field))
+            raise ValueError(self.tr('It expects a dictionary but took %1').arg(type(key_field)))
         if key_field not in listitem:
-            raise KeyError(_('Key "%s" does not exists. Check dictionary.') % key_field)
+            raise KeyError(self.tr('Key "%1" does not exists. Check dictionary.').arg(key_field))
         if type(value) in (list, tuple):
             return listitem[key_field] in value
         else:
@@ -146,8 +146,8 @@ class ParamStorage(object):
                 response = self.http.request_full('/manager/get_all/',
                                                   { 'action': 'category_rent', })
             except HttpException, e:
-                QMessageBox.critical(self, _('Categories of Rent'),
-                                     _('Unable to fetch: %s') % e)
+                QMessageBox.critical(self, self.tr('Categories of Rent'),
+                                     self.tr('Unable to fetch: %1').arg(e))
                 return []
             else:
                 self.cache[KEY] = response['data']

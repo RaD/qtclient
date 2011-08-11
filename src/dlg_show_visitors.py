@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # (c) 2009-2011 Ruslan Popov <ruslan.popov@gmail.com>
 
-from settings import _, userRoles
+from settings import userRoles
 from ui_dialog import UiDlgTemplate
 from library import ParamStorage
 
@@ -14,7 +14,6 @@ class ShowVisitors(UiDlgTemplate):
 
     ui_file = 'uis/dlg_event_visitors.ui'
     params = ParamStorage()
-    title = _('Registered visitors')
     event_uuid = None
 
     def __init__(self, parent=None):
@@ -34,7 +33,7 @@ class ShowVisitors(UiDlgTemplate):
         self.event_uuid = event_uuid
         http = self.params.http
         if not http.request('/api/history/%s/' % self.event_uuid, 'GET', force=True):
-            QMessageBox.critical(self, _('Visitors'), _('Unable to fetch: %s') % http.error_msg)
+            QMessageBox.critical(self, self.tr('Visitors'), self.tr('Unable to fetch: %s') % http.error_msg)
             return
 
         status, response = http.piston()
@@ -61,18 +60,18 @@ class ShowVisitors(UiDlgTemplate):
     def context_menu(self, position):
         """ Create context menu."""
         menu = QMenu()
-        action_reprint = menu.addAction(_('Reprint Selected'))
-        action_cancel = menu.addAction(_('Cancel Selected'))
+        action_reprint = menu.addAction(self.tr('Reprint Selected'))
+        action_cancel = menu.addAction(self.tr('Cancel Selected'))
         action = menu.exec_(self.tableVisitors.mapToGlobal(position))
 
         # choose action
         if action == action_reprint:
             self.reprint()
         elif action == action_cancel:
-            QMessageBox.warning(self, _('Warning'),
-                                _('Not yet implemented!'))
+            QMessageBox.warning(self, self.tr('Warning'),
+                                self.tr('Not yet implemented!'))
         else:
-            print '%s: %s' % (self.__class__, _('Unknown context menu action'))
+            print '%s: %s' % (self.__class__, self.tr('Unknown context menu action'))
 
     def reprint(self):
         selected = self.tableVisitors.selectionModel().selectedRows()
@@ -85,7 +84,7 @@ class ShowVisitors(UiDlgTemplate):
 
     def get_visit_info(self, visit_id):
         if not self.http.request('/manager/reprint_visit/', {'item_id': visit_id}):
-            QMessageBox.critical(self, _('Visit Reprint'), _('Unable to fetch: %s') % self.http.error_msg)
+            QMessageBox.critical(self, self.tr('Visit Reprint'), self.tr('Unable to fetch: %s') % self.http.error_msg)
             return
         default_response = None
         response = self.http.parse(default_response)

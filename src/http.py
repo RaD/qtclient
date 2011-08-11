@@ -9,7 +9,7 @@ from dlg_settings import TabNetwork
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from settings import _, DEBUG, TEST_CREDENTIALS
+from settings import DEBUG, TEST_CREDENTIALS
 DEBUG_COMMON, DEBUG_RFID, DEBUG_PRINTER = DEBUG
 
 class HttpException(Exception):
@@ -122,10 +122,10 @@ class Http:
                     return default
                 return response
         elif self.response.status == 302: # authentication
-            self.error_msg = _('Authenticate yourself.')
+            self.error_msg = self.tr('Authenticate yourself.')
             return default
         elif self.response.status == 500: # error
-            self.error_msg = _('Error 500. Check dump!')
+            self.error_msg = self.tr('Error 500. Check dump!')
             print '='*10, '\nERROR 500\n', '='*10
             print self.response.read()
             with open('./dump.html', 'w') as dump:
@@ -206,10 +206,10 @@ class Http:
                 raise HttpException( '[%(code)s] %(desc)s' % response )
             return response
         elif self.response.status == 302: # authentication
-            raise HttpException( _('Authenticate yourself.') )
+            raise HttpException( self.tr('Authenticate yourself.') )
         elif self.response.status == 500: # error
             open('./dump.html', 'w').write(self.response.read())
-            raise HttpException( _('Error 500. Check dump!') )
+            raise HttpException( self.tr('Error 500. Check dump!') )
         else:
             raise HttpException( '[%s] %s' % (self.response.status, self.response.reason) )
 

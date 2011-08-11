@@ -4,7 +4,6 @@
 import sys, re
 from datetime import datetime, timedelta
 
-from settings import _
 from library import ParamStorage
 from event_storage import EventStorage
 from dlg_settings import TabGeneral
@@ -71,8 +70,8 @@ class QtSchedule(QTableView):
         self.verticalHeader().setStretchLastSection(True)
 
         # Context menu
-        self.ctxMenuExchange = QAction(_('Exchange rooms'), self)
-        self.ctxMenuExchange.setStatusTip(_('Exchange rooms between selected and current events.'))
+        self.ctxMenuExchange = QAction(self.tr('Exchange rooms'), self)
+        self.ctxMenuExchange.setStatusTip(self.tr('Exchange rooms between selected and current events.'))
         self.connect(self.ctxMenuExchange, SIGNAL('triggered()'), self.exchangeRooms)
         self.contextMenu = QMenu(self)
         self.contextMenu.addAction(self.ctxMenuExchange)
@@ -216,9 +215,9 @@ class QtSchedule(QTableView):
             data = self.current_data
             self.current_data = self.selected_data
             self.selected_data = data
-            self.parent.statusBar().showMessage(_('Complete.'))
+            self.parent.statusBar().showMessage(self.tr('Complete.'))
         else:
-            self.parent.statusBar().showMessage(_('Unable to exchange.'))
+            self.parent.statusBar().showMessage(self.tr('Unable to exchange.'))
 
     def mousePressEvent(self, event):
         """ Mouse click handler. Do DnD here. """

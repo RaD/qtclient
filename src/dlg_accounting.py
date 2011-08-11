@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # (c) 2009-2010 Ruslan Popov <ruslan.popov@gmail.com>
 
-from settings import _
 from settings import MODEL_PROPERTIES
 from http import Http
 
@@ -16,7 +15,7 @@ class DlgAccounting(QDialog):
         self.parent = parent
         self.setMinimumWidth(600)
 
-        labels = QStringList([_('Resource'), _('Count'), _('Action')])
+        labels = QStringList([self.tr('Resource'), self.tr('Count'), self.tr('Action')])
 
         self.accounts = QTableWidget(0, 3)
         self.accounts.setHorizontalHeaderLabels(labels)
@@ -25,10 +24,10 @@ class DlgAccounting(QDialog):
         resultLayout = QVBoxLayout()
         resultLayout.addWidget(self.accounts)
 
-        groupList = QGroupBox(_('Resources'))
+        groupList = QGroupBox(self.tr('Resources'))
         groupList.setLayout(resultLayout)
 
-        buttonClose = QPushButton(_('Close'))
+        buttonClose = QPushButton(self.tr('Close'))
 
         self.connect(buttonClose, SIGNAL('clicked()'),
                      self, SLOT('reject()'))
@@ -43,7 +42,7 @@ class DlgAccounting(QDialog):
 
         self.setLayout(self.mainLayout)
 
-        self.setWindowTitle(_('Accounting'))
+        self.setWindowTitle(self.tr('Accounting'))
 
         self.initData()
 
@@ -69,7 +68,7 @@ class DlgAccounting(QDialog):
                 id = lambda: item['id']
                 self.addResource(id())
 
-            button = QPushButton(_('Add'))
+            button = QPushButton(self.tr('Add'))
             self.connect(button, SIGNAL('clicked()'), clicked)
             self.accounts.setCellWidget(lastRow, 2, button)
 
@@ -101,13 +100,13 @@ class DlgResource(QDialog):
         layoutGrid.setColumnStretch(1, 1)
         layoutGrid.setColumnMinimumWidth(1, 250)
 
-        layoutGrid.addWidget(QLabel(_('Count')), 0, 0)
+        layoutGrid.addWidget(QLabel(self.tr('Count')), 0, 0)
         layoutGrid.addWidget(self.count, 0, 1)
-        layoutGrid.addWidget(QLabel(_('Price')), 1, 0)
+        layoutGrid.addWidget(QLabel(self.tr('Price')), 1, 0)
         layoutGrid.addWidget(self.price, 1, 1)
 
-        buttonApplyDialog = QPushButton(_('Apply'))
-        buttonCancelDialog = QPushButton(_('Cancel'))
+        buttonApplyDialog = QPushButton(self.tr('Apply'))
+        buttonCancelDialog = QPushButton(self.tr('Cancel'))
 
         self.connect(buttonApplyDialog, SIGNAL('clicked()'),
                      self.applyDialog)
@@ -124,7 +123,7 @@ class DlgResource(QDialog):
         layout.addLayout(buttonLayout)
 
         self.setLayout(layout)
-        self.setWindowTitle(_('Add resource'))
+        self.setWindowTitle(self.tr('Add resource'))
 
     def setCallback(self, callback):
         self.callback = callback
@@ -134,7 +133,7 @@ class DlgResource(QDialog):
             count = int( self.count.text() )
             price = float( self.price.text() )
         except:
-            QMessageBox.warning(self, _('Warning'), _('Improper values.'))
+            QMessageBox.warning(self, self.tr('Warning'), self.tr('Improper values.'))
             return
         self.callback(count, price)
         self.accept()

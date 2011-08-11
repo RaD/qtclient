@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>User Information</string>
   </property>
   <widget class="QWidget" name="verticalLayoutWidget_2">
    <property name="geometry">

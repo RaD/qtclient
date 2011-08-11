@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # (c) 2009-2010 Ruslan Popov <ruslan.popov@gmail.com>
 
-from settings import _, userRoles
+from settings import userRoles
 from library import ParamStorage
 from ui_dialog import UiDlgTemplate
 
@@ -29,11 +29,6 @@ class Searching(UiDlgTemplate):
     def __init__(self, parent, *args, **kwargs):
 
         self.mode = kwargs.get('mode', 'client')
-        self.apply_title = kwargs.get('apply_title', _('Show'))
-        if self.mode == 'client':
-            self.title = _('Search client')
-        else:
-            self.title = _('Search renter')
         UiDlgTemplate.__init__(self, parent)
 
     def setupUi(self):
@@ -41,7 +36,7 @@ class Searching(UiDlgTemplate):
 
         self.tableUsers.setSelectionBehavior(QAbstractItemView.SelectRows)
 
-        self.buttonApply.setText(self.apply_title)
+        self.buttonApply.setText(self.tr('Show'))
         self.buttonApply.setDisabled(True)
 
         self.connect(self.buttonSearch, SIGNAL('clicked()'), self.searchFor)
@@ -55,7 +50,7 @@ class Searching(UiDlgTemplate):
         name = self.editSearch.text().toUtf8()
         http = self.params.http
         if not http.request('/api/%s/%s/' % (self.mode, name), 'GET', force=True):
-            QMessageBox.critical(self, _('Searching'), _('Unable to search: %s') % http.error_msg)
+            QMessageBox.critical(self, self.tr('Searching'), self.tr('Unable to search: %s') % http.error_msg)
             return
         response = http.parse()
         self.showList(response)

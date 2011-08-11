@@ -3,7 +3,7 @@
 
 import serial, random, time
 
-from settings import _, DEBUG, PORT
+from settings import DEBUG, PORT
 from ui_dialog import UiDlgTemplate
 
 from PyQt4.QtGui import *
@@ -12,18 +12,18 @@ from PyQt4.QtCore import *
 class WaitingRFID(UiDlgTemplate):
 
     ui_file = 'uis/dlg_rfid_wait.ui'
-    title = _('RFID Reader')
     callback = None
 
     def __init__(self, parent, *args, **kwargs):
         UiDlgTemplate.__init__(self, parent)
 
+        self.title = self.tr('RFID Reader')
         self.callback = kwargs.get('callback')
 
     def setupUi(self):
         UiDlgTemplate.setupUi(self)
 
-        self.labelText.setText(_('Put the RFID on the reader'))
+        self.labelText.setText(self.tr('Put the RFID on the reader'))
         self.connect(self.buttonCancel, SIGNAL('clicked()'), self, SLOT('reject()'))
 
         self.reader = ThreadRFID(self)

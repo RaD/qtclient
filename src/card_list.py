@@ -5,20 +5,20 @@ from datetime import datetime, date, time, timedelta
 import json
 
 from library import date2str, dt2str, ParamStorage
-from settings import _, DEBUG, userRoles
+from settings import DEBUG, userRoles
 GET_ID_ROLE = userRoles['getObjectID']
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
 MODEL_MAP_RAW = (
-    ('card', None, _('Type'), unicode, False),
-    ('category', None, _('Category'), unicode, True),
-    ('price', None, _('Price'), float, False),
-    ('begin', None, _('Begin'), date2str, False),
-    ('end', None, _('End'), date2str, False),
-    ('registered', None, _('Register'), dt2str, False),
-    ('cancelled', None, _('Cancel'), dt2str, False),
+    ('card', None, QApplication.translate('card_list', 'Type'), unicode, False),
+    ('category', None, QApplication.translate('card_list', 'Category'), unicode, True),
+    ('price', None, QApplication.translate('card_list', 'Price'), float, False),
+    ('begin', None, QApplication.translate('card_list', 'Begin'), date2str, False),
+    ('end', None, QApplication.translate('card_list', 'End'), date2str, False),
+    ('registered', None, QApplication.translate('card_list', 'Register'), dt2str, False),
+    ('cancelled', None, QApplication.translate('card_list', 'Cancel'), dt2str, False),
     ('uuid', None, 'id', int, False), # идентификатор ваучера
     ('object', None, 'object', None, False), # всё описание ваучера
 )
@@ -300,20 +300,20 @@ class CardListModel(QAbstractTableModel):
             info = self.get_voucher_info(index)
             vtype = info['type']
             if vtype in ('flyer', 'test', 'once',):
-                out.append( info.get('is_utilized') and _('Utilized') or _('Not utilized') )
+                out.append( info.get('is_utilized') and self.tr('Utilized') or self.tr('Not utilized') )
             if vtype in ('abonement', 'club', 'promo'):
                 # при обработке цены, проверяем долг клиента, если он
                 # есть, то показываем это
                 debt, amount = self.is_debt_exist(index)
                 if debt:
-                    out.append( _('debt %.02f') % (amount,) )
+                    out.append( self.tr('debt %.02f') % (amount,) )
             if vtype == 'abonement':
                 # отображаем скидку, если есть
                 if 'discount_price' in info:
                     price = float( info['price'] )
                     discount_price = float( info['discount_price'] )
                     discount_percent = int( info['discount_percent'] )
-                    out.append( _('discount %.02f/%i%%') % (price - discount_price, discount_percent) )
+                    out.append( self.tr('discount %.02f/%i%%') % (price - discount_price, discount_percent) )
                 out.append( 'sold %i' % int( info.get('sold', 0) ))
                 out.append( 'used %i' % int( info.get('used', 0) ))
                 out.append( 'available %i' % int( info.get('available', 0) ))
@@ -361,8 +361,8 @@ class CardList(QTableView):
         #self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
         #self.resizeColumnsToContents()
 
-        self.actionCardCancel = QAction(_('Cancel card'), self)
-        self.actionCardCancel.setStatusTip(_('Cancel current card.'))
+        self.actionCardCancel = QAction(self.tr('Cancel card'), self)
+        self.actionCardCancel.setStatusTip(self.tr('Cancel current card.'))
         self.connect(self.actionCardCancel, SIGNAL('triggered()'), self.cardCancel)
 
         # source model

@@ -22,7 +22,7 @@ from dlg_event_info import EventInfo
 from dlg_calendar import DlgCalendar
 from dlg_accounting import DlgAccounting
 
-from settings import _, DEBUG
+from settings import DEBUG, VERSION
 DEBUG_COMMON, DEBUG_RFID, DEBUG_PRINTER = DEBUG
 
 from library import ParamStorage
@@ -41,32 +41,7 @@ class MainWindow(QMainWindow):
 
     params = ParamStorage() # синглтон для хранения данных
     menu_actions = []
-    menu_desc = [
-        (_('File'), [
-            (_('Log in'), 'Ctrl+I', 'login', _('Start user session.'), MENU_LOGGED_OUT),
-            (_('Log out'), '', 'logout', _('End user session.'), MENU_LOGGED_IN),
-            None,
-            (_('Application settings'), 'Ctrl+S', 'setupApp', _('Manage the application settings.'), MENU_LOGGED_ANY),
-            None,
-            (_('Exit'), '', 'close', _('Close the application.'), MENU_LOGGED_ANY),
-            ]
-         ),
-        (_('Client'), [
-            (_('New'), 'Ctrl+N', 'client_new', _('Register new client.'), MENU_LOGGED_IN),
-            (_('Search by RFID'), 'Ctrl+D', 'client_search_rfid', _('Search a client with its RFID card.'), MENU_LOGGED_IN | MENU_RFID),
-            (_('Search by name'), 'Ctrl+F', 'client_search_name', _('Search a client with its name.'), MENU_LOGGED_IN),
-            ]
-         ),
-        (_('Renter'), [
-            (_('New'), 'Ctrl+M', 'renter_new', _('Register new renter.'), MENU_LOGGED_IN),
-            (_('Search by name'), 'Ctrl+G', 'renter_search_name', _('Search a renter with its name.'), MENU_LOGGED_IN),
-            ]
-          ),
-        (_('Help'), [
-            (_('About'), '', 'help_about', _('About application dialog.'), MENU_LOGGED_ANY),
-            ]
-         ),
-        ]
+    menu_desc = None
 
     def __init__(self, parent=None):
         QMainWindow.__init__(self, parent)
@@ -88,6 +63,7 @@ class MainWindow(QMainWindow):
         self.params.multiplier = timedelta(hours=1).seconds / self.params.quant.seconds
 
         self.menus = []
+        self.menu_desc = self.app_menu()
         self.create_menus(self.menu_desc)
         self.menu_state(MENU_LOGGED_OUT)
         self.setup_views()
@@ -100,9 +76,9 @@ class MainWindow(QMainWindow):
         if 'WrongHost' == host.toString():
             self.setupApp()
 
-        self.baseTitle = _('Manager\'s interface')
+        self.baseTitle = self.tr('Manager\'s interface')
         self.logoutTitle()
-        self.statusBar().showMessage(_('Ready'), 2000)
+        self.statusBar().showMessage(self.tr('Ready'), 2000)
         self.resize(640, 480)
 
     def loggedTitle(self, response):
@@ -114,7 +90,7 @@ class MainWindow(QMainWindow):
             self.setWindowTitle('%s : %s' % (self.baseTitle, response.get('username')))
 
     def logoutTitle(self):
-        self.setWindowTitle('%s : %s' % (self.baseTitle, _('Login to start session')))
+        self.setWindowTitle('%s : %s' % (self.baseTitle, self.tr('Login to start session')))
 
     def get_dynamic(self):
         self.bpMonday.setText(self.schedule.model().getMonday().strftime('%d/%m/%Y'))
@@ -125,7 +101,7 @@ class MainWindow(QMainWindow):
         Метод для получения статической информации с сервера.
         """
         if not self.params.http.request('/api/static/', 'GET', {}):
-            QMessageBox.critical(self, _('Static info'), _('Unable to fetch: %s') % self.params.http.error_msg)
+            QMessageBox.critical(self, self.tr('Static info'), self.tr('Unable to fetch: %s') % self.params.http.error_msg)
             return
         return self.params.http.parse()
 
@@ -152,9 +128,9 @@ class MainWindow(QMainWindow):
             ok, tip = self.params.printer.get_status()
             self.printer_widget.setToolTip(tip)
             if ok:
-                msg = _('Printer is ready')
+                msg = self.tr('Printer is ready')
             else:
-                msg = _('Printer is not ready')
+                msg = self.tr('Printer is not ready')
             self.printer_widget.setText(msg)
         self.printer_refresh = self.makeTimer(show_printer_status,
                                               self.params.printer.refresh_timeout,
@@ -162,7 +138,7 @@ class MainWindow(QMainWindow):
 
     def prepare_filter(self, id, title):
         def handler():
-            self.statusBar().showMessage(_('Filter: Room "%s" is changed its state') % title)
+            self.statusBar().showMessage(self.tr('Filter: Room "%s" is changed its state') % title)
         return handler
 
     def setup_views(self):
@@ -172,9 +148,9 @@ class MainWindow(QMainWindow):
 
         self.bpMonday = QLabel('--/--/----')
         self.bpSunday = QLabel('--/--/----')
-        self.buttonPrev = QPushButton(_('<<'))
-        self.buttonNext = QPushButton(_('>>'))
-        self.buttonToday = QPushButton(_('Today'))
+        self.buttonPrev = QPushButton(self.tr('<<'))
+        self.buttonNext = QPushButton(self.tr('>>'))
+        self.buttonToday = QPushButton(self.tr('Today'))
         self.buttonPrev.setDisabled(True)
         self.buttonNext.setDisabled(True)
         self.buttonToday.setDisabled(True)
@@ -195,7 +171,7 @@ class MainWindow(QMainWindow):
         self.connect(self.buttonToday, SIGNAL('clicked()'), today)
 
         bottomPanel = QHBoxLayout()
-        bottomPanel.addWidget(QLabel(_('Week:')))
+        bottomPanel.addWidget(QLabel(self.tr('Week:')))
         bottomPanel.addWidget(self.bpMonday)
         bottomPanel.addWidget(QLabel('-'))
         bottomPanel.addWidget(self.bpSunday)
@@ -226,6 +202,34 @@ class MainWindow(QMainWindow):
 
     def getMime(self, name):
         return self.mimes.get(name, None)
+
+    def app_menu(self):
+        return [
+            (self.tr('File'), [
+                (self.tr('Open'), 'Ctrl+I', 'open_session', self.tr('Open user session.'), MENU_LOGGED_OUT),
+                (self.tr('Close'), '', 'close_session', self.tr('Close user session.'), MENU_LOGGED_IN),
+                None,
+                (self.tr('Settings'), 'Ctrl+S', 'app_settings', self.tr('Manage the application settings.'), MENU_LOGGED_ANY),
+                None,
+                (self.tr('Exit'), '', 'close', self.tr('Close the application.'), MENU_LOGGED_ANY),
+                ]
+             ),
+            (self.tr('Client'), [
+                (self.tr('New'), 'Ctrl+N', 'client_new', self.tr('Register new client.'), MENU_LOGGED_IN),
+                (self.tr('Search by RFID'), 'Ctrl+D', 'client_search_rfid', self.tr('Search a client with its RFID card.'), MENU_LOGGED_IN | MENU_RFID),
+                (self.tr('Search by name'), 'Ctrl+F', 'client_search_name', self.tr('Search a client with its name.'), MENU_LOGGED_IN),
+                ]
+             ),
+            (self.tr('Renter'), [
+                (self.tr('New'), 'Ctrl+M', 'renter_new', self.tr('Register new renter.'), MENU_LOGGED_IN),
+                (self.tr('Search by name'), 'Ctrl+G', 'renter_search_name', self.tr('Search a renter with its name.'), MENU_LOGGED_IN),
+                ]
+              ),
+            (self.tr('Help'), [
+                (self.tr('About'), '', 'help_about', self.tr('About application dialog.'), MENU_LOGGED_ANY),
+                ]
+             ),
+            ]
 
     def create_menus(self, desc):
         """
@@ -319,7 +323,7 @@ class MainWindow(QMainWindow):
 
     # Menu handlers: The begin
 
-    def login(self):
+    def open_session(self):
         def callback(credentials):
             self.credentials = credentials
 
@@ -330,7 +334,7 @@ class MainWindow(QMainWindow):
 
         if QDialog.Accepted == dlgStatus:
             if not self.params.http.request('/api/login/', 'POST', self.credentials):
-                QMessageBox.critical(self, _('Login'), _('Unable to login: %s') % self.params.http.error_msg)
+                QMessageBox.critical(self, self.tr('Open session'), self.tr('Unable to open: %s') % self.params.http.error_msg)
                 return
 
             default_response = None
@@ -365,13 +369,13 @@ class MainWindow(QMainWindow):
                 self.printer_init()
                 self.interface_disable(MENU_LOGGED_IN | MENU_RFID | MENU_PRINTER)
             else:
-                QMessageBox.warning(self, _('Login failed'),
-                                    _('It seems you\'ve entered wrong login/password.'))
+                QMessageBox.warning(self, self.tr('Autentication failed'),
+                                    self.tr('It seems you\'ve entered wrong login/password.'))
 
-    def logout(self):
+    def close_session(self):
         self.params.logged_in = False
         self.interface_disable(MENU_LOGGED_OUT)
-        self.setWindowTitle('%s : %s' % (self.baseTitle, _('Login to start session')))
+        self.setWindowTitle('%s : %s' % (self.baseTitle, self.tr('Open user session')))
         self.schedule.model().storage_init()
 
         # clear rooms layout
@@ -384,7 +388,7 @@ class MainWindow(QMainWindow):
             if w:
                 w.deleteLater()
 
-    def setupApp(self):
+    def app_settings(self):
         self.dialog = DlgSettings(self)
         self.dialog.setModal(True)
         self.dialog.exec_()
@@ -428,13 +432,13 @@ class MainWindow(QMainWindow):
             if QDialog.Accepted == dialog.exec_() and self.rfid_id:
                 h = self.params.http
                 if not h.request('/api/%s/%s/' % (mode, self.rfid_id), 'GET', force=True):
-                    QMessageBox.critical(self, _('Client info'), _('Unable to fetch: %s') % h.error_msg)
+                    QMessageBox.critical(self, self.tr('Client info'), self.tr('Unable to fetch: %s') % h.error_msg)
                     return
                 response = h.parse()
 
                 if 0 == len(response):
-                    QMessageBox.warning(self, _('Warning'),
-                                        _('This RFID belongs to nobody.'))
+                    QMessageBox.warning(self, self.tr('Warning'),
+                                        self.tr('This RFID belongs to nobody.'))
                 else:
                     self.dialog = klass(self)
                     self.dialog.setModal(True)
@@ -466,7 +470,7 @@ class MainWindow(QMainWindow):
            <p>Сайт: <a href="http://snegiri.dontexist.org/projects/advisor/client/">Учётная система: Клиент</a>.</p>
            <p>Поддержка: <a href="mailto:ruslan.popov@gmail.com">Написать письмо</a>.</p>
            """ % locals()
-        QMessageBox.about(self, _('About application dialog'), msg.decode('utf-8'))
+        QMessageBox.about(self, self.tr('About application dialog'), msg.decode('utf-8'))
 
     def eventTraining(self):
         def callback(e_date, e_time, room_tuple, team):
@@ -485,7 +489,7 @@ class MainWindow(QMainWindow):
                           'title': title, 'price': price,
                           'count': count, 'coach': coach,
                           'duration': duration,
-                          'groups': _('Waiting for update.')}
+                          'groups': self.tr('Waiting for update.')}
             eventObj = Event({}) # FIXME
             self.schedule.insertEvent(room, eventObj)
 
@@ -529,7 +533,7 @@ class MainWindow(QMainWindow):
 #                             {'from_date': from_range[0],
 #                              'to_date': to_range[0]}, self.session_id)
             response = ajax.parse_json()
-            self.statusBar().showMessage(_('The week has been copied sucessfully.'))
+            self.statusBar().showMessage(self.tr('The week has been copied sucessfully.'))
 
         self.dialog = DlgAccounting(self)
         self.dialog.setModal(True)
@@ -563,6 +567,26 @@ class MainWindow(QMainWindow):
     # Drag'n'Drop section ends
 
 
+class MyTranslator(QTranslator):
+    """
+    Класс MyTranslator здесь понадобился только для того, чтобы
+    сделать проверку
+
+    if len(res) == 0
+
+    т.к. метод translate() класса QtCore.QTranslator возвращает пустую
+    строку, если перевод не удался (а мы хотим получить в этом случае
+    исходную строку).
+    """
+    def __init__(self, parent=None):
+        QTranslator.__init__(self, parent)
+
+    def translate(self, context, sourceText):
+        res = QTranslator.translate(self, context, sourceText)
+        if len(res) == 0:
+            res = QString(sourceText)
+        return res
+
 if __name__=="__main__":
 
     def readStyleSheet(fileName) :
@@ -576,11 +600,22 @@ if __name__=="__main__":
     # application global settings
     QCoreApplication.setOrganizationName('Home, Sweet Home')
     QCoreApplication.setOrganizationDomain('snegiri.dontexist.org')
-    QCoreApplication.setApplicationName('foobar')
-    QCoreApplication.setApplicationVersion('0.1')
+    QCoreApplication.setApplicationName('Advisor Client')
+    QCoreApplication.setApplicationVersion('.'.join(map(str, VERSION)))
 
     app = QApplication(sys.argv)
     app.setStyleSheet(readStyleSheet('manager.css'))
+
+    # подключаем перевод
+    locale = QLocale.system().name()
+    print 'Locale is', locale, ':',
+    tr = QTranslator()
+    if tr.load('advisor-client_%s' % locale, '.'):
+        print 'Translation loaded.'
+        app.installTranslator(tr)
+    else:
+        print 'Translation not loaded.'
+
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())

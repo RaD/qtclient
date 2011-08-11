@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # (c) 2009-2011 Ruslan Popov <ruslan.popov@gmail.com>
 
-from settings import _
-
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
@@ -15,7 +13,7 @@ class DlgCalendar(QDialog):
         self.setMinimumWidth(400)
 
         date_range = kwargs.get('date_range', None)
-        title = kwargs.get('title', _('Set the title'))
+        title = kwargs.get('title', self.tr('Set the title'))
         desc = kwargs.get('desc', None)
 
         self.calendar = QCalendarWidget()
@@ -26,8 +24,8 @@ class DlgCalendar(QDialog):
         if date_range:
             self.calendar.setDateRange(*date_range)
 
-        buttonApplyDialog = QPushButton(_('Apply'))
-        buttonCancelDialog = QPushButton(_('Cancel'))
+        buttonApplyDialog = QPushButton(self.tr('Apply'))
+        buttonCancelDialog = QPushButton(self.tr('Cancel'))
 
         self.connect(buttonApplyDialog, SIGNAL('clicked()'),
                      self.applyDialog)

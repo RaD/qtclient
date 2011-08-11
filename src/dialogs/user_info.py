@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # (c) 2009-2011 Ruslan Popov <ruslan.popov@gmail.com>
 
-from settings import _, DEBUG, userRoles
+from settings import DEBUG, userRoles
 from card_list import CardListModel
 from rent_list import RentListModel
 from dialogs import BreakDialog, WizardDialog, WizardListDlg, WizardSpinDlg, WizardPriceDlg, PaymentDlg
@@ -76,11 +76,11 @@ class BaseUserInfo(UiDlgTemplate):
         if QDialog.Accepted == dlgStatus:
             http = self.params.http
             if not http.request('/api/rfid/%s/' % self.rfid_code, 'POST'):
-                QMessageBox.critical(self, _('Client info'), _('Unable to fetch: %s') % http.error_msg)
+                QMessageBox.critical(self, self.tr('Client Information'), self.tr('Unable to fetch: %1').arg(http.error_msg))
                 return
             status, response = http.piston()
             if status == 'DUPLICATE_ENTRY':
-                QMessageBox.warning(self, _('Warning'), _('This RFID is used already!'))
+                QMessageBox.warning(self, self.tr('Warning'), self.tr('This RFID is used already!'))
             elif status == 'CREATED':
                 self.rfid_uuid = response.get('uuid')
                 self.buttonRFID.setText(self.rfid_code)
@@ -117,7 +117,7 @@ class BaseUserInfo(UiDlgTemplate):
         if not http.request('/api/%s/' % mode,
                             self.user_id is None and 'POST' or 'PUT',
                             data):
-            QMessageBox.critical(self, _('Saving User'), _('Unable to save: %s') % http.error_msg)
+            QMessageBox.critical(self, self.tr('Saving User'), self.tr('Unable to save: %1').arg(http.error_msg))
             return False
         status, response = http.piston()
         if status == 'ALL_OK':
@@ -128,9 +128,8 @@ class BaseUserInfo(UiDlgTemplate):
 
 class RenterInfo(BaseUserInfo):
 
-    title = _('Renter\'s information')
-
     def setupUi(self):
+        self.title = self.tr('Renter Information')
         super(RenterInfo, self).setupUi(discount=self.params.static.get('discount_renter'))
         self.model = RentListModel(self)
         self.tableHistory.setModel(self.model)
@@ -179,8 +178,8 @@ class RenterInfo(BaseUserInfo):
                 if type(v) is str and len(v) == 0:
                     errors.append(k)
             if len(errors) > 0:
-                msg = '%s\n%s' % ( _('Check the following fields:'), ', '.join(errors) )
-                QMessageBox.warning(self, _('Assign Rent'), msg)
+                msg = '%s\n%s' % ( self.tr('Check the following fields:'), ', '.join(errors) )
+                QMessageBox.warning(self, self.tr('Assign Rent'), msg)
                 return False
             else:
                 self.tableHistory.model().insert_new(info)
@@ -196,13 +195,12 @@ class RenterInfo(BaseUserInfo):
         if self.save_user(mode='renter'):
             self.buttonAssign.setDisabled(False)
         else:
-            QMessageBox.warning(self, _('Warning'), _('Please fill all fields.'))
+            QMessageBox.warning(self, self.tr('Warning'), self.tr('Please fill all fields.'))
 
 class ClientInfo(BaseUserInfo):
 
-    title = _('Client\'s information')
-
     def setupUi(self):
+        self.title = self.tr('Client Information')
         super(ClientInfo, self).setupUi(discount=self.params.static.get('discount_client'))
         self.model = CardListModel(self)
         self.tableHistory.setModel(self.model)
@@ -217,11 +215,11 @@ class ClientInfo(BaseUserInfo):
         cancelled = model.is_cancelled(index)
         may_prolongate = model.may_prolongate(index)
 
-        action_payment_add = menu.addAction(_('Payment'))
+        action_payment_add = menu.addAction(self.tr('Payment'))
         action_payment_add.setDisabled(not is_debt)
-        action_prolongate = menu.addAction(_('Prolongate'))
+        action_prolongate = menu.addAction(self.tr('Prolongate'))
         action_prolongate.setDisabled(not(cancelled and may_prolongate and not is_debt))
-        action_cancel = menu.addAction(_('Cancel'))
+        action_cancel = menu.addAction(self.tr('Cancel'))
         action_cancel.setDisabled(cancelled)
         action = menu.exec_(self.tableHistory.mapToGlobal(position))
 
@@ -270,7 +268,7 @@ class ClientInfo(BaseUserInfo):
             self.rfid_code = rfid.get('code')
 
             self.buttonRFID.setText(self.rfid_code)
-            self.buttonRFID.setToolTip(_('RFID code of this client.'))
+            self.buttonRFID.setToolTip(self.tr('RFID code of this client.'))
             self.buttonRFID.setDisabled(True)
 
         # заполняем список приобретённых ваучеров
@@ -282,19 +280,19 @@ class ClientInfo(BaseUserInfo):
         if self.save_user(mode='client'):
             self.buttonAssign.setDisabled(False)
         else:
-            QMessageBox.warning(self, _('Warning'), _('Please fill all fields.'))
+            QMessageBox.warning(self, self.tr('Warning'), self.tr('Please fill all fields.'))
 
     def voucher_payment_add(self, index, initial_value=0.00):
         """ Show price dialog and register payment. """
-        title = _('Register payment')
+        title = self.tr('Register payment')
 
         def callback(value):
             self.payment = value
 
         params = {
-            'title': _('Payment'),
-            'button_back': _('Cancel'),
-            'button_next': _('Apply'),
+            'title': self.tr('Payment'),
+            'button_back': self.tr('Cancel'),
+            'button_next': self.tr('Apply'),
             'callback': callback,
             'initial_value': initial_value,
             }
@@ -312,7 +310,7 @@ class ClientInfo(BaseUserInfo):
             http = self.params.http
             if not http.request('/api/voucher/', 'PUT',
                                 {'action': 'PAYMENT', 'uuid': voucher_uuid, 'amount': self.payment}):
-                QMessageBox.critical(self, title, _('Unable to register: %s') % http.error_msg)
+                QMessageBox.critical(self, title, self.tr('Unable to register: %1').arg(http.error_msg))
                 return
             status, response = http.piston()
             if u'ALL_OK' == status:
@@ -323,16 +321,16 @@ class ClientInfo(BaseUserInfo):
             else:
                 # иначе сообщаем о проблеме
                 QMessageBox.warning(self, title, '%s: %i\n\n%s\n\n%s' % (
-                    _('Error'), ERR_VOUCHER_PAYMENT,
-                    _('Server could not receive that payment.'),
-                    _('Call support team!')))
+                    self.tr('Error'), ERR_VOUCHER_PAYMENT,
+                    self.tr('Server could not receive that payment.'),
+                    self.tr('Call support team!')))
 
     def voucher_prolongate(self, index):
         """ Метод для пролонгации ваучера. Отображает диалог с
         календарём, позволяя продлить действие ваучера до двух недель
         от текущего дня."""
         from dlg_calendar import DlgCalendar
-        title = _('Voucher Prolongation')
+        title = self.tr('Voucher Prolongation')
         # получаем информацию о ваучере
         model = index.model()
         voucher = model.get_voucher_info(index)
@@ -344,7 +342,7 @@ class ClientInfo(BaseUserInfo):
             self.selected_date = selected_date
         # отображаем диалог с календарём
         params = {'date_range': (date.today(), date.today() + timedelta(days=14)),
-                  'title': title, 'desc': _('Choose the prolongation date:')}
+                  'title': title, 'desc': self.tr('Choose the prolongation date:')}
         self.dialog = DlgCalendar(self, **params)
         self.dialog.setModal(True)
         self.dialog.setCallback(callback)
@@ -352,26 +350,26 @@ class ClientInfo(BaseUserInfo):
             # выполняем пролонгацию на сервере
             params = {'voucher_id': voucher_id, 'prolongate_date': self.selected_date}
             if not self.http.request('/manager/voucher_prolongate/', params):
-                QMessageBox.critical(self, title, _('Unable to prolongate: %s') % self.http.error_msg)
+                QMessageBox.critical(self, title, self.tr('Unable to prolongate: %1').arg(self.http.error_msg))
                 return
             # проверяем результат
             default_response = None
             response = self.http.parse(default_response)
             if response and 'saved_id' in response:
-                QMessageBox.information(self, title, _('Voucher has been prolongated sucessfully.'))
+                QMessageBox.information(self, title, self.tr('Voucher has been prolongated sucessfully.'))
                 # приводим отображаемую модель к нужному виду
                 if 'end_date' in voucher:
                     voucher['end_date'] = self.selected_date
                     voucher['cancel_datetime'] = None
                     model.update(index)
             else:
-                QMessageBox.critical(self, title, _('Could not prolongate this voucher!'))
+                QMessageBox.critical(self, title, self.tr('Could not prolongate this voucher!'))
 
     def voucher_cancel(self, index):
         """
         Метод для отмены ваучера. Отображает форму "Да/Нет".
         """
-        title = _('Voucher Cancellation')
+        title = self.tr('Voucher Cancellation')
         # получаем информацию о ваучере
         model = index.model()
         voucher = model.get_voucher_info(index)
@@ -380,24 +378,24 @@ class ClientInfo(BaseUserInfo):
             raise Exception('Bad voucher id')
         # удостоверяемся в трезвом уме пользователя
         if QMessageBox.Yes == QMessageBox.question(self, title,
-                                                   _('Are you sure to cancel this voucher?'),
+                                                   self.tr('Are you sure to cancel this voucher?'),
                                                    QMessageBox.Yes, QMessageBox.No):
             # отменяем ваучер
             http = self.params.http
             if not http.request('/api/voucher/', 'PUT',
                                 {'action': 'CANCEL', 'uuid': voucher_uuid}):
-                QMessageBox.critical(self, title, _('Unable to cancel: %s') % http.error_msg)
+                QMessageBox.critical(self, title, self.tr('Unable to cancel: %1').arg(http.error_msg))
                 return
             response = http.parse()
 
             if u'OK' == unicode(response):
-                QMessageBox.information(self, title, _('Voucher has been cancelled sucessfully.'))
+                QMessageBox.information(self, title, self.tr('Voucher has been cancelled sucessfully.'))
                 # приводим отображаемую модель к нужному виду
                 if 'cancelled' in voucher:
                     voucher['cancelled'] = datetime.now()
                     model.update(index)
             else:
-                QMessageBox.critical(self, title, _('Could not cancel this voucher!'))
+                QMessageBox.critical(self, title, self.tr('Could not cancel this voucher!'))
 
     def wizard_dialog(self, dtype, title, data_to_fill, desc=None):
         self.wizard_data = None
@@ -411,7 +409,7 @@ class ClientInfo(BaseUserInfo):
             'price': WizardPriceDlg,
             }
 
-        params = {'button_back': _('Cancel'), 'desc': desc}
+        params = {'button_back': self.tr('Cancel'), 'desc': desc}
         dialog = dialogs[dtype](self, params)
         dialog.setModal(True)
         dialog.prefill(title, data_to_fill, callback)
@@ -449,10 +447,10 @@ class ClientInfo(BaseUserInfo):
             item = (i['slug'], i['title'])
             card_list.append(item)
         if 0 < len(self.params.static.get('card_club')):
-            item = ('club', _('Club Card'))
+            item = ('club', self.tr('Club Card'))
             card_list.append(item)
         if 0 < len(self.params.static.get('card_promo')):
-            item = ('promo', _('Promo Card'))
+            item = ('promo', self.tr('Promo Card'))
             card_list.append(item)
         return card_list
 
@@ -462,7 +460,7 @@ class ClientInfo(BaseUserInfo):
         функционала."""
 
         try:
-            voucher_type = self.wizard_dialog('list', _('Choose the voucher\'s type'),
+            voucher_type = self.wizard_dialog('list', self.tr('Choose the voucher\'s type'),
                                               self.possible_voucher_types())
             voucher_type_str = str(voucher_type)
 
@@ -473,7 +471,7 @@ class ClientInfo(BaseUserInfo):
             elif voucher_type_str == 'promo':
                 steps = self.assign_promo()
             else:
-                raise Exception(_('Error'))
+                raise Exception(self.tr('Error'))
         except BreakDialog:
             # диалог был просто закрыт, покупки нет
             return False
@@ -489,7 +487,7 @@ class ClientInfo(BaseUserInfo):
                 kwargs['category'] = steps['category'].get('uuid')
             data = dict(steps, **kwargs) # копируем содержимое steps и корректируем указанные поля
             if not http.request('/api/voucher/', 'POST', data):
-                QMessageBox.critical(self, _('Save info'), _('Unable to save: %s') % http.error_msg)
+                QMessageBox.critical(self, self.tr('Save info'), self.tr('Unable to save: %1').arg(http.error_msg))
                 return False
             status, response = http.piston()
             if 'CREATED' == status:
@@ -517,7 +515,7 @@ class ClientInfo(BaseUserInfo):
         try:
             if voucher_type in ('once', 'abonement',):
                 category_list = [ (i['uuid'], i['title']) for i in self.params.static.get('category_team')]
-                result = self.wizard_dialog('list', _('Price Category'), category_list)
+                result = self.wizard_dialog('list', self.tr('Price Category'), category_list)
                 if result:
                     # из списка категорий выбираем нужную по идентификатору
                     steps['category'] = filter(lambda x: result == x.get('uuid'),
@@ -529,7 +527,7 @@ class ClientInfo(BaseUserInfo):
 
             if voucher_type == 'abonement':
                 steps['used'] = 0
-                steps['sold'] = sold = int(self.wizard_dialog('spin', _('Visit Count'), 8))
+                steps['sold'] = sold = int(self.wizard_dialog('spin', self.tr('Visit Count'), 8))
                 # вычисляем скидки и их суммарный процент
                 discount_percent, discount_list = self._discount_abonement(sold)
                 # вычисляем стоимость абонемента без скидок
@@ -551,8 +549,8 @@ class ClientInfo(BaseUserInfo):
                 # посещения до полной стоимости абонемента.
                 once_price = steps['category'].get('once')
                 while True:
-                    result = float(self.wizard_dialog('price', _('Paid'), discount_price,
-                                                      _('Payment range is %(min)0.2f .. %(max)0.2f.' ) % {
+                    result = float(self.wizard_dialog('price', self.tr('Paid'), discount_price,
+                                                      self.tr('Payment range is %(min)0.2f .. %(max)0.2f.' ) % {
                                                           'min': once_price, 'max': discount_price
                                                           }))
                     if result >= once_price and result <= price:
@@ -580,7 +578,7 @@ class ClientInfo(BaseUserInfo):
 
         try:
             card_list = [ (i['uuid'], i['title']) for i in self.params.static.get('card_club')]
-            card_uuid = self.wizard_dialog('list', _('Card Type'), card_list)
+            card_uuid = self.wizard_dialog('list', self.tr('Card Type'), card_list)
             if not card_uuid:
                 raise RuntimeWarning('Wrong Card Type')
             steps['card'] = this_card = filter(lambda item: card_uuid == item.get('uuid'),
@@ -591,8 +589,8 @@ class ClientInfo(BaseUserInfo):
             # которая должна быть в диапазоне от стоимости одного
             # посещения до полной стоимости абонемента.
             while True:
-                result = float(self.wizard_dialog('price', _('Paid'), price,
-                                                  _('Payment range is %(min)0.2f .. %(max)0.2f.' ) % {
+                result = float(self.wizard_dialog('price', self.tr('Paid'), price,
+                                                  self.tr('Payment range is %(min)0.2f .. %(max)0.2f.' ) % {
                                                       'min': price/2.0, 'max': price
                                                       }))
                 if result >= price/2.0 and result <= price:
@@ -612,7 +610,7 @@ class ClientInfo(BaseUserInfo):
 
         try:
             card_list = [ (i['uuid'], i['title']) for i in self.params.static.get('card_promo')]
-            card_uuid = self.wizard_dialog('list', _('Card Type'), card_list)
+            card_uuid = self.wizard_dialog('list', self.tr('Card Type'), card_list)
             if not card_uuid:
                 raise RuntimeWarning('Wrong Card Type')
             steps['card'] = this_card = filter(lambda item: card_uuid == item.get('uuid'),
@@ -621,7 +619,7 @@ class ClientInfo(BaseUserInfo):
 
             # требуем оплаты полной суммы
             while True:
-                result = self.wizard_dialog('price', _('Paid'), price)
+                result = self.wizard_dialog('price', self.tr('Paid'), price)
                 if result:
                     if float(result) == float(price):
                         steps['paid'] = float(result)
@@ -653,7 +651,7 @@ class ClientInfo(BaseUserInfo):
         elif count > 8 and count % 8 == 0:
             price = category.get('full') * (count / 8)
         else:
-            print _('Invalid usage. Why do you use count=%i' % count)
+            print self.tr('Invalid usage. Why do you use count=%i' % count)
             price = 0.0
         return float(price)
 

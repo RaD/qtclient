@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # (c) 2009-2011 Ruslan Popov <ruslan.popov@gmail.com>
 
-from settings import _
 from ui_dialog import UiDlgTemplate
 
 from PyQt4.QtGui import *
@@ -22,14 +21,14 @@ class DlgSettings(QDialog):
 
         # определяем вкладки диалога
         self.tabWidget = QTabWidget()
-        self.tabWidget.addTab(TabGeneral(self), _('General'))
-        self.tabWidget.addTab(TabNetwork(self), _('Network'))
-        self.tabWidget.addTab(TabPrinter(self), _('Printer'))
+        self.tabWidget.addTab(TabGeneral(self), self.tr('General'))
+        self.tabWidget.addTab(TabNetwork(self), self.tr('Network'))
+        self.tabWidget.addTab(TabPrinter(self), self.tr('Printer'))
         # и их последовательность
         self.tabIndex = ['general', 'network', 'printer']
 
-        applyButton = QPushButton(_('Apply'))
-        cancelButton = QPushButton(_('Cancel'))
+        applyButton = QPushButton(self.tr('Apply'))
+        cancelButton = QPushButton(self.tr('Cancel'))
 
         self.connect(applyButton, SIGNAL('clicked()'),
                      self.applyDialog)
@@ -46,7 +45,7 @@ class DlgSettings(QDialog):
         mainLayout.addLayout(buttonLayout)
         self.setLayout(mainLayout)
 
-        self.setWindowTitle(_('Settings'))
+        self.setWindowTitle(self.tr('Settings'))
 
         # подгружаем настройки
         self.settings = QSettings()
@@ -188,7 +187,7 @@ class TabNetwork(TabAbstract):
                          }
 
         # the address and port of HTTP server
-        labelHttpServer = QLabel(_('HTTP server (address/port)'))
+        labelHttpServer = QLabel(self.tr('HTTP server (address/port)'))
         self.addressHttpServer = QLineEdit()
         self.portHttpServer = QLineEdit()
         boxHttpServer = QHBoxLayout()
@@ -197,19 +196,19 @@ class TabNetwork(TabAbstract):
         boxHttpServer.addWidget(self.portHttpServer)
 
         # checkbox to enabling http proxy usage
-        self.useProxy = QCheckBox(_('Use HTTP proxy'))
+        self.useProxy = QCheckBox(self.tr('Use HTTP proxy'))
 
         # http proxy's parameters
-        groupHttpProxy = QGroupBox(_('HTTP proxy settings'))
+        groupHttpProxy = QGroupBox(self.tr('HTTP proxy settings'))
 
-        labelHttpProxy = QLabel(_('Address and port'))
+        labelHttpProxy = QLabel(self.tr('Address and port'))
         self.addressHttpProxy = QLineEdit()
         self.portHttpProxy = QLineEdit()
         boxHttpProxy = QHBoxLayout()
         boxHttpProxy.addWidget(self.addressHttpProxy)
         boxHttpProxy.addWidget(self.portHttpProxy)
 
-        labelProxyAuth = QLabel(_('Login and password'))
+        labelProxyAuth = QLabel(self.tr('Login and password'))
         self.loginProxyAuth = QLineEdit()
         self.passwordProxyAuth = QLineEdit()
         boxProxyAuth = QHBoxLayout()

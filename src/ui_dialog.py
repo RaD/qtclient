@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # (c) 2009-2010 Ruslan Popov <ruslan.popov@gmail.com>
 
-from settings import _, DEBUG
+from settings import DEBUG
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -19,7 +19,7 @@ class UiDlgTemplate(QDialog):
 
         self.parent = parent
         if not self.ui_file:
-            raise RuntimeError( _('There is no UI file.') )
+            raise RuntimeError( self.tr('There is no UI file.') )
         uic.loadUi(self.ui_file, self)
         self.setupUi()
 

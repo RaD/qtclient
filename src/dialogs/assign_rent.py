@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # (c) 2010-2011 Ruslan Popov <ruslan.popov@gmail.com>
 
-from settings import _, userRoles, WEEK_DAYS
+from settings import userRoles, WEEK_DAYS
 from library import ParamStorage
 from ui_dialog import UiDlgTemplate
 from dlg_calendar import DlgCalendar
@@ -204,7 +204,7 @@ class AssignRent(UiDlgTemplate):
         def handle(selected_date):
             widget.setDate(selected_date)
 
-        params = {'title': _('Choose a date')}
+        params = {'title': self.tr('Choose a date')}
         self.dialog = DlgCalendar(self, **params)
         self.dialog.setModal(True)
         self.dialog.setCallback(handle)
@@ -218,7 +218,7 @@ class AssignRent(UiDlgTemplate):
             model = self.tableItems.model()
             done = model.insert_new(info)
             if not done:
-                QMessageBox.warning(self, _('Assign rent event'), _('Unable to assign: place already busy.'))
+                QMessageBox.warning(self, self.tr('Assign rent event'), self.tr('Unable to assign: place already busy.'))
                 return False
 
             self.price = model.price()

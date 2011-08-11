@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # (c) 2009-2010 Ruslan Popov <ruslan.popov@gmail.com>
 
-from settings import _
 from settings import userRoles
 from team_tree import TeamTree
 from http import Http
@@ -18,21 +17,21 @@ class DlgEventAssign(QDialog):
         self.mode = mode
         self.setMinimumWidth(600)
 
-        labelDate = QLabel(_('Date'))
+        labelDate = QLabel(self.tr('Date'))
         self.editDate = QDateEdit()
         labelDate.setBuddy(self.editDate)
         current = QDate.currentDate()
         self.editDate.setDate(current)
         self.editDate.setMinimumDate(current)
 
-        labelTime = QLabel(_('Time'))
+        labelTime = QLabel(self.tr('Time'))
         self.editTime = QTimeEdit()
         labelTime.setBuddy(self.editTime)
         current = QTime.currentTime()
         time = QTime(current.hour(), current.minute())
         self.editTime.setTime(time)
 
-        labelRoom = QLabel(_('Room'))
+        labelRoom = QLabel(self.tr('Room'))
         self.comboRoom = QComboBox()
         labelRoom.setBuddy(self.comboRoom)
 
@@ -48,7 +47,7 @@ class DlgEventAssign(QDialog):
         groupLayout.addWidget(self.editTime, row, 1)
         row += 1
         if self.mode == 'rent':
-            labelDuration = QLabel(_('Duration'))
+            labelDuration = QLabel(self.tr('Duration'))
             self.editDuration = QTimeEdit()
             labelDuration.setBuddy(self.editDuration)
             self.editDuration.setTime(QTime(1, 0))
@@ -66,12 +65,12 @@ class DlgEventAssign(QDialog):
             self.tree = TeamTree(self)
             teamLayout = QVBoxLayout()
             teamLayout.addWidget(self.tree)
-            groupTeams = QGroupBox(_('Available teams'))
+            groupTeams = QGroupBox(self.tr('Available teams'))
             groupTeams.setLayout(teamLayout)
             mainLayout.addWidget(groupTeams)
 
-        self.buttonAssign = QPushButton(_('Assign'))
-        self.buttonCancel = QPushButton(_('Cancel'))
+        self.buttonAssign = QPushButton(self.tr('Assign'))
+        self.buttonCancel = QPushButton(self.tr('Cancel'))
 
         buttonLayout = QHBoxLayout()
         buttonLayout.addStretch(1)
@@ -79,23 +78,23 @@ class DlgEventAssign(QDialog):
         buttonLayout.addWidget(self.buttonCancel)
 
         if self.mode == 'rent':
-            labels = QStringList([_('Renter'), _('Status'), _('Title'),
-                                  _('Begin'), _('End')])
+            labels = QStringList([self.tr('Renter'), self.tr('Status'), self.tr('Title'),
+                                  self.tr('Begin'), self.tr('End')])
 
             self.rent = QTableWidget(0, 5)
             self.rent.setHorizontalHeaderLabels(labels)
             rentLayout = QVBoxLayout()
             rentLayout.addWidget(self.rent)
-            rentGroup = QGroupBox(_('Rents'))
+            rentGroup = QGroupBox(self.tr('Rents'))
             rentGroup.setLayout(rentLayout)
             mainLayout.addWidget(rentGroup)
 
             ajax = HttpAjax(self, '/manager/get_rents/', {}, self.parent.session_id)
             response = ajax.parse_json()
             self.rent_list = response['rent_list']
-            status_desc = ( _('Reserved'),
-                            _('Paid partially'),
-                            _('Paid') )
+            status_desc = ( self.tr('Reserved'),
+                            self.tr('Paid partially'),
+                            self.tr('Paid') )
             if len(self.rent_list) == 0:
                 self.buttonAssign.setDisabled(True)
             for row in self.rent_list:
@@ -104,7 +103,7 @@ class DlgEventAssign(QDialog):
 
                 renter = '%s %s' % (row['renter']['last_name'],
                                     row['renter']['first_name'])
-                status = [_('Reserved'), _('Paid partially'), _('Paid')][int( row['status'] )]
+                status = [self.tr('Reserved'), self.tr('Paid partially'), self.tr('Paid')][int( row['status'] )]
 
                 self.rent.setItem(lastRow, 0, QTableWidgetItem(renter))
                 self.rent.setItem(lastRow, 1, QTableWidgetItem(status))
@@ -115,7 +114,7 @@ class DlgEventAssign(QDialog):
         mainLayout.addLayout(buttonLayout)
 
         self.setLayout(mainLayout)
-        self.setWindowTitle(_('Assign the event'))
+        self.setWindowTitle(self.tr('Assign the event'))
         self.setSignals()
 
     def setCallback(self, callback):
@@ -145,9 +144,9 @@ class DlgEventAssign(QDialog):
             if type(team) is not list:
                 return QMessageBox.warning(
                     self,
-                    _('Warning'),
-                    '\n'.join([_('What team do you want to assign?'),
-                               _('Choose the team on the team\'s tree.')]),
+                    self.tr('Warning'),
+                    '\n'.join([self.tr('What team do you want to assign?'),
+                               self.tr('Choose the team on the team\'s tree.')]),
                     QMessageBox.Ok, QMessageBox.Ok)
             self.callback(e_date, e_time, room, team)
         else:

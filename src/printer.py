@@ -1,35 +1,38 @@
 # -*- coding: utf-8 -*-
 # (c) 2009-2011 Ruslan Popov <ruslan.popov@gmail.com>
 
-from settings import _, PRINTER_REFRESH_TIMEOUT
+from settings import PRINTER_REFRESH_TIMEOUT
 from library import ParamStorage
 
 import re
+
+from PyQt4.QtGui import QApplication
 
 class Printer:
 
     device_file = '/dev/usblp0'
     params = ParamStorage()
     is_ready = False
-    error_msg = _('No error')
     refresh_timeout = 1000 # one second
     template = None
-    flags = [
-        [(_('No media'), 1),
-         (_('Pause is active'), 2),
-         (_('Buffer is full'), 5),
-         (_('Diagnostic mode is active'), 6),
-         (_('Check is printing'), 7),
-         (_('RAM is corrupted'), 9),
-         (_('Head is too cold'), 10),
-         (_('Head is too hot'), 11),
-         ],
-        [(_('Close the lid'), 2),
-         (_('No ribbon'), 3),
-         ],
-        ]
 
     def __init__(self, *args, **kwargs):
+        self.error_msg = QApplication.translate('printer', 'No error')
+        self.flags = [
+            [(QApplication.translate('printer', 'No media'), 1),
+             (QApplication.translate('printer', 'Pause is active'), 2),
+             (QApplication.translate('printer', 'Buffer is full'), 5),
+             (QApplication.translate('printer', 'Diagnostic mode is active'), 6),
+             (QApplication.translate('printer', 'Check is printing'), 7),
+             (QApplication.translate('printer', 'RAM is corrupted'), 9),
+             (QApplication.translate('printer', 'Head is too cold'), 10),
+             (QApplication.translate('printer', 'Head is too hot'), 11),
+             ],
+            [(QApplication.translate('printer', 'Close the lid'), 2),
+             (QApplication.translate('printer', 'No ribbon'), 3),
+             ],
+            ]
+
         self.device_file = kwargs.get('device_file', '/dev/usblp0')
         self.refresh_timeout = kwargs.get('refresh_timeout', PRINTER_REFRESH_TIMEOUT)
         self.template = kwargs.get('template', '')
@@ -67,7 +70,7 @@ class Printer:
         else:
             out = self.HOSTI()
 
-        if out:
+        if not out:
             self.is_ready = False
             return (self.is_ready, self.error_msg)
         else:
@@ -83,7 +86,7 @@ class Printer:
 
             if len(error_list) == 0:
                 self.is_ready = True
-                return (self.is_ready, _('Ready'))
+                return (self.is_ready, QApplication.translate('printer', 'Ready'))
             else:
                 self.is_ready = False
                 return (self.is_ready, '\n'.join(error_list))
@@ -95,7 +98,7 @@ class Printer:
             p.close()
             return True
         except IOError:
-            self.error_msg = _('No device')
+            self.error_msg = QApplication.translate('printer', 'No device')
             return False
 
     def recv(self):
@@ -105,7 +108,7 @@ class Printer:
             p.close()
             return data
         except IOError:
-            self.error_msg = _('No device')
+            self.error_msg = QApplication.translate('printer', 'No device')
             return None
 
     def hardcopy(self, params):

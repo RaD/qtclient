@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # (c) 2009 Ruslan Popov <ruslan.popov@gmail.com>
 
-from settings import _
 from settings import userRoles
 
 from PyQt4.QtGui import *
@@ -44,7 +43,7 @@ class AbstractTreeModel(QAbstractItemModel):
         QAbstractItemModel.__init__(self, parent)
 
         rootData = []
-        rootData.append(QVariant(_('Teams')))
+        rootData.append(QVariant(self.tr('Teams')))
         self.rootItem = TreeItem(rootData)
         self.setData(data)
 

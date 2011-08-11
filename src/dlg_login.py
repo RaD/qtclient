@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # (c) 2010 Ruslan Popov <ruslan.popov@gmail.com>
 
-from settings import _, DEBUG
+from settings import DEBUG
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -15,12 +15,12 @@ class DlgLogin(QDialog):
         self.setMinimumWidth(300)
 
         self.editLogin = QLineEdit()
-        labelLogin = QLabel(_('Login'))
+        labelLogin = QLabel(self.tr('Login'))
         labelLogin.setBuddy(self.editLogin)
 
         self.editPassword = QLineEdit()
         self.editPassword.setEchoMode(QLineEdit.Password)
-        labelPassword = QLabel(_('Password'))
+        labelPassword = QLabel(self.tr('Password'))
         labelPassword.setBuddy(self.editPassword)
 
         groupLayout = QGridLayout()
@@ -32,8 +32,8 @@ class DlgLogin(QDialog):
         groupLayout.addWidget(labelPassword, 1, 0)
         groupLayout.addWidget(self.editPassword, 1, 1)
 
-        self.buttonOk = QPushButton(_('Ok'))
-        buttonCancel = QPushButton(_('Cancel'))
+        self.buttonOk = QPushButton(self.tr('Ok'))
+        buttonCancel = QPushButton(self.tr('Cancel'))
 
         self.connect(self.buttonOk, SIGNAL('clicked()'),
                      self.applyDialog)
@@ -50,7 +50,7 @@ class DlgLogin(QDialog):
         self.mainLayout.addLayout(buttonLayout)
 
         self.setLayout(self.mainLayout)
-        self.setWindowTitle(_('Authentication'))
+        self.setWindowTitle(self.tr('Authentication'))
 
     def setCallback(self, callback):
         self.callback = callback

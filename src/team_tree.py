@@ -3,7 +3,6 @@
 
 import sys, re
 
-from settings import _
 from tree_model import TreeItem, AbstractTreeModel
 
 from PyQt4.QtGui import *

@@ -3,7 +3,7 @@
 
 import time, json
 from datetime import datetime, date, time, timedelta
-from settings import _, DEBUG, WEEK_DAYS
+from settings import DEBUG, WEEK_DAYS
 from library import date2str, dt2str, ParamStorage
 from http import HttpException
 
@@ -110,11 +110,11 @@ class RentEvent(BaseModel):
     """
 
     # описание модели
-    FIELDS = (_('Week Day'), _('Room'), _('Category'), _('Begin'), _('End'), None)
     HIDDEN_FIELDS = 1
     storage = []
 
     def __init__(self, parent=None):
+        self.FIELDS = (self.tr('Week Day'), self.tr('Room'), self.tr('Category'), self.tr('Begin'), self.tr('End'), None)
         BaseModel.__init__(self, parent)
 
     def init_data(self, event_list):
@@ -143,7 +143,7 @@ class RentEvent(BaseModel):
                 return False
 
         # проверка на совпадение через сервер
-        title = _('Check calendar')
+        title = self.tr('Check calendar')
 
         try:
             response = P.http.request_full('/manager/is_area_free/', info_cropped)
@@ -168,8 +168,8 @@ class RentEvent(BaseModel):
 
         record = (
             WEEK_DAYS[info['day_id']],
-            P.rooms.get(info['room_id'], _('Unknown')),
-            cats.get(info['category_id'], _('Unknown')),
+            P.rooms.get(info['room_id'], self.tr('Unknown')),
+            cats.get(info['category_id'], self.tr('Unknown')),
             info['begin_time'],
             info['end_time'],
             info,
@@ -202,11 +202,12 @@ class RentListModel(BaseModel):
     """ Модель для представления списка аренд."""
 
     # описание модели
-    FIELDS = (_('Title'), _('Begin'), _('End'), _('Hours'), _('Price'), _('Paid'), None)
     HIDDEN_FIELDS = 1
     storage = []
 
     def __init__(self, parent=None):
+        #self.FIELDS = (self.tr('Title'), self.tr('Begin'), self.tr('End'), self.tr('Hours'), self.tr('Price'), self.tr('Paid'), None)
+        self.FIELDS = ('Title', 'Begin', 'End', 'Hours', 'Price', 'Paid', None)
         BaseModel.__init__(self, parent)
 
     def init_data(self, event_list):

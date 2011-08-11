@@ -9,7 +9,7 @@ from os.path import dirname, join
 from library import ParamStorage
 from http import Http
 
-from settings import _, DEBUG, WEEK_DAYS, userRoles
+from settings import DEBUG, WEEK_DAYS, userRoles
 DEBUG_COMMON, DEBUG_RFID, DEBUG_PRINTER = DEBUG
 
 from PyQt4.QtGui import *
@@ -73,7 +73,7 @@ class Event(object):
     @property
     def title(self):
         if self.prototype == self.RENT:
-            return _('Rent')
+            return QApplication.translate('event_storage', 'Rent')
         else:
             activity = self.data.get('activity')
             ds_list = activity.get('dance_style')
@@ -90,7 +90,7 @@ class Event(object):
     @property
     def styles(self):
         if self.prototype == self.RENT:
-            return _('Rent')
+            return QApplication.translate('event_storage', 'Rent')
         else:
             return u', '.join(
                 [i.get('title') for i in self.styles_list])
@@ -98,7 +98,7 @@ class Event(object):
     @property
     def coaches(self):
         if self.prototype == self.RENT:
-            return _('Renter')
+            return QApplication.translate('event_storage', 'Renter')
         else:
             return ', '.join(
                 ['%s %s' % (i.get('last_name'), i.get('first_name')) \
@@ -109,7 +109,7 @@ class Event(object):
 
     @property
     def tooltip(self):
-        first_line = _('%(title)s, %(duration)s minutes') % {'title': self.title, 'duration': self.duration.seconds/60}
+        first_line = QApplication.translate('event_storage', '%1, %2 minutes').arg(self.title).arg(self.duration.seconds/60)
         return '%s\n%s\n%s' % (first_line, self.coaches, self.category)
 
     @property
@@ -169,7 +169,7 @@ class ModelStorage:
         elif op == self.DEL:
             del(self.rc2e[key])
         else:
-            raise _('ModelStorage: Unknown operation')
+            raise QApplication.translate('event_storage', 'ModelStorage: Unknown operation')
 
     def getByER(self, key):
         cells = self.e2rc.get(key, None)
@@ -198,7 +198,7 @@ class EventStorage(QAbstractTableModel):
         if 'week' == self.mode:
             self.week_days = WEEK_DAYS
         else:
-            self.week_days = [ _('Day') ]
+            self.week_days = [ self.tr('Day') ]
 
         begin_hour, end_hour = self.params.work_hours
         self.rows_count = (end_hour - begin_hour) * self.params.multiplier
@@ -263,18 +263,18 @@ class EventStorage(QAbstractTableModel):
         if 'day' == self.mode:
             return False
 
-        self.parent.parent.statusBar().showMessage(_('Request information for the calendar.')) # fixme: msg queue
+        self.parent.parent.statusBar().showMessage(self.tr('Request information for the calendar.')) # fixme: msg queue
         monday, sunday = self.weekRange
 
         http = self.params.http
         if http and http.is_session_open():
             http.request('/api/calendar/%s/' % monday.strftime('%d%m%Y'), 'GET', {}) # FIXME: wrong place for HTTP Request!
-            self.parent.parent.statusBar().showMessage(_('Parsing the response...'))
+            self.parent.parent.statusBar().showMessage(self.tr('Parsing the response...'))
             response = http.parse(None)
 
             # result processing
             if response:
-                self.parent.parent.statusBar().showMessage(_('Filling the calendar...'))
+                self.parent.parent.statusBar().showMessage(self.tr('Filling the calendar...'))
                 self.storage_init()
                 # place the event in the model
                 for event_info in response:
@@ -283,12 +283,12 @@ class EventStorage(QAbstractTableModel):
                     self.insert(event.room_uuid, event)
                 # draw events
                 self.emit(SIGNAL('layoutChanged()'))
-                self.parent.parent.statusBar().showMessage(_('Done'), 2000)
+                self.parent.parent.statusBar().showMessage(self.tr('Done'), 2000)
                 # debugging
                 #self.storage.dump()
                 return True
             else:
-                self.parent.parent.statusBar().showMessage(_('No reply'))
+                self.parent.parent.statusBar().showMessage(self.tr('No reply'))
                 return False
 
     def rowCount(self, parent): # protected

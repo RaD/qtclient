@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # (c) 2009-2011 Ruslan Popov <ruslan.popov@gmail.com>
 
-from settings import _
-
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from PyQt4 import uic
@@ -164,7 +162,7 @@ class PaymentDlg(WizardDialog):
 
         self.callback = self.params.get('callback', None)
         initial_value = self.params.get('initial_value', 0)
-        dialog_title = self.params.get('title', _('Unknown'))
+        dialog_title = self.params.get('title', self.tr('Unknown'))
         self.doubleSpinBox.setRange(0, initial_value)
         self.doubleSpinBox.setValue(initial_value)
         WizardDialog.prefill(self, dialog_title)

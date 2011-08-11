@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # (c) 2009-2011 Ruslan Popov <ruslan.popov@gmail.com>
 
-from settings import _, userRoles
+from settings import userRoles
 from ui_dialog import UiDlgTemplate
 from library import ParamStorage
 
@@ -18,13 +18,13 @@ class ShowCoaches(UiDlgTemplate):
 
     ui_file = 'uis/dlg_event_coaches.ui'
     params = ParamStorage()
-    title = _('Registered visitors')
     callback = None
     event = None
 
     def __init__(self, parent, *args, **kwargs):
         UiDlgTemplate.__init__(self, parent)
 
+        self.title = self.tr('Registered visitors')
         self.callback = kwargs.get('callback')
 
     def setupUi(self):
@@ -56,18 +56,18 @@ class ShowCoaches(UiDlgTemplate):
     def apply(self):
         selected = self.tableCoaches.selectionModel().selectedRows()
         if len(selected) > 3:
-            message = _('Select no more three coaches.')
+            message = self.tr('Select no more three coaches.')
         else:
             uuid_list = [unicode(i.model().data(i, GET_ID_ROLE).toString()) for i in selected]
             if len(uuid_list) == 0:
-                message = _('No selection, skip...')
+                message = self.tr('No selection, skip...')
             else:
                 http = self.params.http
                 params = [('action', 'CHANGE_COACH'), ('uuid', self.event.uuid),]
                 params += [('leaders', i) for i in uuid_list]
                 if not http.request('/api/history/', 'PUT', params):
-                    QMessageBox.critical(self, _('Register change'),
-                                         _('Unable to register: %s') % http.error_msg)
+                    QMessageBox.critical(self, self.tr('Register change'),
+                                         self.tr('Unable to register: %s') % http.error_msg)
                     return
                 status, response = http.piston()
                 if 'ALL_OK' == status:
@@ -75,5 +75,5 @@ class ShowCoaches(UiDlgTemplate):
                     self.callback(uuid_list)
                     return
                 else:
-                    message = _('Unable to exchange.')
-        QMessageBox.warning(self, _('Coaches exchange'), message)
+                    message = self.tr('Unable to exchange.')
+        QMessageBox.warning(self, self.tr('Coaches exchange'), message)

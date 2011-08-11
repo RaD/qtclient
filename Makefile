@@ -38,3 +38,9 @@ debianize:
 	cd $(BASEDIR)/build/dist/$(PROJECT)-$(VERSION); \
 	debuild -k4A43B8D0; \
 	cd -
+
+locale:
+	pylupdate4 -noobsolete advisor-client.pro
+	linguist advisor-client_ru_RU.ts
+	lrelease advisor-client_ru_RU.ts
+	mv advisor-client_ru_RU.qm src/

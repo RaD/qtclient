@@ -12,12 +12,6 @@ userRoles = {
     'getObjectID': Qt.UserRole,
 }
 
-import gettext
-from os.path import abspath, dirname, join
-gettext.bindtextdomain('project', join(abspath(dirname(__file__)), 'locale'))
-gettext.textdomain('project')
-_ = lambda a: unicode(gettext.gettext(a), 'utf8')
-
 PORT = {
     'name': '/dev/ttyUSB0',
     'rate': 38400,
@@ -35,10 +29,7 @@ MODEL_PROPERTIES = {
     'TYPE_RFIDCARDS': '0',
     }
 
-WEEK_DAYS = [ _('Monday'), _('Tuesday'),
-              _('Wednesday'), _('Thursday'),
-              _('Friday'), _('Saturday'),
-              _('Sunday') ]
+WEEK_DAYS = [ 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', ]
 
 XPM_EVENT_CLOSED = [
     '8 8 4 1',
