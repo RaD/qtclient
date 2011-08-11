@@ -110,7 +110,7 @@ class BaseUserInfo(UiDlgTemplate):
 
         # соберём информацию о скидках клиента, сохраняем
         # идентификаторы установленных скидок
-        data += [ ('discount', i) for i,(o, desc) in self.discounts_by_uuid.items() if o.checkState() == Qt.Checked]
+        data = data + [ ('discount', i) for i,(o, desc) in self.discounts_by_uuid.items() if o.checkState() == Qt.Checked]
 
         # передаём на сервер
         dialog_title = self.tr('Saving')
@@ -146,8 +146,8 @@ class RenterInfo(BaseUserInfo):
         menu = QMenu()
 
     def initData(self, data={}):
-        # новые записи обозначаются нулевым идентификатором
-        self.user_id = data.get('id', '0')
+        self.user_id = data.get('uuid')
+        self.buttonAssign.setDisabled(self.user_id is None)
 
         # Определение подсказок
         meta = [('last_name', self.editLastName),
@@ -235,12 +235,6 @@ class ClientInfo(BaseUserInfo):
             print 'unknown'
 
     def initData(self, data={}):
-
-        print 'USER_INFO'
-        import pprint;
-        pprint.pprint(data)
-        print
-
         self.user_id = data.get('uuid')
         self.buttonAssign.setDisabled(self.user_id is None)
 
