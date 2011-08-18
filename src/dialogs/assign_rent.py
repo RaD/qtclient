@@ -248,18 +248,23 @@ class AssignRent(UiDlgTemplate):
     def save_rent(self):
         """ Метод для получения данных из диалога. Диалог вызывается
         из user_info.RenterInfo.assign_item."""
-        self.begin_date = self.dateBegin.date().toPyDate().strftime('%Y-%m-%d')
-        self.end_date = self.dateEnd.date().toPyDate().strftime('%Y-%m-%d')
-        params = {
-            'renter': self.user_id,
-            'desc': unicode(self.editDesc.toPlainText()).encode('utf-8'),
-            }
+        dialog_title = self.tr('Rent Save')
+        begin_date = self.dateBegin.date().toPyDate().strftime('%Y-%m-%d')
+        end_date = self.dateEnd.date().toPyDate().strftime('%Y-%m-%d')
+        formset = self.model.formset(initial={
+            'begin_date':begin_date, 'end_date':end_date, 'is_active':u'on',
+            })
+        params = formset + [
+            ('renter', self.user_id),
+            ('desc', unicode(self.editDesc.toPlainText()).encode('utf-8')),
+            ('is_active', u'on'),
+            ]
         http = self.params.http
         if not http.request('/api/rent/', 'POST', params):
-            QMessageBox.critical(self, self.tr('Rent Save'), self.tr('Unable to save: %1').arg(http.error_msg))
+            QMessageBox.critical(self, dialog_title,
+                                 self.tr('Unable to save: %1').arg(http.error_msg))
             return
 
-        dialog_title = self.tr('Rent Save')
         status, response = http.piston()
         if status == 'CREATED':
             self.rent_id = response.get('uuid')

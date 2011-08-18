@@ -48,23 +48,38 @@ class BaseModel(QAbstractTableModel):
         return self.storage
 
     def formset(self, **kwargs):
-        """ Метод для создания набора форм для сохранения данных через
-        Django FormSet."""
-        # основа
+        """
+        Метод для создания набора форм для сохранения данных через
+        Django FormSet.
+        """
         if 'record_list' not in kwargs:
             record_list = self.export()
-        formset = {
-            'form-TOTAL_FORMS': str(len(record_list)),
-            'form-INITIAL_FORMS': '0',
-            }
-        # заполнение набора
+        formset = [
+            ('formset-TOTAL_FORMS', str(len(record_list))),
+            ('formset-MAX_NUM_FORMS', str(len(record_list))),
+            ('formset-INITIAL_FORMS', '0'),
+            ]
         for index, record in enumerate(record_list):
-            prefix = 'form-%i' % index
-            if 'initial' in kwargs:
-                record.update( kwargs['initial'] )
-            row = {'%s-record' % prefix: json.dumps(record),}
-            formset.update( row )
+            for key, value in kwargs.get('initial', {}).items(): # инжектим данные
+                row = ('formset-%s-%s' % (index, key), value)
+                formset.append( row )
+            for key in self.FIELDS:
+                row = ('formset-%s-%s' % (index, key),
+                       record.get(key))
+                formset.append( row )
         return formset
+
+    def proxy(self, dictionary, key):
+        """
+        Метод реализующий применение обработчика для поля, если
+        таковой был определён в дочерней модели.
+        """
+        value = dictionary.get(key, '--')
+        if hasattr(self, 'handler_%s' % key):
+            handler = getattr(self, 'handler_%s' % key)
+            return handler(value)
+        else:
+            return value
 
     ##
     ## Переопределённые методы базовой модели
@@ -118,30 +133,18 @@ class BaseModel(QAbstractTableModel):
         else:
             return QVariant()
 
-    def proxy(self, dictionary, key):
-        """
-        Метод реализующий применение обработчика для поля, если
-        таковой был определён в дочерней модели.
-        """
-        value = dictionary.get(key, '--')
-        if hasattr(self, 'handler_%s' % key):
-            handler = getattr(self, 'handler_%s' % key)
-            return handler(value)
-        else:
-            return value
-
 class RentEvent(BaseModel):
     """
     Модель для представления списка событий из которых состоит аренда.
     """
 
     # описание модели
-    FIELDS = ('weekday', 'room', 'category', 'begin_time', 'end_time', 'data',)
+    FIELDS = ('weekday', 'room', 'category', 'begin_time', 'end_time',)
 
     def __init__(self, parent=None):
         BaseModel.__init__(self, parent)
         self.TITLES = (self.tr('Week Day'), self.tr('Room'), self.tr('Category'),
-                       self.tr('Begin'), self.tr('End'), None,)
+                       self.tr('Begin'), self.tr('End'),)
 
     def init_data(self, event_list):
         """ Метод для заполнения модели. """
@@ -206,12 +209,12 @@ class RentListModel(BaseModel):
     """ Модель для представления списка аренд."""
 
     # описание модели
-    FIELDS = ('title', 'begin_date', 'end_date', 'hours', 'price', 'paid', 'data',)
+    FIELDS = ('title', 'begin_date', 'end_date', 'hours', 'price', 'paid',)
 
     def __init__(self, parent=None):
         BaseModel.__init__(self, parent)
         self.TITLES = (self.tr('Title'), self.tr('Begin'), self.tr('End'),
-                       self.tr('Hours'), self.tr('Price'), self.tr('Paid'), None)
+                       self.tr('Hours'), self.tr('Price'), self.tr('Paid'),)
 
     def init_data(self, event_list):
         """ Метод для заполнения модели. """
