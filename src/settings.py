@@ -29,8 +29,6 @@ MODEL_PROPERTIES = {
     'TYPE_RFIDCARDS': '0',
     }
 
-WEEK_DAYS = [ 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', ]
-
 XPM_EVENT_CLOSED = [
     '8 8 4 1',
     '+ c #000000',

@@ -9,7 +9,7 @@ from os.path import dirname, join
 from library import ParamStorage
 from http import Http
 
-from settings import DEBUG, WEEK_DAYS, userRoles
+from settings import DEBUG, userRoles
 DEBUG_COMMON, DEBUG_RFID, DEBUG_PRINTER = DEBUG
 
 from PyQt4.QtGui import *
@@ -196,7 +196,7 @@ class EventStorage(QAbstractTableModel):
         self.mode = mode
 
         if 'week' == self.mode:
-            self.week_days = WEEK_DAYS
+            self.week_days = self.params.WEEK_DAYS
         else:
             self.week_days = [ self.tr('Day') ]
 

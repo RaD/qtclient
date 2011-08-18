@@ -3,7 +3,7 @@
 
 import time, json
 from datetime import datetime, date, time, timedelta
-from settings import DEBUG, WEEK_DAYS
+from settings import DEBUG
 from library import date2str, dt2str, ParamStorage
 from http import HttpException
 
@@ -114,8 +114,9 @@ class RentEvent(BaseModel):
     storage = []
 
     def __init__(self, parent=None):
-        self.FIELDS = (self.tr('Week Day'), self.tr('Room'), self.tr('Category'), self.tr('Begin'), self.tr('End'), None)
         BaseModel.__init__(self, parent)
+        self.FIELDS = (self.tr('Week Day'), self.tr('Room'), self.tr('Category'),
+                       self.tr('Begin'), self.tr('End'), None)
 
     def init_data(self, event_list):
         """ Метод для заполнения модели. """
@@ -167,7 +168,7 @@ class RentEvent(BaseModel):
         map(lambda x: cats.update( { x['id']: x['title']} ), P.category_rent_list())
 
         record = (
-            WEEK_DAYS[info['day_id']],
+            self.params.WEEK_DAYS[info['day_id']],
             P.rooms.get(info['room_id'], self.tr('Unknown')),
             cats.get(info['category_id'], self.tr('Unknown')),
             info['begin_time'],

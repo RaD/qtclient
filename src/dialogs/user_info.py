@@ -171,24 +171,10 @@ class RenterInfo(BaseUserInfo):
         # заполняем список зарегистрированных аренд
         self.tableHistory.model().init_data(data.get('activity_list', []))
 
-    def assign_rent(self):
+    def assign_item(self):
         """ Метод отображает диалог регистрации аренды. """
 
-        # определяем обработчик результатов диалога
-        def handle(info):
-            errors = []
-            for k,v in info.items():
-                if type(v) is str and len(v) == 0:
-                    errors.append(k)
-            if len(errors) > 0:
-                msg = '%s\n%s' % ( self.tr('Check the following fields:'), ', '.join(errors) )
-                QMessageBox.warning(self, self.tr('Assign Rent'), msg)
-                return False
-            else:
-                self.tableHistory.model().insert_new(info)
-                return True
-
-        dialog = AssignRent(self, handle)
+        dialog = AssignRent(self, renter=self.user_id)
         dialog.setModal(True)
         dialog.init_data( {'rent_item_list': [], } )
         dialog.exec_()
