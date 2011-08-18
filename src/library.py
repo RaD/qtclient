@@ -97,6 +97,7 @@ class ParamStorage(object):
     def __init__(self, *args, **kwargs):
         LOG_FILENAME = os.path.expanduser('~/advisor-client.debug.log')
         logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
+
     def init_settings(self, *args, **kwargs):
         self.settings = kwargs.get('obj')
         self.main_window = kwargs.get('main_window')
@@ -136,20 +137,3 @@ class ParamStorage(object):
     def mapper(self, handler, key_list):
         return lambda x: handler(x, key_list)
 
-    def category_rent_list(self):
-        KEY = 'category_rent'
-        # получаем время обновления данных
-        last_access = self.cache.get('%s_timestamp' % KEY, self.yesterday)
-        if datetime.now() - last_access > self.cache_timeout:
-            # если время превысило предел, обновляем данные
-            try:
-                response = self.http.request_full('/manager/get_all/',
-                                                  { 'action': 'category_rent', })
-            except HttpException, e:
-                QMessageBox.critical(self, self.tr('Categories of Rent'),
-                                     self.tr('Unable to fetch: %1').arg(e))
-                return []
-            else:
-                self.cache[KEY] = response['data']
-                self.cache['%s_timestamp' % KEY] = datetime.now()
-        return self.cache[KEY]

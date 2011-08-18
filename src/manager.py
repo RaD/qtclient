@@ -55,6 +55,15 @@ class MainWindow(QMainWindow):
         self.rfid_id = None
 
         self.params.init_settings(obj=QSettings(), main_window=self)
+        self.params.WEEK_DAYS = (
+            self.tr('Monday'),
+            self.tr('Tuesday'),
+            self.tr('Wednesday'),
+            self.tr('Thursday'),
+            self.tr('Friday'),
+            self.tr('Saturday'),
+            self.tr('Sunday'),
+            )
 
         self.params.logged_in = False
         self.params.http = Http(self)
@@ -566,26 +575,6 @@ class MainWindow(QMainWindow):
             print 'move event', event.pos()
     # Drag'n'Drop section ends
 
-
-class MyTranslator(QTranslator):
-    """
-    Класс MyTranslator здесь понадобился только для того, чтобы
-    сделать проверку
-
-    if len(res) == 0
-
-    т.к. метод translate() класса QtCore.QTranslator возвращает пустую
-    строку, если перевод не удался (а мы хотим получить в этом случае
-    исходную строку).
-    """
-    def __init__(self, parent=None):
-        QTranslator.__init__(self, parent)
-
-    def translate(self, context, sourceText):
-        res = QTranslator.translate(self, context, sourceText)
-        if len(res) == 0:
-            res = QString(sourceText)
-        return res
 
 if __name__=="__main__":
 
