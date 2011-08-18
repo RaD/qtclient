@@ -51,7 +51,6 @@ class AddItem(UiDlgTemplate):
         # заполнение выпадашек
         self.fill_combo_days()
         self.fill_combo_rooms()
-        self.fill_combo_categories()
 
         # подключение обработчиков событий
         self.connect(self.buttonOK, SIGNAL('clicked()'), self.apply_dialog)
@@ -107,13 +106,6 @@ class AddItem(UiDlgTemplate):
             self.cbRoom.addItem(item.get('title'),
                                 QVariant(item.get('uuid')))
 
-    def fill_combo_categories(self):
-        """ Метод для заполнения списка с категориями. """
-        # сохраняем информацию об арендаторе
-        for item in self.params.static.get('category_rent'):
-            self.cbCategory.addItem(item.get('title'),
-                                    QVariant(item.get('uuid')))
-
     def _combo_current(self, widget):
         """ Вспомогательный метод для получения данных для выбранного
         элемента выпадающего списка."""
@@ -130,7 +122,6 @@ class AddItem(UiDlgTemplate):
         params = {'id': self.event_id,
                   'weekday': q2u(self.cbDay),
                   'room': q2u(self.cbRoom),
-                  'category_uuid': q2u(self.cbCategory),
                   'begin_time': begin.time().strftime('%H:%M:00'),
                   'end_time': end.time().strftime('%H:%M:59'),
                   'duration': duration,}
@@ -202,7 +193,6 @@ class AssignRent(UiDlgTemplate):
     def add_item(self):
         """ Метод для отображения диалога для ввода информации о событии аренды. """
         self.dialog = AddItem(self, callback=self.add_item_handle)
-        self.dialog.setModal(True)
         self.dialog.exec_()
 
     def add_item_handle(self, data):

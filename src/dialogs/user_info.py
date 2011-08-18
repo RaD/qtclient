@@ -175,7 +175,6 @@ class RenterInfo(BaseUserInfo):
         """ Метод отображает диалог регистрации аренды. """
 
         dialog = AssignRent(self, renter=self.user_id)
-        dialog.setModal(True)
         dialog.init_data( {'rent_item_list': [], } )
         dialog.exec_()
 
