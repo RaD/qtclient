@@ -39,9 +39,15 @@ class BaseModel(QAbstractTableModel):
         """ Метод для заполнения модели. """
         self.storage = []
 
-    def insert_new(self, info):
-        """ Метод для вставки новой записи в модель. """
-        print 'Метод insert_new() следует переопределить.'
+    def insert_new(self, record):
+        """
+        Метод для вставки новой записи в модель.
+        """
+        self.storage.append(record)
+        index = len(self.storage)
+        self.emit(SIGNAL('rowsInserted(QModelIndex, int, int)'),
+                  QModelIndex(), index, index)
+        return True
 
     def export(self):
         """ Метод для экспорта информации из модели. """
@@ -157,16 +163,6 @@ class RentEvent(BaseModel):
                   QModelIndex(), 1, index)
         return True
 
-    def insert_new(self, record):
-        """
-        Метод для вставки новой записи в модель.
-        """
-        self.storage.append(record)
-        index = len(self.storage)
-        self.emit(SIGNAL('rowsInserted(QModelIndex, int, int)'),
-                  QModelIndex(), index, index)
-        return True
-
     def price(self):
         """ Метод для определения цены аренды по всем арендованым событиям. """
 
@@ -209,45 +205,19 @@ class RentListModel(BaseModel):
     """ Модель для представления списка аренд."""
 
     # описание модели
-    FIELDS = ('title', 'begin_date', 'end_date', 'hours', 'price', 'paid',)
+    FIELDS = ('desc', 'begin_date', 'end_date', 'hours', 'price', 'paid',)
 
     def __init__(self, parent=None):
         BaseModel.__init__(self, parent)
         self.TITLES = (self.tr('Title'), self.tr('Begin'), self.tr('End'),
                        self.tr('Hours'), self.tr('Price'), self.tr('Paid'),)
 
-    def init_data(self, event_list):
+    def init_data(self, rent_list):
         """ Метод для заполнения модели. """
-        BaseModel.init_data(self, event_list)
-        for i in event_list:
-            record = self.prepare_record(i)
+        BaseModel.init_data(self, rent_list)
+        for record in rent_list:
             self.storage.append(record)
         index = len(self.storage)
         self.emit(SIGNAL('rowsInserted(QModelIndex, int, int)'),
                   QModelIndex(), 1, index)
         return True
-
-    def insert_new(self, info):
-        """ Метод для вставки новой записи в модель. Передаётся
-        словарь с полями id, day_id, room_id, begin_time,
-        end_time. Перед вставкой следует выполнить проверку на
-        совпадение."""
-
-        record = self.prepare_record(info)
-        self.storage.append(record)
-        index = len(self.storage)
-        self.emit(SIGNAL('rowsInserted(QModelIndex, int, int)'),
-                  QModelIndex(), index, index)
-        return True
-
-    def prepare_record(self, info):
-        desc = QString.fromUtf8(info.get('desc')[:20])
-        begin = info.get('begin_date')
-        end = info.get('end_date')
-        price = QString('%.02f' % info.get('price', 0.0))
-        paid = QString('%.02f' % info.get('paid', 0.0))
-        hours = QString('%.01f' % reduce(lambda x,y: x+y,
-                                         map(lambda x: x['duration'],
-                                             info.get('plan_list')),
-                                         0.0))
-        return (desc, begin, end, hours, price, paid, info)
