@@ -13,11 +13,20 @@ from PyQt4.QtCore import *
 class BaseModel(QAbstractTableModel):
     """
     Базовая модель.
+
+    Дочерние модели должны определить заголовки полей (TITLES), ключи
+    полей (FIELDS).
+
+    Для полей, которые должны отображаться особым образом (например, в
+    поле находится идентификатор объекта, а надо отображать его
+    текстовое описание, хранящееся на внешнем ресурсе), необходимо
+    определить метод-обработчик. Шаблон имени метода: 'handler_KEY',
+    где KEY - имя ключа поля из FIELDS.
     """
 
     # описание модели
+    TITLES = ()
     FIELDS = ()
-    HIDDEN_FIELDS = 0
     storage = []
 
     # синглтон с параметрами приложения
@@ -36,7 +45,7 @@ class BaseModel(QAbstractTableModel):
 
     def export(self):
         """ Метод для экспорта информации из модели. """
-        return map(lambda x: x[-1], self.storage)
+        return self.storage
 
     def formset(self, **kwargs):
         """ Метод для создания набора форм для сохранения данных через
@@ -71,38 +80,55 @@ class BaseModel(QAbstractTableModel):
         if parent and parent.isValid():
             return 0
         else:
-            return len(self.FIELDS) - self.HIDDEN_FIELDS
+            return len(self.FIELDS)
 
     def headerData(self, section, orientation, role):
         """ Метод для вывода заголовков для полей модели. """
         # для горизонтального заголовка выводятся названия полей
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            return QVariant(self.FIELDS[section])
+            return QVariant(self.TITLES[section])
         # для вертикального заголовка выводятся порядковые номера записей
         if orientation == Qt.Vertical and role == Qt.DisplayRole:
             return QVariant(section+1) #
         return QVariant()
 
     def flags(self, index):
-        """ Свойства полей модели. Разрешаем только отображение."""
+        """
+        Свойства полей модели. Разрешаем только отображение.
+        """
         return Qt.ItemIsEnabled
 
     def data(self, index, role):
-        """ Метод для выдачи данных из модели по указанному индексу и
-        для переданной роли."""
-
+        """
+        Метод для выдачи данных из модели по указанному индексу и для
+        переданной роли.
+        """
         if not index.isValid():
             return QVariant('error')
 
         row = index.row()
         col = index.column()
+        key = self.FIELDS[col]
 
         if role == Qt.DisplayRole:
-            return QVariant(self.storage[row][col])
+            value = self.proxy(self.storage[row], key)
+            return QVariant(value)
         elif role == Qt.ToolTipRole:
             return QVariant()
         else:
             return QVariant()
+
+    def proxy(self, dictionary, key):
+        """
+        Метод реализующий применение обработчика для поля, если
+        таковой был определён в дочерней модели.
+        """
+        value = dictionary.get(key, '--')
+        if hasattr(self, 'handler_%s' % key):
+            handler = getattr(self, 'handler_%s' % key)
+            return handler(value)
+        else:
+            return value
 
 class RentEvent(BaseModel):
     """
@@ -110,13 +136,12 @@ class RentEvent(BaseModel):
     """
 
     # описание модели
-    HIDDEN_FIELDS = 1
-    storage = []
+    FIELDS = ('weekday', 'room', 'category', 'begin_time', 'end_time', 'data',)
 
     def __init__(self, parent=None):
         BaseModel.__init__(self, parent)
-        self.FIELDS = (self.tr('Week Day'), self.tr('Room'), self.tr('Category'),
-                       self.tr('Begin'), self.tr('End'), None)
+        self.TITLES = (self.tr('Week Day'), self.tr('Room'), self.tr('Category'),
+                       self.tr('Begin'), self.tr('End'), None,)
 
     def init_data(self, event_list):
         """ Метод для заполнения модели. """
@@ -129,53 +154,15 @@ class RentEvent(BaseModel):
                   QModelIndex(), 1, index)
         return True
 
-    def insert_new(self, info):
-        """ Метод для вставки новой записи в модель. Передаётся
-        словарь с полями id, day_id, room_id, begin_time,
-        end_time. Перед вставкой следует выполнить проверку на
-        совпадение."""
-        P = self.params
-        key_list = ('day_id', 'room_id', 'begin_time', 'end_time')
-        info_cropped = P.dict_crop(info.copy(), key_list)
-
-        # локальная проверка на совпадение
-        for obj in self.storage:
-            if info_cropped == P.dict_crop(obj[-1].copy(), key_list):
-                return False
-
-        # проверка на совпадение через сервер
-        title = self.tr('Check calendar')
-
-        try:
-            response = P.http.request_full('/manager/is_area_free/', info_cropped)
-        except HttpException, e:
-            print unicode(e)
-            return False
-
-        if not (response and response.get('free', 'no') == 'yes'):
-            return False
-
-        record = self.prepare_record(info)
+    def insert_new(self, record):
+        """
+        Метод для вставки новой записи в модель.
+        """
         self.storage.append(record)
         index = len(self.storage)
         self.emit(SIGNAL('rowsInserted(QModelIndex, int, int)'),
                   QModelIndex(), index, index)
         return True
-
-    def prepare_record(self, info):
-        P = self.params
-        cats = {}
-        map(lambda x: cats.update( { x['id']: x['title']} ), P.category_rent_list())
-
-        record = (
-            self.params.WEEK_DAYS[info['day_id']],
-            P.rooms.get(info['room_id'], self.tr('Unknown')),
-            cats.get(info['category_id'], self.tr('Unknown')),
-            info['begin_time'],
-            info['end_time'],
-            info,
-            )
-        return record
 
     def price(self):
         """ Метод для определения цены аренды по всем арендованым событиям. """
@@ -197,19 +184,34 @@ class RentEvent(BaseModel):
             price += id_price.get(i, 0.0)
         return price
 
+    def handler_weekday(self, value):
+        """
+        Обработчик для визуализации значения дня недели.
+        """
+        return self.params.WEEK_DAYS[int(value)]
+
+    def handler_room(self, value):
+        """
+        Обработчик для визуализации наименования зала.
+        """
+        matched = filter(lambda x: x.get('uuid') == value,
+                         self.params.static['rooms'])
+        try:
+            return matched[0].get('title')
+        except IndexError:
+            return '--'
 
 class RentListModel(BaseModel):
 
     """ Модель для представления списка аренд."""
 
     # описание модели
-    HIDDEN_FIELDS = 1
-    storage = []
+    FIELDS = ('title', 'begin_date', 'end_date', 'hours', 'price', 'paid', 'data',)
 
     def __init__(self, parent=None):
-        #self.FIELDS = (self.tr('Title'), self.tr('Begin'), self.tr('End'), self.tr('Hours'), self.tr('Price'), self.tr('Paid'), None)
-        self.FIELDS = ('Title', 'Begin', 'End', 'Hours', 'Price', 'Paid', None)
         BaseModel.__init__(self, parent)
+        self.TITLES = (self.tr('Title'), self.tr('Begin'), self.tr('End'),
+                       self.tr('Hours'), self.tr('Price'), self.tr('Paid'), None)
 
     def init_data(self, event_list):
         """ Метод для заполнения модели. """

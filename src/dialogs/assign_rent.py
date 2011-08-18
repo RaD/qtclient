@@ -217,9 +217,12 @@ class AssignRent(UiDlgTemplate):
         """
         d2s = lambda x: x.date().toPyDate().strftime('%Y-%m-%d')
         mbox_title = self.tr('Assign rent event')
+        # дополняем переданные данные диапазоном дат, в котором
+        # действуют события
         params = dict(data,
                       begin_date = d2s(self.dateBegin),
                       end_date = d2s(self.dateEnd))
+        # делаем проверку через сервер
         http = self.params.http
         if not http.request('/api/event/', 'POST', params):
             QMessageBox.critical(self, mbox_title,
@@ -227,15 +230,13 @@ class AssignRent(UiDlgTemplate):
             return
         status, response = http.piston()
         if status == 'ALL_OK':
-            model = self.tableItems.model()
-            done = model.insert_new(info)
-            if not done:
-                QMessageBox.warning(self, mbox_title,
-                                    self.tr('Unable to assign: place already busy.'))
-                return False
+            # добавляем информацию о событии в модель
+            if  self.model.insert_new(params):
+                #self.price = self.model.price()
+                return True
 
-            self.price = model.price()
-            return True
+            QMessageBox.warning(self, mbox_title,
+                                self.tr('Unable to assign: place already busy.'))
         elif status == 'DUPLICATE_ENTRY':
             QMessageBox.warning(self, mbox_title,
                                 self.tr('Unable to assign: place already busy.'))
