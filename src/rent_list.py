@@ -42,6 +42,12 @@ class BaseModel(QAbstractTableModel):
     def insert_new(self, record):
         """
         Метод для вставки новой записи в модель.
+
+        @type  record: dict
+        @param record: Словарь с данными.
+
+        @rtype: boolean
+        @return: Результат выполнения операции.
         """
         self.storage.append(record)
         index = len(self.storage)
@@ -50,13 +56,21 @@ class BaseModel(QAbstractTableModel):
         return True
 
     def export(self):
-        """ Метод для экспорта информации из модели. """
+        """
+        Метод для экспорта информации из модели.
+
+        @rtype: list of dicts
+        @return: Содержимое модели.
+        """
         return self.storage
 
     def formset(self, **kwargs):
         """
         Метод для создания набора форм для сохранения данных через
         Django FormSet.
+
+        @rtype: list of tuples
+        @return: Список с данными набора форм.
         """
         if 'record_list' not in kwargs:
             record_list = self.export()
@@ -79,6 +93,11 @@ class BaseModel(QAbstractTableModel):
         """
         Метод реализующий применение обработчика для поля, если
         таковой был определён в дочерней модели.
+
+        @type  dictionary: dict
+        @param dictionary: Словарь с данными
+        @type  key: unicode
+        @param key: Словарный ключ, значение для которого следует получить.
         """
         value = dictionary.get(key, '--')
         if hasattr(self, 'handler_%s' % key):
@@ -201,10 +220,9 @@ class RentEvent(BaseModel):
             return '--'
 
 class RentListModel(BaseModel):
-
-    """ Модель для представления списка аренд."""
-
-    # описание модели
+    """
+    Модель для представления списка аренд.
+    """
     FIELDS = ('desc', 'begin_date', 'end_date', 'hours', 'price', 'paid',)
 
     def __init__(self, parent=None):
