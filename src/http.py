@@ -125,9 +125,7 @@ class Http:
             self.error_msg = self.tr('Authenticate yourself.')
             return default
         elif self.response.status == 500: # error
-            self.error_msg = self.tr('Error 500. Check dump!')
-            print '='*10, '\nERROR 500\n', '='*10
-            print self.response.read()
+            self.error_msg = 'Error 500. Check dump!'
             with open('./dump.html', 'w') as dump:
                 dump.write(self.response.read())
         else:
@@ -151,6 +149,9 @@ class Http:
             data = json.loads(response)
         except ValueError:
             data = response
+        if self.response.status > 399:
+            with open('./dump.html', 'w') as dump:
+                dump.write(data)
         return (status_list.get(self.response.status, 'UNKNOWN'), data)
 
     def prepare(self, data):
