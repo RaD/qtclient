@@ -10,6 +10,18 @@ from http import HttpException
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
+class DatetimeRange:
+    """
+    Класс для реализации определения принадлежности времени к
+    определённому диапазону.
+    """
+    def __init__(self, low, high):
+        self.low = low
+        self.high = high
+
+    def __contains__(self, dt):
+        return self.low <= dt < self.high
+
 class BaseModel(QAbstractTableModel):
     """
     Базовая модель.
@@ -164,12 +176,13 @@ class RentEvent(BaseModel):
     """
 
     # описание модели
-    FIELDS = ('weekday', 'room', 'category', 'begin_time', 'end_time',)
+    FIELDS = ('weekday', 'room', 'begin_time', 'end_time', 'category', 'cost',)
 
     def __init__(self, parent=None):
         BaseModel.__init__(self, parent)
-        self.TITLES = (self.tr('Week Day'), self.tr('Room'), self.tr('Category'),
-                       self.tr('Begin'), self.tr('End'),)
+        self.TITLES = (self.tr('Week Day'), self.tr('Room'),
+                       self.tr('Begin'), self.tr('End'),
+                       self.tr('Category'), self.tr('Cost'),)
 
     def init_data(self, event_list):
         """ Метод для заполнения модели. """
@@ -182,25 +195,55 @@ class RentEvent(BaseModel):
                   QModelIndex(), 1, index)
         return True
 
-    def price(self):
-        """ Метод для определения цены аренды по всем арендованым событиям. """
+    def insert_new(self, record):
+        """
+        Метод для вставки новой записи в модель.
 
-        # пересчитываем сумму, для этого надо получить список
-        # идентификаторов категорий, затем, используя данный
-        # список получить цену для каждой категории и
-        # просуммировать эти цены
+        @type  record: dict
+        @param record: Словарь с данными.
 
-        price = 0.0
-        P = self.params
+        @rtype: boolean
+        @return: Результат выполнения операции.
+        """
+        for key, value in record.items():
+            print '%s = %s (%s)' % (key, value, type(value))
+        record = dict(record,
+                      category=self.get_category_title(record),
+                      cost=self.get_category_cost(record))
+        return super(RentEvent, self).insert_new(record)
 
-        cats_id = [i['category_id'] for i in self.export()]
-        all_cats = P.category_rent_list()
+    def get_category(self, record):
+        s2d = lambda x: datetime.strptime(x, '%H:%M:%S')
+        value = s2d(record.get('begin_time'))
 
-        id_price = {}
-        map(lambda x: P.dict_norm(id_price, x, 'id', 'price'), all_cats)
-        for i in cats_id:
-            price += id_price.get(i, 0.0)
-        return price
+        days = ['mo', 'tu', 'we', 'th', 'fr', 'su', 'sa']
+        weekday = days[int(record.get('weekday'))]
+
+        categories = self.params.static.get('category_rent', [])
+        for item in categories:
+            begin = s2d(item.get('begin'))
+            end = s2d(item.get('end'))
+            if value in DatetimeRange(begin, end) and item.get(weekday):
+                return item
+        return None
+
+    def get_category_title(self, record):
+        category = self.get_category(record)
+        if category:
+            return category.get('title')
+        else:
+            return self.tr('No category')
+
+    def get_category_cost(self, record):
+        s2d = lambda x: datetime.strptime(x, '%H:%M:%S')
+        category = self.get_category(record)
+        if category:
+            begin_time = s2d(record.get('begin_time'))
+            end_time = s2d(record.get('end_time'))
+            duration = end_time - begin_time + timedelta(seconds=1)
+            return duration.seconds / 3600.0 * float(category.get('price'))
+        else:
+            return self.tr('Unknown')
 
     def handler_weekday(self, value):
         """

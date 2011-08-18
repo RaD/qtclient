@@ -21,7 +21,7 @@ class AddItem(UiDlgTemplate):
     ui_file = 'uis/dlg_add_rent.ui'
     callback = None
     params = None
-    event_id = 0
+    event_uuid = None
 
     def __init__(self, parent, callback):
         self.callback = callback
@@ -119,7 +119,7 @@ class AddItem(UiDlgTemplate):
         begin = self.editBegin.dateTime().toPyDateTime()
         end = self.editEnd.dateTime().toPyDateTime()
         duration = float((end - begin).seconds + 60) / 3600
-        params = {'id': self.event_id,
+        params = {'uuid': self.event_uuid,
                   'weekday': q2u(self.cbDay),
                   'room': q2u(self.cbRoom),
                   'begin_time': begin.time().strftime('%H:%M:00'),
