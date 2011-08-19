@@ -343,7 +343,8 @@ class MainWindow(QMainWindow):
 
         if QDialog.Accepted == dlgStatus:
             if not self.params.http.request('/api/login/', 'POST', self.credentials):
-                QMessageBox.critical(self, self.tr('Open session'), self.tr('Unable to open: %s') % self.params.http.error_msg)
+                QMessageBox.critical(self, self.tr('Open session'),
+                                     self.tr('Unable to open: %1').arg(self.params.http.error_msg))
                 return
 
             default_response = None
