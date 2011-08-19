@@ -3,6 +3,7 @@
 
 import time, json
 from datetime import datetime, date, time, timedelta
+from dateutil import rrule
 from settings import DEBUG
 from library import date2str, dt2str, ParamStorage
 from http import HttpException
@@ -39,6 +40,7 @@ class BaseModel(QAbstractTableModel):
     # описание модели
     TITLES = ()
     FIELDS = ()
+    EXCLUDE = ()
     storage = []
 
     # синглтон с параметрами приложения
@@ -96,6 +98,8 @@ class BaseModel(QAbstractTableModel):
                 row = ('formset-%s-%s' % (index, key), value)
                 formset.append( row )
             for key in self.FIELDS:
+                if key in self.EXCLUDE:
+                    continue
                 row = ('formset-%s-%s' % (index, key),
                        record.get(key))
                 formset.append( row )
@@ -177,6 +181,7 @@ class RentEvent(BaseModel):
 
     # описание модели
     FIELDS = ('weekday', 'room', 'begin_time', 'end_time', 'category', 'cost',)
+    EXCLUDE = ('category', 'cost',)
 
     def __init__(self, parent=None):
         BaseModel.__init__(self, parent)
@@ -267,7 +272,12 @@ class RentEvent(BaseModel):
             begin_time = s2d(record.get('begin_time'))
             end_time = s2d(record.get('end_time'))
             duration = end_time - begin_time + timedelta(seconds=1)
-            return duration.seconds / 3600.0 * float(category.get('price'))
+            multiplier = rrule.rrule(
+                rrule.DAILY,
+                dtstart=datetime.strptime(record.get('begin_date'), '%Y-%m-%d'),
+                until=datetime.strptime(record.get('end_date'), '%Y-%m-%d'),
+                byweekday=int(record.get('weekday'))).count()
+            return duration.seconds / 3600.0 * float(category.get('price')) * multiplier
         else:
             return self.tr('Unknown')
 
@@ -293,6 +303,7 @@ class RentListModel(BaseModel):
     Модель для представления списка аренд.
     """
     FIELDS = ('desc', 'begin_date', 'end_date', 'hours', 'price', 'paid',)
+    EXCLUDE = ('desc', 'begin_date', 'end_date', 'hours', 'price', 'paid',)
 
     def __init__(self, parent=None):
         BaseModel.__init__(self, parent)
