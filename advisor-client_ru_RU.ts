@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS><TS version="1.1" language="ru_RU">
+<!DOCTYPE TS>
+<TS version="2.0" language="ru_RU">
 <context>
     <name></name>
     <message>
@@ -24,22 +25,22 @@
 <context>
     <name>AssignRent</name>
     <message>
-        <location filename="src/dialogs/assign_rent.py" line="196"/>
+        <location filename="src/dialogs/assign_rent.py" line="192"/>
         <source>Choose a date</source>
         <translation>Выберите дату</translation>
     </message>
     <message>
-        <location filename="src/dialogs/assign_rent.py" line="219"/>
+        <location filename="src/dialogs/assign_rent.py" line="214"/>
         <source>Assign rent event</source>
         <translation>Назначить событие аренды</translation>
     </message>
     <message>
-        <location filename="src/dialogs/assign_rent.py" line="241"/>
+        <location filename="src/dialogs/assign_rent.py" line="236"/>
         <source>Unable to assign: place already busy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно назначить: место уже занято.</translation>
     </message>
     <message>
-        <location filename="src/dialogs/assign_rent.py" line="262"/>
+        <location filename="src/dialogs/assign_rent.py" line="246"/>
         <source>Rent Save</source>
         <translation>Сохранение аренды</translation>
     </message>
@@ -54,52 +55,52 @@
         <translation>Информация сохранена.</translation>
     </message>
     <message>
-        <location filename="src/dialogs/assign_rent.py" line="244"/>
+        <location filename="src/dialogs/assign_rent.py" line="239"/>
         <source>Unknown answer: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Неизвестный ответ: %1</translation>
     </message>
 </context>
 <context>
     <name>BaseUserInfo</name>
     <message>
-        <location filename="src/dialogs/user_info.py" line="83"/>
+        <location filename="src/dialogs/user_info.py" line="88"/>
         <source>Warning</source>
         <translation>Внимание</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="83"/>
+        <location filename="src/dialogs/user_info.py" line="88"/>
         <source>This RFID is used already!</source>
         <translation>Данный RFID уже использован!</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="79"/>
+        <location filename="src/dialogs/user_info.py" line="84"/>
         <source>Client Information</source>
         <translation>Информация о клиенте</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="79"/>
+        <location filename="src/dialogs/user_info.py" line="84"/>
         <source>Unable to fetch: %1</source>
         <translation>Невозможно получить: %1</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="121"/>
+        <location filename="src/dialogs/user_info.py" line="126"/>
         <source>Unable to save: %1</source>
         <translation>Невозможно сохранить: %1</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="126"/>
+        <location filename="src/dialogs/user_info.py" line="131"/>
         <source>Information is saved.</source>
         <translation>Информация сохранена.</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="129"/>
+        <location filename="src/dialogs/user_info.py" line="134"/>
         <source>Warning!
 Please fill all fields.</source>
         <translation>Внимание!
 Пожалуйста, заполните все поля.</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="116"/>
+        <location filename="src/dialogs/user_info.py" line="121"/>
         <source>Saving</source>
         <translation>Сохранение</translation>
     </message>
@@ -143,162 +144,162 @@ Please fill all fields.</source>
 <context>
     <name>ClientInfo</name>
     <message>
-        <location filename="src/dialogs/user_info.py" line="272"/>
+        <location filename="src/dialogs/user_info.py" line="287"/>
         <source>Payment</source>
         <translation>Оплата</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="207"/>
+        <location filename="src/dialogs/user_info.py" line="222"/>
         <source>Prolongate</source>
         <translation>Продление</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="391"/>
+        <location filename="src/dialogs/user_info.py" line="406"/>
         <source>Cancel</source>
         <translation>Отмена</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="252"/>
+        <location filename="src/dialogs/user_info.py" line="267"/>
         <source>RFID code of this client.</source>
-        <translation>Код RFID для этого клиента</translation>
+        <translation>Код RFID для этого клиента.</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="266"/>
+        <location filename="src/dialogs/user_info.py" line="281"/>
         <source>Register payment</source>
         <translation>Регистрация платежа</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="274"/>
+        <location filename="src/dialogs/user_info.py" line="289"/>
         <source>Apply</source>
         <translation>Применить</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="453"/>
+        <location filename="src/dialogs/user_info.py" line="468"/>
         <source>Error</source>
         <translation>Ошибка</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="302"/>
+        <location filename="src/dialogs/user_info.py" line="317"/>
         <source>Server could not receive that payment.</source>
         <translation>Сервер не может принять данный платёж.</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="302"/>
+        <location filename="src/dialogs/user_info.py" line="317"/>
         <source>Call support team!</source>
         <translation>Звоните в поддержку!</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="312"/>
+        <location filename="src/dialogs/user_info.py" line="327"/>
         <source>Voucher Prolongation</source>
         <translation>Продление ваучера</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="324"/>
+        <location filename="src/dialogs/user_info.py" line="339"/>
         <source>Choose the prolongation date:</source>
         <translation>Выберите дату продления:</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="338"/>
+        <location filename="src/dialogs/user_info.py" line="353"/>
         <source>Voucher has been prolongated sucessfully.</source>
         <translation>Ваучер был успешно продлён.</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="345"/>
+        <location filename="src/dialogs/user_info.py" line="360"/>
         <source>Could not prolongate this voucher!</source>
         <translation>Не могу продлить данный ваучер!</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="351"/>
+        <location filename="src/dialogs/user_info.py" line="366"/>
         <source>Voucher Cancellation</source>
         <translation>Отмена ваучера</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="359"/>
+        <location filename="src/dialogs/user_info.py" line="374"/>
         <source>Are you sure to cancel this voucher?</source>
         <translation>Вы точно желаете отменить данный ваучер?</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="371"/>
+        <location filename="src/dialogs/user_info.py" line="386"/>
         <source>Voucher has been cancelled sucessfully.</source>
         <translation>Ваучер был успешно отменён.</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="377"/>
+        <location filename="src/dialogs/user_info.py" line="392"/>
         <source>Could not cancel this voucher!</source>
         <translation>Не могу отменить данный ваучер!</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="429"/>
+        <location filename="src/dialogs/user_info.py" line="444"/>
         <source>Club Card</source>
         <translation>Клубная карта</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="432"/>
+        <location filename="src/dialogs/user_info.py" line="447"/>
         <source>Promo Card</source>
         <translation>Промо карта</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="442"/>
+        <location filename="src/dialogs/user_info.py" line="457"/>
         <source>Choose the voucher&apos;s type</source>
         <translation>Укажите тип ваучера</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="469"/>
+        <location filename="src/dialogs/user_info.py" line="484"/>
         <source>Save info</source>
         <translation>Сохранение</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="497"/>
+        <location filename="src/dialogs/user_info.py" line="512"/>
         <source>Price Category</source>
         <translation>Ценовая категория</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="509"/>
+        <location filename="src/dialogs/user_info.py" line="524"/>
         <source>Visit Count</source>
         <translation>Количество посещений</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="601"/>
+        <location filename="src/dialogs/user_info.py" line="616"/>
         <source>Paid</source>
         <translation>Оплата</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="571"/>
+        <location filename="src/dialogs/user_info.py" line="586"/>
         <source>Payment range is %(min)0.2f .. %(max)0.2f.</source>
         <translation>Диапазон платежа от %(min)0.2f до %(max)0.2f.</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="592"/>
+        <location filename="src/dialogs/user_info.py" line="607"/>
         <source>Card Type</source>
         <translation>Тип карты</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="633"/>
+        <location filename="src/dialogs/user_info.py" line="648"/>
         <source>Invalid usage. Why do you use count=%i</source>
         <translation>Неправильное использование. Зачем вы используете количество = %i</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="190"/>
+        <location filename="src/dialogs/user_info.py" line="204"/>
         <source>Client Information</source>
         <translation>Информация о клиенте</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="292"/>
+        <location filename="src/dialogs/user_info.py" line="307"/>
         <source>Unable to register: %1</source>
         <translation>Невозможно зарегистрировать: %1</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="332"/>
+        <location filename="src/dialogs/user_info.py" line="347"/>
         <source>Unable to prolongate: %1</source>
         <translation>Невозможно продлить: %1</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="366"/>
+        <location filename="src/dialogs/user_info.py" line="381"/>
         <source>Unable to cancel: %1</source>
         <translation>Невозможно отменить: %1</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="469"/>
+        <location filename="src/dialogs/user_info.py" line="484"/>
         <source>Unable to save: %1</source>
         <translation>Невозможно сохранить: %1</translation>
     </message>
@@ -306,7 +307,7 @@ Please fill all fields.</source>
 <context>
     <name>Dialog</name>
     <message>
-        <location filename="src/uis/dlg_add_rent.ui" line="14"/>
+        <location filename="src/uis/dlg_add_rent.ui" line="17"/>
         <source>Dialog</source>
         <translation>Диалог</translation>
     </message>
@@ -326,7 +327,7 @@ Please fill all fields.</source>
         <translation>ОК</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_add_rent.ui" line="123"/>
+        <location filename="src/uis/dlg_add_rent.ui" line="116"/>
         <source>Cancel</source>
         <translation>Отмена</translation>
     </message>
@@ -376,26 +377,26 @@ Please fill all fields.</source>
         <translation>Цвет окантовки</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_assign_rent.ui" line="114"/>
+        <location filename="src/uis/dlg_assign_rent.ui" line="117"/>
         <source>...</source>
         <translation type="unfinished"></translation>
     </message>
-    <message encoding="UTF-8">
+    <message utf8="true">
         <location filename="src/uis/dlg_settings_general.ui" line="77"/>
         <source>Управление отладкой (для разработчиков):</source>
         <translation type="unfinished"></translation>
     </message>
-    <message encoding="UTF-8">
+    <message utf8="true">
         <location filename="src/uis/dlg_settings_general.ui" line="86"/>
         <source>Приложение</source>
         <translation type="unfinished"></translation>
     </message>
-    <message encoding="UTF-8">
+    <message utf8="true">
         <location filename="src/uis/dlg_settings_general.ui" line="93"/>
         <source>Считыватель</source>
         <translation type="unfinished"></translation>
     </message>
-    <message encoding="UTF-8">
+    <message utf8="true">
         <location filename="src/uis/dlg_settings_general.ui" line="100"/>
         <source>Принтер</source>
         <translation type="unfinished"></translation>
@@ -436,12 +437,12 @@ Please fill all fields.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_assign_rent.ui" line="241"/>
+        <location filename="src/uis/dlg_assign_rent.ui" line="250"/>
         <source>Save</source>
         <translation>Сохранить</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_user_info.ui" line="213"/>
+        <location filename="src/uis/dlg_user_info.ui" line="219"/>
         <source>Assign</source>
         <translation>Назначить</translation>
     </message>
@@ -501,47 +502,42 @@ Please fill all fields.</source>
         <translation>Показать</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_assign_rent.ui" line="43"/>
+        <location filename="src/uis/dlg_assign_rent.ui" line="46"/>
         <source>Description</source>
         <translation>Описание</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_assign_rent.ui" line="66"/>
+        <location filename="src/uis/dlg_assign_rent.ui" line="69"/>
         <source>Period</source>
         <translation>Период</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_assign_rent.ui" line="136"/>
+        <location filename="src/uis/dlg_assign_rent.ui" line="139"/>
         <source>Today</source>
         <translation>Сегодня</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_add_rent.ui" line="34"/>
+        <location filename="src/uis/dlg_add_rent.ui" line="37"/>
         <source>Day of week</source>
         <translation>День недели</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_add_rent.ui" line="44"/>
+        <location filename="src/uis/dlg_add_rent.ui" line="47"/>
         <source>Room</source>
         <translation>Зал</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_add_rent.ui" line="54"/>
+        <location filename="src/uis/dlg_add_rent.ui" line="57"/>
         <source>Begin</source>
         <translation>Начало</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_add_rent.ui" line="75"/>
+        <location filename="src/uis/dlg_add_rent.ui" line="78"/>
         <source>End</source>
         <translation>Конец</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_add_rent.ui" line="96"/>
-        <source>Category</source>
-        <translation>Категория</translation>
-    </message>
-    <message>
-        <location filename="src/uis/dlg_add_rent.ui" line="130"/>
+        <location filename="src/uis/dlg_add_rent.ui" line="123"/>
         <source>OK</source>
         <translation>ОК</translation>
     </message>
@@ -621,62 +617,62 @@ Please fill all fields.</source>
         <translation>Имя</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_assign_rent.ui" line="20"/>
+        <location filename="src/uis/dlg_assign_rent.ui" line="23"/>
         <source>Assign Rent Dialog</source>
         <translation>Диалог назначения аренды</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_assign_rent.ui" line="59"/>
+        <location filename="src/uis/dlg_assign_rent.ui" line="62"/>
         <source>Rent Description</source>
         <translation>Описание аренды</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_assign_rent.ui" line="81"/>
+        <location filename="src/uis/dlg_assign_rent.ui" line="84"/>
         <source>Begin Date</source>
         <translation>Дата начала</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_assign_rent.ui" line="111"/>
+        <location filename="src/uis/dlg_assign_rent.ui" line="114"/>
         <source>Click to open calendar</source>
         <translation>Нажмите для вызова календаря</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_assign_rent.ui" line="104"/>
+        <location filename="src/uis/dlg_assign_rent.ui" line="107"/>
         <source>End Date</source>
         <translation>Дата завершения</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_assign_rent.ui" line="133"/>
+        <location filename="src/uis/dlg_assign_rent.ui" line="136"/>
         <source>One day Rent</source>
         <translation>Однодневная аренда</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_assign_rent.ui" line="158"/>
+        <location filename="src/uis/dlg_assign_rent.ui" line="161"/>
         <source>Events</source>
         <translation>События</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_assign_rent.ui" line="177"/>
+        <location filename="src/uis/dlg_assign_rent.ui" line="180"/>
         <source>Events of this Rent</source>
         <translation>События данной аренды</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_assign_rent.ui" line="203"/>
+        <location filename="src/uis/dlg_assign_rent.ui" line="212"/>
         <source>Add an event to the rent</source>
         <translation>Добавить событие к аренде</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_assign_rent.ui" line="206"/>
+        <location filename="src/uis/dlg_assign_rent.ui" line="215"/>
         <source>Add Event</source>
         <translation>Добавить событие</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_assign_rent.ui" line="238"/>
+        <location filename="src/uis/dlg_assign_rent.ui" line="247"/>
         <source>Save Rent</source>
         <translation>Сохранить аренду</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_assign_rent.ui" line="260"/>
+        <location filename="src/uis/dlg_assign_rent.ui" line="269"/>
         <source>Close the Dialog</source>
         <translation>Закрыть диалог</translation>
     </message>
@@ -1197,12 +1193,12 @@ Status: %s</source>
 <context>
     <name>Http</name>
     <message>
-        <location filename="src/http.py" line="209"/>
+        <location filename="src/http.py" line="210"/>
         <source>Authenticate yourself.</source>
         <translation>Аутентифицируйте себя.</translation>
     </message>
     <message>
-        <location filename="src/http.py" line="212"/>
+        <location filename="src/http.py" line="213"/>
         <source>Error 500. Check dump!</source>
         <translation>Ошибка 500. Проверьте журнал!</translation>
     </message>
@@ -1504,45 +1500,83 @@ Status: %s</source>
 <context>
     <name>RentEvent</name>
     <message>
-        <location filename="src/rent_list.py" line="119"/>
+        <location filename="src/rent_list.py" line="188"/>
         <source>Week Day</source>
         <translation>День недели</translation>
     </message>
     <message>
-        <location filename="src/rent_list.py" line="119"/>
+        <location filename="src/rent_list.py" line="188"/>
         <source>Room</source>
         <translation>Зал</translation>
     </message>
     <message>
-        <location filename="src/rent_list.py" line="119"/>
+        <location filename="src/rent_list.py" line="188"/>
         <source>Category</source>
         <translation>Категория</translation>
     </message>
     <message>
-        <location filename="src/rent_list.py" line="119"/>
+        <location filename="src/rent_list.py" line="188"/>
         <source>Begin</source>
         <translation>Начало</translation>
     </message>
     <message>
-        <location filename="src/rent_list.py" line="119"/>
+        <location filename="src/rent_list.py" line="188"/>
         <source>End</source>
         <translation>Конец</translation>
     </message>
     <message>
-        <location filename="src/rent_list.py" line="147"/>
-        <source>Check calendar</source>
+        <location filename="src/rent_list.py" line="282"/>
+        <source>Unknown</source>
+        <translation>Неизвестно</translation>
+    </message>
+    <message>
+        <location filename="src/rent_list.py" line="188"/>
+        <source>Cost</source>
+        <translation>Стоимость</translation>
+    </message>
+    <message>
+        <location filename="src/rent_list.py" line="256"/>
+        <source>No category</source>
+        <translation>Нет категории</translation>
+    </message>
+</context>
+<context>
+    <name>RentListModel</name>
+    <message>
+        <location filename="src/rent_list.py" line="310"/>
+        <source>Title</source>
+        <translation>Название</translation>
+    </message>
+    <message>
+        <location filename="src/rent_list.py" line="310"/>
+        <source>Begin</source>
+        <translation>Начало</translation>
+    </message>
+    <message>
+        <location filename="src/rent_list.py" line="310"/>
+        <source>End</source>
+        <translation>Конец</translation>
+    </message>
+    <message>
+        <location filename="src/rent_list.py" line="310"/>
+        <source>Hours</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="src/rent_list.py" line="170"/>
-        <source>Unknown</source>
-        <translation>Неизвестно</translation>
+        <location filename="src/rent_list.py" line="310"/>
+        <source>Price</source>
+        <translation>Цена</translation>
+    </message>
+    <message>
+        <location filename="src/rent_list.py" line="310"/>
+        <source>Paid</source>
+        <translation>Оплачено</translation>
     </message>
 </context>
 <context>
     <name>RenterInfo</name>
     <message>
-        <location filename="src/dialogs/user_info.py" line="135"/>
+        <location filename="src/dialogs/user_info.py" line="140"/>
         <source>Renter Information</source>
         <translation>Информация об арендаторе</translation>
     </message>
@@ -1550,17 +1584,17 @@ Status: %s</source>
 <context>
     <name>Searching</name>
     <message>
-        <location filename="src/dialogs/searching.py" line="53"/>
+        <location filename="src/dialogs/searching.py" line="58"/>
         <source>Searching</source>
         <translation>Поиск</translation>
     </message>
     <message>
-        <location filename="src/dialogs/searching.py" line="53"/>
+        <location filename="src/dialogs/searching.py" line="58"/>
         <source>Unable to search: %s</source>
         <translation>Невозможно выполнить поиск: %s</translation>
     </message>
     <message>
-        <location filename="src/dialogs/searching.py" line="39"/>
+        <location filename="src/dialogs/searching.py" line="44"/>
         <source>Show</source>
         <translation>Показать</translation>
     </message>
