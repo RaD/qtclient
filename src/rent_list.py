@@ -205,14 +205,21 @@ class RentEvent(BaseModel):
         @rtype: boolean
         @return: Результат выполнения операции.
         """
-        for key, value in record.items():
-            print '%s = %s (%s)' % (key, value, type(value))
         record = dict(record,
                       category=self.get_category_title(record),
                       cost=self.get_category_cost(record))
         return super(RentEvent, self).insert_new(record)
 
     def get_category(self, record):
+        """
+        Метод для получения категории аренды, подходящей под условия.
+
+        @type  record: dict
+        @param record: Словарь с данными события аренды.
+
+        @rtype: dict or None
+        @return: Категория аренды, подходящая под условия.
+        """
         s2d = lambda x: datetime.strptime(x, '%H:%M:%S')
         value = s2d(record.get('begin_time'))
 
@@ -228,6 +235,15 @@ class RentEvent(BaseModel):
         return None
 
     def get_category_title(self, record):
+        """
+        Метод для получения названия категории аренды, подходящей под условия.
+
+        @type  record: dict
+        @param record: Словарь с данными события аренды.
+
+        @rtype: unicode
+        @return: Название категории аренды.
+        """
         category = self.get_category(record)
         if category:
             return category.get('title')
@@ -235,6 +251,16 @@ class RentEvent(BaseModel):
             return self.tr('No category')
 
     def get_category_cost(self, record):
+        """
+        Метод для вычисления стоимости события аренды, исходя из
+        категории аренды, подходящей под условия.
+
+        @type  record: dict
+        @param record: Словарь с данными события аренды.
+
+        @rtype: float
+        @return: Стоимость события аренды.
+        """
         s2d = lambda x: datetime.strptime(x, '%H:%M:%S')
         category = self.get_category(record)
         if category:
