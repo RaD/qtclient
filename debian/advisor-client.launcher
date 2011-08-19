@@ -3,6 +3,6 @@
 # application launcher
 
 cd /usr/share/pyshared/advisor-client
-python manager.pyc
+python manager.py
 
 exit $?

@@ -1,3 +1,9 @@
+advisor-client (0.4.2-1ubuntu1) maverick; urgency=low
+
+  * see RC#1 milestone on https://github.com/RaD/foobar/issues/
+
+ -- Ruslan Popov <ruslan.popov@gmail.com>  Sat, 20 Aug 2011 02:07:48 +0400
+
 advisor-client (0.4.1-1ubuntu2) maverick; urgency=low
 
   * Small changes in code.

@@ -10,6 +10,6 @@ Homepage: http://snegiri.dontexist.org/projects/advisor/client/
 
 Package: advisor-client
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, python-qt4 (>= 4.4), python-cjson, python-serial (>=2.3)
+Depends: ${shlibs:Depends}, ${misc:Depends}, python-qt4 (>= 4.4), python-cjson, python-serial (>=2.3), python-dateutil
 Description: Manager interface of advisor-client system
  <insert long description, indented with spaces>

@@ -1,10 +1,9 @@
 PROJECT=advisor-client
-VERSION=0.4.1
+VERSION=0.4.2
 
 BASEDIR=$(shell pwd)
 BUILD=$(BASEDIR)/build
 DST=$(BUILD)/client
-LCL=locale/ru/LC_MESSAGES
 
 all:
 	echo "Usage: make dist"
@@ -16,11 +15,10 @@ build: dist debianize
 
 dist:
 	mkdir -p $(DST) $(DST)/$(LCL) $(DST)/uis $(DST)/dialogs
-	cd ./src; make pomo; cd -
 	cp ./src/*.py ./src/*.css $(DST)/
 	cp ./src/uis/*.ui $(DST)/uis/
 	cp ./src/dialogs/*.py $(DST)/dialogs/
-	cp ./src/$(LCL)/*mo $(DST)/$(LCL)/
+	cp ./src/advisor-client_*.qm $(DST)/
 	cp ./package/* $(BUILD)/
 
 	cd $(BUILD); python setup.py sdist; cd -

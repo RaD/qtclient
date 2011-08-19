@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='advisor-client',
-      version='0.4.1',
+      version='0.4.2',
       description='Accounting System / Client Interface',
       author='Ruslan Popov',
       author_email='ruslan.popov@gmail.com',
@@ -15,7 +15,7 @@ setup(name='advisor-client',
       package_data={'advisor-client': [
           'dialogs/*.py',
           'uis/*.ui',
-          'locale/ru/LC_MESSAGES/*mo',
+          'advisor-client_*.qm',
           'manager.css'
           ]}
      )

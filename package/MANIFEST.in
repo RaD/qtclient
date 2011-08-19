@@ -5,5 +5,5 @@ include INSTALL
 include MANIFEST.in
 recursive-include client/dialogs *.py
 recursive-include client/uis *.ui
-recursive-include client/locale *.mo
+recursive-include client *.qm
 recursive-include client *.css
