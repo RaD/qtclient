@@ -45,6 +45,11 @@ class BaseUserInfo(UiDlgTemplate):
         self.tableHistory.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableHistory.customContextMenuRequested.connect(self.context_menu)
 
+        header = self.tableHistory.horizontalHeader()
+        header.setStretchLastSection(False)
+        header.setResizeMode(QHeaderView.ResizeToContents)
+        header.setResizeMode(0, QHeaderView.Stretch)
+
         # добавляем на диалог все зарегистрированные виды скидок
         discount_list = kwargs.get('discount', [])
         for index, item in enumerate(discount_list):
@@ -134,8 +139,18 @@ class RenterInfo(BaseUserInfo):
     def setupUi(self):
         self.title = self.tr('Renter Information')
         super(RenterInfo, self).setupUi(discount=self.params.static.get('discount_renter'))
+
         self.model = RentListModel(self)
         self.tableHistory.setModel(self.model)
+
+        # fixme: без этого таблица не растягивается, надо понять
+        # почему не отрабатывает такой же код в базовом классе, походу
+        # засада в модели
+        header = self.tableHistory.horizontalHeader()
+        header.setStretchLastSection(False)
+        header.setResizeMode(QHeaderView.ResizeToContents)
+        header.setResizeMode(0, QHeaderView.Stretch)
+
 
     def context_menu(self, position):
         """
@@ -188,6 +203,7 @@ class ClientInfo(BaseUserInfo):
     def setupUi(self):
         self.title = self.tr('Client Information')
         super(ClientInfo, self).setupUi(discount=self.params.static.get('discount_client'))
+
         self.model = CardListModel(self)
         self.tableHistory.setModel(self.model)
 

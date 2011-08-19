@@ -36,6 +36,11 @@ class Searching(UiDlgTemplate):
 
         self.tableUsers.setSelectionBehavior(QAbstractItemView.SelectRows)
 
+        header = self.tableUsers.horizontalHeader()
+        header.setStretchLastSection(False)
+        header.setResizeMode(QHeaderView.ResizeToContents)
+        header.setResizeMode(0, QHeaderView.Stretch)
+
         self.buttonApply.setText(self.tr('Show'))
         self.buttonApply.setDisabled(True)
 

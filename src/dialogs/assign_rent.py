@@ -153,6 +153,11 @@ class AssignRent(UiDlgTemplate):
         self.tableItems.setModel(self.model)
         self.tableItems.setSelectionBehavior(QAbstractItemView.SelectRows)
 
+        header = self.tableItems.horizontalHeader()
+        header.setStretchLastSection(False)
+        header.setResizeMode(QHeaderView.ResizeToContents)
+        header.setResizeMode(0, QHeaderView.Stretch)
+
         self.connect(self.toolBegin, SIGNAL('clicked()'), lambda: self.show_calendar(self.dateBegin))
         self.connect(self.toolEnd, SIGNAL('clicked()'), lambda: self.show_calendar(self.dateEnd))
         self.connect(self.buttonToday, SIGNAL('clicked()'), self.set_date_today)

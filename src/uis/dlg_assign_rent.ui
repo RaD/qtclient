@@ -179,6 +179,12 @@
         <property name="toolTip">
          <string>Events of this Rent</string>
         </property>
+        <attribute name="horizontalHeaderCascadingSectionResizes">
+         <bool>false</bool>
+        </attribute>
+        <attribute name="horizontalHeaderStretchLastSection">
+         <bool>false</bool>
+        </attribute>
        </widget>
       </item>
      </layout>
