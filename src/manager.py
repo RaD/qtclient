@@ -83,7 +83,7 @@ class MainWindow(QMainWindow):
         settings.endGroup()
 
         if 'WrongHost' == host.toString():
-            self.setupApp()
+            self.app_settings()
 
         self.baseTitle = self.tr('Manager\'s interface')
         self.logoutTitle()
