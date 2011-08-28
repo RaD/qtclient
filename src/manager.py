@@ -335,21 +335,24 @@ class MainWindow(QMainWindow):
     def open_session(self):
         def callback(credentials):
             self.credentials = credentials
+            self.credentials['version'] = '.'.join(map(str, self.params.version))
 
         self.dialog = DlgLogin(self)
         self.dialog.setCallback(callback)
         self.dialog.setModal(True)
         dlgStatus = self.dialog.exec_()
 
+        dialog_title = self.tr('Open session')
+        http = self.params.http
         if QDialog.Accepted == dlgStatus:
-            if not self.params.http.request('/api/login/', 'POST', self.credentials):
-                QMessageBox.critical(self, self.tr('Open session'),
-                                     self.tr('Unable to open: %1').arg(self.params.http.error_msg))
+            if not http.request('/api/login/', 'POST', self.credentials):
+                QMessageBox.critical(self, dialog_title,
+                                     self.tr('Unable to make request: %1').arg(http.error_msg))
                 return
 
             default_response = None
-            response = self.params.http.parse(default_response)
-            if response and 'id' in response:
+            status, response = http.piston()
+            if status == 'ALL_OK':
                 self.params.logged_in = True
                 self.loggedTitle(response)
 
@@ -378,8 +381,14 @@ class MainWindow(QMainWindow):
 
                 self.printer_init()
                 self.interface_disable(MENU_LOGGED_IN | MENU_RFID | MENU_PRINTER)
+            elif status == 'NOT_IMPLEMENTED':
+                QMessageBox.information(self, dialog_title,
+                                        self.tr('Protocol is deprecated!'))
+            elif status == 'BAD_REQUEST':
+                QMessageBox.information(self, dialog_title,
+                                        self.tr('No protocol version found!'))
             else:
-                QMessageBox.warning(self, self.tr('Autentication failed'),
+                QMessageBox.warning(self, dialog_title,
                                     self.tr('It seems you\'ve entered wrong login/password.'))
 
     def close_session(self):

@@ -63,44 +63,44 @@
 <context>
     <name>BaseUserInfo</name>
     <message>
-        <location filename="src/dialogs/user_info.py" line="88"/>
+        <location filename="src/dialogs/user_info.py" line="83"/>
         <source>Warning</source>
         <translation>Внимание</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="88"/>
+        <location filename="src/dialogs/user_info.py" line="83"/>
         <source>This RFID is used already!</source>
         <translation>Данный RFID уже использован!</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="84"/>
+        <location filename="src/dialogs/user_info.py" line="79"/>
         <source>Client Information</source>
         <translation>Информация о клиенте</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="84"/>
+        <location filename="src/dialogs/user_info.py" line="79"/>
         <source>Unable to fetch: %1</source>
         <translation>Невозможно получить: %1</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="126"/>
+        <location filename="src/dialogs/user_info.py" line="121"/>
         <source>Unable to save: %1</source>
         <translation>Невозможно сохранить: %1</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="131"/>
+        <location filename="src/dialogs/user_info.py" line="126"/>
         <source>Information is saved.</source>
         <translation>Информация сохранена.</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="134"/>
+        <location filename="src/dialogs/user_info.py" line="129"/>
         <source>Warning!
 Please fill all fields.</source>
         <translation>Внимание!
 Пожалуйста, заполните все поля.</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="121"/>
+        <location filename="src/dialogs/user_info.py" line="116"/>
         <source>Saving</source>
         <translation>Сохранение</translation>
     </message>
@@ -144,162 +144,162 @@ Please fill all fields.</source>
 <context>
     <name>ClientInfo</name>
     <message>
-        <location filename="src/dialogs/user_info.py" line="287"/>
+        <location filename="src/dialogs/user_info.py" line="283"/>
         <source>Payment</source>
         <translation>Оплата</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="222"/>
+        <location filename="src/dialogs/user_info.py" line="218"/>
         <source>Prolongate</source>
         <translation>Продление</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="406"/>
+        <location filename="src/dialogs/user_info.py" line="402"/>
         <source>Cancel</source>
         <translation>Отмена</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="267"/>
+        <location filename="src/dialogs/user_info.py" line="263"/>
         <source>RFID code of this client.</source>
         <translation>Код RFID для этого клиента.</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="281"/>
+        <location filename="src/dialogs/user_info.py" line="277"/>
         <source>Register payment</source>
         <translation>Регистрация платежа</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="289"/>
+        <location filename="src/dialogs/user_info.py" line="285"/>
         <source>Apply</source>
         <translation>Применить</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="468"/>
+        <location filename="src/dialogs/user_info.py" line="464"/>
         <source>Error</source>
         <translation>Ошибка</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="317"/>
+        <location filename="src/dialogs/user_info.py" line="313"/>
         <source>Server could not receive that payment.</source>
         <translation>Сервер не может принять данный платёж.</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="317"/>
+        <location filename="src/dialogs/user_info.py" line="313"/>
         <source>Call support team!</source>
         <translation>Звоните в поддержку!</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="327"/>
+        <location filename="src/dialogs/user_info.py" line="323"/>
         <source>Voucher Prolongation</source>
         <translation>Продление ваучера</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="339"/>
+        <location filename="src/dialogs/user_info.py" line="335"/>
         <source>Choose the prolongation date:</source>
         <translation>Выберите дату продления:</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="353"/>
+        <location filename="src/dialogs/user_info.py" line="349"/>
         <source>Voucher has been prolongated sucessfully.</source>
         <translation>Ваучер был успешно продлён.</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="360"/>
+        <location filename="src/dialogs/user_info.py" line="356"/>
         <source>Could not prolongate this voucher!</source>
         <translation>Не могу продлить данный ваучер!</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="366"/>
+        <location filename="src/dialogs/user_info.py" line="362"/>
         <source>Voucher Cancellation</source>
         <translation>Отмена ваучера</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="374"/>
+        <location filename="src/dialogs/user_info.py" line="370"/>
         <source>Are you sure to cancel this voucher?</source>
         <translation>Вы точно желаете отменить данный ваучер?</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="386"/>
+        <location filename="src/dialogs/user_info.py" line="382"/>
         <source>Voucher has been cancelled sucessfully.</source>
         <translation>Ваучер был успешно отменён.</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="392"/>
+        <location filename="src/dialogs/user_info.py" line="388"/>
         <source>Could not cancel this voucher!</source>
         <translation>Не могу отменить данный ваучер!</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="444"/>
+        <location filename="src/dialogs/user_info.py" line="440"/>
         <source>Club Card</source>
         <translation>Клубная карта</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="447"/>
+        <location filename="src/dialogs/user_info.py" line="443"/>
         <source>Promo Card</source>
         <translation>Промо карта</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="457"/>
+        <location filename="src/dialogs/user_info.py" line="453"/>
         <source>Choose the voucher&apos;s type</source>
         <translation>Укажите тип ваучера</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="484"/>
+        <location filename="src/dialogs/user_info.py" line="480"/>
         <source>Save info</source>
         <translation>Сохранение</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="512"/>
+        <location filename="src/dialogs/user_info.py" line="508"/>
         <source>Price Category</source>
         <translation>Ценовая категория</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="524"/>
+        <location filename="src/dialogs/user_info.py" line="520"/>
         <source>Visit Count</source>
         <translation>Количество посещений</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="616"/>
+        <location filename="src/dialogs/user_info.py" line="612"/>
         <source>Paid</source>
         <translation>Оплата</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="586"/>
+        <location filename="src/dialogs/user_info.py" line="582"/>
         <source>Payment range is %(min)0.2f .. %(max)0.2f.</source>
         <translation>Диапазон платежа от %(min)0.2f до %(max)0.2f.</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="607"/>
+        <location filename="src/dialogs/user_info.py" line="603"/>
         <source>Card Type</source>
         <translation>Тип карты</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="648"/>
+        <location filename="src/dialogs/user_info.py" line="644"/>
         <source>Invalid usage. Why do you use count=%i</source>
         <translation>Неправильное использование. Зачем вы используете количество = %i</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="204"/>
+        <location filename="src/dialogs/user_info.py" line="195"/>
         <source>Client Information</source>
         <translation>Информация о клиенте</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="307"/>
+        <location filename="src/dialogs/user_info.py" line="303"/>
         <source>Unable to register: %1</source>
         <translation>Невозможно зарегистрировать: %1</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="347"/>
+        <location filename="src/dialogs/user_info.py" line="343"/>
         <source>Unable to prolongate: %1</source>
         <translation>Невозможно продлить: %1</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="381"/>
+        <location filename="src/dialogs/user_info.py" line="377"/>
         <source>Unable to cancel: %1</source>
         <translation>Невозможно отменить: %1</translation>
     </message>
     <message>
-        <location filename="src/dialogs/user_info.py" line="484"/>
+        <location filename="src/dialogs/user_info.py" line="480"/>
         <source>Unable to save: %1</source>
         <translation>Невозможно сохранить: %1</translation>
     </message>
@@ -1226,7 +1226,7 @@ Status: %s</source>
         <translation>Статическая информация</translation>
     </message>
     <message>
-        <location filename="src/manager.py" line="444"/>
+        <location filename="src/manager.py" line="454"/>
         <source>Unable to fetch: %s</source>
         <translation>Невозможно получить: %s</translation>
     </message>
@@ -1248,12 +1248,12 @@ Status: %s</source>
     <message>
         <location filename="src/manager.py" line="160"/>
         <source>&lt;&lt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;&lt;</translation>
     </message>
     <message>
         <location filename="src/manager.py" line="161"/>
         <source>&gt;&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&gt;&gt;</translation>
     </message>
     <message>
         <location filename="src/manager.py" line="162"/>
@@ -1266,37 +1266,37 @@ Status: %s</source>
         <translation>Неделя:</translation>
     </message>
     <message>
-        <location filename="src/manager.py" line="381"/>
+        <location filename="src/manager.py" line="391"/>
         <source>It seems you&apos;ve entered wrong login/password.</source>
         <translation>Похоже, что вы ввели неправильный логин/пароль.</translation>
     </message>
     <message>
-        <location filename="src/manager.py" line="444"/>
+        <location filename="src/manager.py" line="454"/>
         <source>Client info</source>
         <translation>Информация о клиенте</translation>
     </message>
     <message>
-        <location filename="src/manager.py" line="449"/>
+        <location filename="src/manager.py" line="459"/>
         <source>Warning</source>
         <translation>Внимание</translation>
     </message>
     <message>
-        <location filename="src/manager.py" line="449"/>
+        <location filename="src/manager.py" line="459"/>
         <source>This RFID belongs to nobody.</source>
         <translation>Данный RFID не принадлежит никому.</translation>
     </message>
     <message>
-        <location filename="src/manager.py" line="482"/>
+        <location filename="src/manager.py" line="492"/>
         <source>About application dialog</source>
         <translation>Диалог о приложении</translation>
     </message>
     <message>
-        <location filename="src/manager.py" line="501"/>
+        <location filename="src/manager.py" line="511"/>
         <source>Waiting for update.</source>
         <translation>Ожидаем обновление.</translation>
     </message>
     <message>
-        <location filename="src/manager.py" line="545"/>
+        <location filename="src/manager.py" line="555"/>
         <source>The week has been copied sucessfully.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1411,22 +1411,12 @@ Status: %s</source>
         <translation>Настройки</translation>
     </message>
     <message>
-        <location filename="src/manager.py" line="346"/>
+        <location filename="src/manager.py" line="345"/>
         <source>Open session</source>
         <translation>Открытие сессии</translation>
     </message>
     <message>
-        <location filename="src/manager.py" line="346"/>
-        <source>Unable to open: %s</source>
-        <translation>Невозможно открыть: %s</translation>
-    </message>
-    <message>
-        <location filename="src/manager.py" line="381"/>
-        <source>Autentication failed</source>
-        <translation>Аутентификация не прошла</translation>
-    </message>
-    <message>
-        <location filename="src/manager.py" line="387"/>
+        <location filename="src/manager.py" line="397"/>
         <source>Open user session</source>
         <translation>Открыть пользовательскую сессию</translation>
     </message>
@@ -1464,6 +1454,21 @@ Status: %s</source>
         <location filename="src/manager.py" line="58"/>
         <source>Sunday</source>
         <translation>Воскресенье</translation>
+    </message>
+    <message>
+        <location filename="src/manager.py" line="385"/>
+        <source>Protocol is deprecated!</source>
+        <translation>Протокол устарел!</translation>
+    </message>
+    <message>
+        <location filename="src/manager.py" line="388"/>
+        <source>No protocol version found!</source>
+        <translation>Отсутствует информация о версии протокола!</translation>
+    </message>
+    <message>
+        <location filename="src/manager.py" line="349"/>
+        <source>Unable to make request: %1</source>
+        <translation>Невозможно выполнить запрос: %1</translation>
     </message>
 </context>
 <context>
@@ -1576,7 +1581,7 @@ Status: %s</source>
 <context>
     <name>RenterInfo</name>
     <message>
-        <location filename="src/dialogs/user_info.py" line="140"/>
+        <location filename="src/dialogs/user_info.py" line="135"/>
         <source>Renter Information</source>
         <translation>Информация об арендаторе</translation>
     </message>
