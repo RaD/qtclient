@@ -306,14 +306,14 @@ class CardListModel(QAbstractTableModel):
                 # есть, то показываем это
                 debt, amount = self.is_debt_exist(index)
                 if debt:
-                    out.append( self.tr('debt %.02f') % (amount,) )
+                    out.append( self.tr('debt %1').arg('%.02f' % amount) )
             if vtype == 'abonement':
                 # отображаем скидку, если есть
                 if 'discount_price' in info:
                     price = float( info['price'] )
                     discount_price = float( info['discount_price'] )
                     discount_percent = int( info['discount_percent'] )
-                    out.append( self.tr('discount %.02f/%i%%') % (price - discount_price, discount_percent) )
+                    out.append( self.tr('discount %1/%2').arg('%.02f' % (float(price) - float(discount_price)),).arg(discount_percent) )
                 out.append( 'sold %i' % int( info.get('sold', 0) ))
                 out.append( 'used %i' % int( info.get('used', 0) ))
                 out.append( 'available %i' % int( info.get('available', 0) ))
@@ -326,7 +326,7 @@ class CardListModel(QAbstractTableModel):
             if vtype == 'promo':
                 out.append( 'used %i' % int( info.get('used', 0) ))
                 out.append( 'available %i' % int( info.get('available', 0) ))
-            return QVariant('; '.join(out))
+            return QVariant('; '.join(map(unicode, out)))
         else:
             return QVariant()
 
