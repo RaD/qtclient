@@ -63,9 +63,15 @@ class Http:
 
         return (host, port)
 
-    def request(self, url, method='POST', params={}, force=False): # public
+    def request(self, url, method='POST', params={}, force=False, credentials=None): # public
+        if credentials:
+            import base64
+            self.credentials = params = credentials # кривизна, надо пересмотреть подход
+            base64string = base64.encodestring('%(login)s:%(password)s' % credentials)[:-1]
+            self.headers['Authorization'] = 'Basic %s' % base64string
+
         if self.session_id and self.session_id not in self.headers:
-            self.headers.update( { 'Cookie': 'sessionid=%s' % self.session_id } )
+            self.headers['Cookie'] = 'sessionid=%s' % self.session_id
         if force:
             url = url + '?' + datetime.now().strftime('%y%m%d%H%M%S')
         if type(params) is dict:
@@ -124,6 +130,12 @@ class Http:
         elif self.response.status == 302: # authentication
             self.error_msg = self.tr('Authenticate yourself.')
             return default
+        elif self.response.status == 401: # basic authentication
+            return {
+                'status': 401,
+                'header': self.response.getheader('WWW-Authenticate'),
+                'data': self.response.read(),
+                }
         elif self.response.status == 500: # error
             self.error_msg = 'Error 500. Check dump!'
             with open('./dump.html', 'w') as dump:

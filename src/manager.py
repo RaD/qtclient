@@ -345,7 +345,7 @@ class MainWindow(QMainWindow):
         dialog_title = self.tr('Open session')
         http = self.params.http
         if QDialog.Accepted == dlgStatus:
-            if not http.request('/api/login/', 'POST', self.credentials):
+            if not http.request('/api/login/', 'POST', credentials=self.credentials):
                 QMessageBox.critical(self, dialog_title,
                                      self.tr('Unable to make request: %1').arg(http.error_msg))
                 return
