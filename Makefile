@@ -13,6 +13,9 @@ clean:
 
 build: dist debianize
 
+check:
+	pyflakes ./src/*.py ./src/dialogs/*.py
+
 dist:
 	mkdir -p $(DST) $(DST)/$(LCL) $(DST)/uis $(DST)/dialogs
 	cp ./src/*.py ./src/*.css $(DST)/
