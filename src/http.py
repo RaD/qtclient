@@ -5,6 +5,7 @@ import sys, httplib, urllib, json
 from datetime import datetime
 
 from dlg_settings import TabNetwork
+from library import ParamStorage
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -15,19 +16,21 @@ DEBUG_COMMON, DEBUG_RFID, DEBUG_PRINTER = DEBUG
 class HttpException(Exception):
     pass
 
-class Http:
+
+class Abstract(object):
+
+    cookie_name = 'securelayer_sessionid'
+    headers = {
+        'Content-type': 'application/x-www-form-urlencoded',
+        'Accept': 'text/plain'
+        }
 
     def __init__(self, parent=None):
         self.session_id = None
         self.parent = parent
-        self.headers = {
-            'Content-type': 'application/x-www-form-urlencoded',
-            'Accept': 'text/plain'
-            }
         self.connect()
 
     def __del__(self):
-        # close server's connection
         self.disconnect()
 
     def debug(self, message):
@@ -38,7 +41,7 @@ class Http:
         (self.host, self.port) = self.get_settings()
         self.hostport = '%s:%s' % (self.host, self.port)
         self.debug('Connect to %s\n%s' % (self.hostport, self.headers))
-        self.conn = httplib.HTTPConnection(self.hostport)
+        self.conn = self.protocol(self.hostport)
 
     def disconnect(self):
         self.debug('Disconnect')
@@ -65,15 +68,11 @@ class Http:
 
     def request(self, url, method='POST', params={}, force=False, credentials=None): # public
         if credentials:
-            import base64
-            self.credentials = params = credentials # кривизна, надо пересмотреть подход
-            base64string = base64.encodestring('%(login)s:%(password)s' % credentials)[:-1]
-            self.headers['Authorization'] = 'Basic %s' % base64string
-
-        if self.session_id and self.session_id not in self.headers:
-            self.headers['Cookie'] = 'sessionid=%s' % self.session_id
+            params = dict(params, **credentials)
+        if self.session_id:
+            self.headers['Cookie'] = '%s=%s' % (self.cookie_name, self.session_id)
         if force:
-            url = url + '?' + datetime.now().strftime('%y%m%d%H%M%S')
+            url = urllib.quote(url) + '?' + datetime.now().strftime('%y%m%d%H%M%S')
         if type(params) is dict:
             params = self.prepare(params)
         while True:
@@ -83,11 +82,14 @@ class Http:
             except httplib.CannotSendRequest:
                 self.reconnect()
             except Exception, e:
-                self.error_msg = '[%s] %s' % (e.errno, e.strerror.decode('utf-8'))
+                self.error_msg = '%s%s [%s] %s' % (self.hostport, url, e.errno, e.strerror.decode('utf-8'))
                 self.response = None
                 return False
 
-        self.response = self.conn.getresponse()
+        try:
+            self.response = self.conn.getresponse()
+        except httplib.BadStatusLine, e:
+            print 'BadStatusLine', e
 
         # sessionid=d5b2996237b9044ba98c5622d6311c43;
         # expires=Tue, 09-Feb-2010 16:32:24 GMT;
@@ -104,7 +106,7 @@ class Http:
                 import pprint
                 pprint.pprint(cookie)
 
-            self.session_id = cookie.get('advisor_sessionid', None)
+            self.session_id = cookie.get(self.cookie_name, None)
             self.debug('session id is %s' % self.session_id)
         return True
 
@@ -130,12 +132,6 @@ class Http:
         elif self.response.status == 302: # authentication
             self.error_msg = self.tr('Authenticate yourself.')
             return default
-        elif self.response.status == 401: # basic authentication
-            return {
-                'status': 401,
-                'header': self.response.getheader('WWW-Authenticate'),
-                'data': self.response.read(),
-                }
         elif self.response.status == 500: # error
             self.error_msg = 'Error 500. Check dump!'
             with open('./dump.html', 'w') as dump:
@@ -186,45 +182,30 @@ class Http:
                 out.append( (key, value) )
         return out
 
-    def DEPRECATED_request_full(self, url, params): # public
-        if self.session_id and self.session_id not in self.headers:
-            self.headers.update( { 'Cookie': 'sessionid=%s' % self.session_id } )
 
-        self.response = None
-        params = urllib.urlencode(params)
-        while True:
-            try:
-                self.conn.request('POST', url, params, self.headers)
-                break
-            except httplib.CannotSendRequest:
-                self.reconnect()
-            except Exception, e:
-                msg = '[%s] %s' % (e.errno, e.strerror.decode('utf-8'))
-                raise HttpException(msg)
+class Http(Abstract):
 
-        self.response = self.conn.getresponse()
+    def __init__(self, parent=None):
+        self.port = 80
+        self.protocol = httplib.HTTPConnection
+        super(Http, self).__init__(parent)
 
-        cookie_string = self.response.getheader('set-cookie')
-        if cookie_string:
-            cookie = {}
-            for item in cookie_string.split('; '):
-                key, value = item.split('=')
-                cookie.update( { key: value } )
+class Https(Abstract):
 
-            self.session_id = cookie.get('sessionid', None)
+    def __init__(self, parent=None):
+        self.port = 443
+        self.protocol = httplib.HTTPSConnection
+        super(Https, self).__init__(parent)
 
-        if self.response.status == 200: # http status
-            response = json.loads( self.response.read() )
-            if 'code' in response and response['code'] != 200:
-                raise HttpException( '[%(code)s] %(desc)s' % response )
-            return response
-        elif self.response.status == 302: # authentication
-            raise HttpException( self.tr('Authenticate yourself.') )
-        elif self.response.status == 500: # error
-            open('./dump.html', 'w').write(self.response.read())
-            raise HttpException( self.tr('Error 500. Check dump!') )
-        else:
-            raise HttpException( '[%s] %s' % (self.response.status, self.response.reason) )
+class WebResource(object):
+
+    params = ParamStorage() # синглтон для хранения данных
+
+    def get(self, parent=None):
+        print self.params.app_config(key='General/debug_use_ssl')
+        self.use_ssl = 'true' == self.params.app_config(key='General/debug_use_ssl')
+        print 'Use SSL:', self.use_ssl
+        return self.use_ssl and Https(parent) or Http(parent)
 
 # Test part of module
 

@@ -6,7 +6,7 @@ import sys, re, time
 from datetime import datetime, timedelta
 from os.path import dirname, join
 
-from http import Http
+from http import WebResource
 from event_storage import Event
 from qtschedule import QtSchedule
 from printer import Printer
@@ -66,7 +66,6 @@ class MainWindow(QMainWindow):
             )
 
         self.params.logged_in = False
-        self.params.http = Http(self)
         self.params.work_hours = (8, 24)
         self.params.quant = timedelta(minutes=30)
         self.params.multiplier = timedelta(hours=1).seconds / self.params.quant.seconds
@@ -84,6 +83,9 @@ class MainWindow(QMainWindow):
 
         if 'WrongHost' == host.toString():
             self.app_settings()
+
+        self.webresource = WebResource()
+        self.params.http = self.webresource.get(self)
 
         self.baseTitle = self.tr('Manager\'s interface')
         self.logoutTitle()
@@ -112,7 +114,11 @@ class MainWindow(QMainWindow):
         if not self.params.http.request('/api/static/', 'GET', {}):
             QMessageBox.critical(self, self.tr('Static info'), self.tr('Unable to fetch: %s') % self.params.http.error_msg)
             return
-        return self.params.http.parse()
+        data = self.params.http.parse()
+        if type(data) is dict and data.get('status') == 401:
+            return None
+        else:
+            return data
 
     def update_interface(self):
         """ This method updates application's interface using static
@@ -334,8 +340,8 @@ class MainWindow(QMainWindow):
 
     def open_session(self):
         def callback(credentials):
-            self.credentials = credentials
-            self.credentials['version'] = '.'.join(map(str, self.params.version))
+            self.credentials = dict(credentials,
+                                    version='.'.join(map(str, self.params.version)))
 
         self.dialog = DlgLogin(self)
         self.dialog.setCallback(callback)
@@ -357,7 +363,11 @@ class MainWindow(QMainWindow):
                 self.loggedTitle(response)
 
                 # подгружаем статическую информацию и список залов
-                self.params.static = self.get_static()
+                static = self.get_static()
+                if not static:
+                    print 'Check static!'
+                    return
+                self.params.static = static
 
                 rooms_by_index = {}
                 rooms_by_uuid = {}

@@ -72,7 +72,7 @@ class DlgSettings(QDialog):
         """
         for index in xrange(self.tabWidget.count()):
             tab = self.tabWidget.widget(index)
-            data = tab.saveSettings(self.settings)
+            tab.saveSettings(self.settings)
 
 class TabAbstract(QWidget):
     """
@@ -149,6 +149,7 @@ class TabGeneral(UiDlgTemplate, TabAbstract):
         'borderWidth': 2,
         'borderColor': '#ff0000',
         'debug_app': False,
+        'debug_use_ssl': True,
         'debug_reader': False,
         'debug_printer': False,
         }

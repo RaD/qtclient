@@ -74,7 +74,7 @@
     <item>
      <widget class="QLabel" name="label_4">
       <property name="text">
-       <string>Управление отладкой (для разработчиков):</string>
+       <string>Debug Mode (Developers Only):</string>
       </property>
      </widget>
     </item>
@@ -83,21 +83,28 @@
       <item>
        <widget class="QCheckBox" name="debug_app">
         <property name="text">
-         <string>Приложение</string>
+         <string>Application</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="debug_use_ssl">
+        <property name="text">
+         <string>Use SSL</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QCheckBox" name="debug_reader">
         <property name="text">
-         <string>Считыватель</string>
+         <string>RFID</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QCheckBox" name="debug_printer">
         <property name="text">
-         <string>Принтер</string>
+         <string>Printer</string>
         </property>
        </widget>
       </item>

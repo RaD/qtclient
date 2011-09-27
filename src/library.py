@@ -3,7 +3,6 @@
 
 from datetime import datetime, date, timedelta
 from settings import DEBUG, userRoles, VERSION
-from http import HttpException
 
 import os, json, pprint
 
