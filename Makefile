@@ -1,5 +1,5 @@
 PROJECT=advisor-client
-VERSION=0.4.2
+VERSION=0.4.3
 
 BASEDIR=$(shell pwd)
 BUILD=$(BASEDIR)/build

@@ -1,3 +1,9 @@
+advisor-client (0.4.3-1ubuntu1) maverick; urgency=low
+
+  * SSL support, SecureLayer integration.
+
+ -- Ruslan Popov <ruslan.popov@gmail.com>  Wed, 19 Oct 2011 14:09:30 +0400
+
 advisor-client (0.4.2-1ubuntu1) maverick; urgency=low
 
   * see RC#1 milestone on https://github.com/RaD/foobar/issues/

@@ -202,7 +202,6 @@ class WebResource(object):
     params = ParamStorage() # синглтон для хранения данных
 
     def get(self, parent=None):
-        print self.params.app_config(key='General/debug_use_ssl')
         self.use_ssl = 'true' == self.params.app_config(key='General/debug_use_ssl')
         print 'Use SSL:', self.use_ssl
         return self.use_ssl and Https(parent) or Http(parent)
