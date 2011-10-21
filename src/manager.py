@@ -422,7 +422,9 @@ class MainWindow(QMainWindow):
         self.dialog.setModal(True)
         self.dialog.exec_()
         self.get_dynamic()
-        self.params.http.reconnect()
+        self.params.http.disconnect()
+        self.params.http = self.webresource.get(self)
+        self.params.http.connect()
 
     def client_new(self, klass=ClientInfo):
         self.user_new(klass)
