@@ -56,7 +56,7 @@ class BaseUserInfo(UiDlgTemplate):
 
         self.connect(self.buttonAssign, SIGNAL('clicked()'), self.assign_item)
         self.connect(self.buttonRFID,   SIGNAL('clicked()'), self.assign_rfid)
-        self.connect(self.buttonSave,  SIGNAL('clicked()'), self.save_dialog)
+        self.connect(self.buttonSave,   SIGNAL('clicked()'), self.save_dialog)
         self.connect(self.buttonClose,  SIGNAL('clicked()'), self, SLOT('reject()'))
 
     def context_menu(self, position):

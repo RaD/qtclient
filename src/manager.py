@@ -76,6 +76,7 @@ class MainWindow(QMainWindow):
         self.menu_state(MENU_LOGGED_OUT)
         self.setup_views()
 
+        # если сервер не определён, показываем диалог настройки приложения
         settings = QSettings()
         settings.beginGroup('network')
         host = settings.value('addressHttpServer', QVariant('WrongHost'))
@@ -343,7 +344,11 @@ class MainWindow(QMainWindow):
             self.credentials = dict(credentials,
                                     version='.'.join(map(str, self.params.version)))
 
-        self.dialog = DlgLogin(self)
+        connecting_to = u'%s %s' % (
+            self.params.http.hostport,
+            self.webresource.use_ssl and self.tr('Secure') or self.tr('Unsecure'),
+            )
+        self.dialog = DlgLogin(self, connecting_to=connecting_to)
         self.dialog.setCallback(callback)
         self.dialog.setModal(True)
         dlgStatus = self.dialog.exec_()

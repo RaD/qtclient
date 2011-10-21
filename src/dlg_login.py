@@ -2,55 +2,29 @@
 # (c) 2010 Ruslan Popov <ruslan.popov@gmail.com>
 
 from settings import DEBUG
+from ui_dialog import UiDlgTemplate
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-class DlgLogin(QDialog):
+class DlgLogin(UiDlgTemplate):
 
-    def __init__(self, parent=None):
-        QDialog.__init__(self, parent)
+    ui_file = 'uis/dlg_login.ui'
 
-        self.callback = None
-        self.setMinimumWidth(300)
+    def __init__(self, parent=None, **kwargs):
+        self.connecting_to = kwargs.get('connecting_to')
+        UiDlgTemplate.__init__(self, parent)
 
-        self.editLogin = QLineEdit()
-        labelLogin = QLabel(self.tr('Login'))
-        labelLogin.setBuddy(self.editLogin)
+    def setupUi(self):
+        UiDlgTemplate.setupUi(self)
 
-        self.editPassword = QLineEdit()
-        self.editPassword.setEchoMode(QLineEdit.Password)
-        labelPassword = QLabel(self.tr('Password'))
-        labelPassword.setBuddy(self.editPassword)
-
-        groupLayout = QGridLayout()
-        groupLayout.setColumnStretch(1, 1)
-        groupLayout.setColumnMinimumWidth(1, 250)
-
-        groupLayout.addWidget(labelLogin, 0, 0)
-        groupLayout.addWidget(self.editLogin, 0, 1)
-        groupLayout.addWidget(labelPassword, 1, 0)
-        groupLayout.addWidget(self.editPassword, 1, 1)
-
-        self.buttonOk = QPushButton(self.tr('Ok'))
-        buttonCancel = QPushButton(self.tr('Cancel'))
+        if self.connecting_to:
+            self.editConnecting.setText(self.connecting_to)
 
         self.connect(self.buttonOk, SIGNAL('clicked()'),
                      self.applyDialog)
-        self.connect(buttonCancel, SIGNAL('clicked()'),
+        self.connect(self.buttonCancel, SIGNAL('clicked()'),
                      self, SLOT('reject()'))
-
-        buttonLayout = QHBoxLayout()
-        buttonLayout.addStretch(1)
-        buttonLayout.addWidget(self.buttonOk)
-        buttonLayout.addWidget(buttonCancel)
-
-        self.mainLayout = QVBoxLayout()
-        self.mainLayout.addLayout(groupLayout)
-        self.mainLayout.addLayout(buttonLayout)
-
-        self.setLayout(self.mainLayout)
-        self.setWindowTitle(self.tr('Authentication'))
 
     def setCallback(self, callback):
         self.callback = callback
