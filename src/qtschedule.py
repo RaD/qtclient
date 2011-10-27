@@ -386,10 +386,11 @@ class QtScheduleDelegate(QItemDelegate):
     PADDING = 2
     STEP = 5
 
+    params = ParamStorage()
+
     def __init__(self, parent=None):
         QItemDelegate.__init__(self, parent)
-        self.parent = parent
-        self.params = ParamStorage()
+        self.parent = parent # указатель на QtSchedule
 
         self.settings = QSettings()
         general = TabGeneral(self.parent)
@@ -424,11 +425,14 @@ class QtScheduleDelegate(QItemDelegate):
         rooms = self.params.static.get('rooms')
         room_count = len(rooms)
 
-        dx = 0 #self.parent.scrolledCellX
-        dy = self.parent.scrolledCellY
+        height = cell.rect.height()
+        width = cell.rect.width()
 
         row = index.row()
         col = index.column()
+
+        dx = col * (width + 1) #self.parent.scrolledCellX
+        dy = self.parent.scrolledCellY + row * (height + 1)
 
         pen_width = 1
 
@@ -437,18 +441,15 @@ class QtScheduleDelegate(QItemDelegate):
 
             if isinstance(event, Event):
                 # fill the event's body
-                h = cell.rect.height()
                 if self.parent.showGrid():
-                    w = (cell.rect.width() - pen_width)/ room_count
+                    w = (width - pen_width)/ room_count
                 else:
-                    w = cell.rect.width() / room_count
+                    w = width / room_count
 
-                x = dx + col * (cell.rect.width() + 1) + \
-                    w * map(lambda x: x == room, rooms).index(True)
-                y = dy + row * (cell.rect.height() + 1)
+                x = dx + w * map(lambda x: x == room, rooms).index(True)
+                y = dy
 
-                painter.fillRect(x, y, w, h, self.parent.string2color(room.get('color')));
-
+                painter.fillRect(x, y, w, height, self.parent.string2color(room.get('color')));
 
                 if event.show_type == 'tail':
                     if event.fixed in (1, 2):
@@ -456,10 +457,10 @@ class QtScheduleDelegate(QItemDelegate):
                             self.prepare( painter, (Qt.green, 3) )
                         if event.fixed == 2:
                             self.prepare( painter, (Qt.blue, 3) )
-                        painter.drawLine(x+self.PADDING, y+h-self.PADDING-5,
-                                         x+self.PADDING+5, y+h-self.PADDING)
+                        painter.drawLine(x+self.PADDING, y+height-self.PADDING-5,
+                                         x+self.PADDING+5, y+height-self.PADDING)
 
-                line_dir = self.direction(w, h)
+                line_dir = self.direction(w, height)
 
                 # prepare to draw the borders
                 if self.parent.selected_event == event:
@@ -468,30 +469,61 @@ class QtScheduleDelegate(QItemDelegate):
                     self.prepare( painter, (Qt.black, pen_width) )
 
                 # draws items using type of the cell
-                painter.drawLine(x, y+h, x, y)
-                painter.drawLine(x+w, y+h, x+w, y)
+                painter.drawLine(x, y+height, x, y)
+                painter.drawLine(x+w, y+height, x+w, y)
                 if event.show_type == 'head':
                     painter.drawLine(x, y, x+w, y)
 
                     # draw event's title
                     self.prepare( painter, (Qt.black, pen_width) )
-                    painter.drawText(x+1, y+1, w-2, h-2,
+                    painter.drawText(x+1, y+1, w-2, height-2,
                                      Qt.AlignLeft | Qt.AlignTop,
                                      event.title)
 
                 elif event.show_type == 'tail':
-                    painter.drawLine(x, y+h, x+w, y+h)
+                    painter.drawLine(x, y+height, x+w, y+height)
 
                     # draw event's coach
                     self.prepare( painter, (Qt.black, pen_width) )
-                    painter.drawText(x+1, y+1, w-2, h-2,
+                    painter.drawText(x+1, y+1, w-2, height-2,
                                      Qt.AlignLeft | Qt.AlignTop,
                                      event.coaches)
                 else:
                     pass
 
+        self.timeline(model, painter, dx, dy, col, row, width, height, pen_width)
+
         painter.restore()
         #QItemDelegate.paint(self, painter, cell, index)
+
+    def timeline(self, model, painter, dx, dy, col, row, width, height, pen_width):
+        """
+        Метод для отрисовки линии текущего времени.
+        """
+        now = datetime.now()
+        first_day, last_day = model.weekRange
+
+        _row = _col = None
+        if model.mode == 'week':
+            if first_day <= now.date() <= last_day:
+                _col = (now.weekday() - first_day.weekday()) % 7
+        else:
+            if now.date() == model.one_day_mode:
+                _col = 0
+
+        if col == _col:
+            _row = (now.hour - self.params.work_hours[0]) * self.params.multiplier
+            if now.minute >= 30:
+                _row += 1
+            if row == _row:
+                x1 = dx
+                y1 = dy + (now.minute % 30) * height / 30
+                x2 = x1 + width
+                y2 = y1
+
+                for i in ((Qt.black, pen_width+2), (Qt.red, pen_width)):
+                    self.prepare( painter, i )
+                    painter.drawLine(x1, y1, x2, y2)
 
     def direction(self, width, height):
         return self.HORIZONTAL if width < height else self.VERTICAL

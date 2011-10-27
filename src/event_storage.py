@@ -192,6 +192,7 @@ class EventStorage(QAbstractTableModel):
 
         self.parent = parent
         self.mode = mode
+        self.one_day_mode = None
 
         if 'week' == self.mode:
             self.week_days = self.params.WEEK_DAYS
@@ -205,7 +206,7 @@ class EventStorage(QAbstractTableModel):
 
         # два режима работы, оконный (плавающее окно по датам) и понедельный (ПН-ВС)
         if use_window:
-            self.weekRange = (datetime.now() - timedelta(days=1), datetime.now() + timedelta(days=5))
+            self.weekRange = (datetime.now().date() - timedelta(days=1), datetime.now().date() + timedelta(days=5))
         else:
             self.weekRange = self.date2range(datetime.now())
 
@@ -329,9 +330,11 @@ class EventStorage(QAbstractTableModel):
         if 'week' == self.mode:
             self.mode = 'day'
             self.storage.setFilter(column)
+            self.one_day_mode = self.weekRange[0] + timedelta(days=column)
         else:
             self.mode = 'week'
             self.storage.setFilter(None)
+            self.one_day_mode = None
         self.emit(SIGNAL('layoutChanged()'))
 
     def colByMode(self, column):
