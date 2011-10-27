@@ -7,7 +7,6 @@ from datetime import datetime, date, time as dtime, timedelta
 from os.path import dirname, join
 
 from library import ParamStorage
-from http import Http
 
 from settings import DEBUG, userRoles
 DEBUG_COMMON, DEBUG_RFID, DEBUG_PRINTER = DEBUG
@@ -28,17 +27,10 @@ class Event(object):
 
     TEAM = 0; RENT = 1;
 
-    monday = None
-    data = None
-    begin = None
-    end = None
-    duration = None
-
-    def __init__(self, monday, info):
-        self.monday = monday
+    def __init__(self, first_day, info):
+        self.first_day = first_day
         self.data = info
 
-        day = monday + timedelta(days=int(info.get('weekday')))
         self.begin = datetime.strptime(info.get('begin'), '%Y-%m-%d %H:%M:%S')
         self.end = datetime.strptime(info.get('end'), '%Y-%m-%d %H:%M:%S') + timedelta(seconds=1)
         self.duration = self.end - self.begin + timedelta(seconds=1)
@@ -62,7 +54,10 @@ class Event(object):
         row = (self.begin.hour - self.params.work_hours[0]) * self.params.multiplier
         if self.begin.minute >= 30:
             row += 1
-        col = int(self.data.get('weekday'))
+
+        # обеспечиваем пересчёт столбца с учётом сдвига окна по дням недели
+        col = (self.begin.weekday() - self.first_day.weekday()) % 7
+
         #print '%s %s %s' % (dt, row, col)
         return (row, col)
 
@@ -187,12 +182,15 @@ class ModelStorage:
         del(self.e2rc[key])
 
 class EventStorage(QAbstractTableModel):
+    """
+    Класс реализации модели хранилища событий.
+    """
+    params = ParamStorage()
 
-    def __init__(self, parent, mode='week'):
+    def __init__(self, parent, mode='week', use_window=False):
         QAbstractTableModel.__init__(self, parent)
 
         self.parent = parent
-        self.params = ParamStorage()
         self.mode = mode
 
         if 'week' == self.mode:
@@ -200,11 +198,16 @@ class EventStorage(QAbstractTableModel):
         else:
             self.week_days = [ self.tr('Day') ]
 
+        # вычисляем параметры модели: количество рядов и ячеек
         begin_hour, end_hour = self.params.work_hours
         self.rows_count = (end_hour - begin_hour) * self.params.multiplier
         self.cols_count = len(self.week_days)
 
-        self.weekRange = self.date2range(datetime.now())
+        # два режима работы, оконный (плавающее окно по датам) и понедельный (ПН-ВС)
+        if use_window:
+            self.weekRange = (datetime.now() - timedelta(days=1), datetime.now() + timedelta(days=5))
+        else:
+            self.weekRange = self.date2range(datetime.now())
 
         # NOT USED YET: self.getMime = parent.getMime
 
@@ -213,13 +216,16 @@ class EventStorage(QAbstractTableModel):
         self.storage_init()
 
     def storage_init(self):
+        """
+        Метод для инициализации хранилища.
+        """
         self.emit(SIGNAL('layoutAboutToBeChanged()'))
         self.storage.init()
         self.emit(SIGNAL('layoutChanged()'))
 
     def update(self):
         if 'week' == self.mode:
-            self.load_data()
+            self.load_data(*self.weekRange)
 
     def insert(self, room_uuid, event, emit_signal=False):
         """ This method registers new event. """
@@ -259,16 +265,26 @@ class EventStorage(QAbstractTableModel):
         self.remove(event, room)
         self.insert(row, col, room, event)
 
-    def load_data(self):
+    def load_data(self, first_day, last_day):
+        """
+        Метод обеспечивает загрузку информации о событиях в календарь.
+
+        @type  first_day: date
+        @param first_day: Первый день периода включительно.
+        @type  last_day: date
+        @param last_day: Последний день периода включительно.
+
+        @rtype: boolean
+        @return: Результат загрузки.
+        """
         if 'day' == self.mode:
             return False
 
         self.parent.parent.statusBar().showMessage(self.tr('Request information for the calendar.')) # fixme: msg queue
-        monday, sunday = self.weekRange
 
         http = self.params.http
         if http and http.is_session_open():
-            http.request('/api/calendar/%s/' % monday.strftime('%d%m%Y'), 'GET', {}) # FIXME: wrong place for HTTP Request!
+            http.request('/api/calendar/%s/' % first_day.strftime('%d%m%Y'), 'GET', {}) # FIXME: wrong place for HTTP Request!
             self.parent.parent.statusBar().showMessage(self.tr('Parsing the response...'))
             response = http.parse(None)
 
@@ -279,7 +295,7 @@ class EventStorage(QAbstractTableModel):
                 # place the event in the model
                 for event_info in response:
                     qApp.processEvents() # keep GUI active
-                    event = Event(monday, event_info)
+                    event = Event(first_day, event_info)
                     self.insert(event.room_uuid, event)
                 # draw events
                 self.emit(SIGNAL('layoutChanged()'))
@@ -361,8 +377,7 @@ class EventStorage(QAbstractTableModel):
     def showCurrWeek(self):
         if 'week' == self.mode:
             now = datetime.now()
-            self.weekRange = self.date2range(now)
-            self.load_data()
+            self.load_data(*self.weekRange)
             return self.weekRange
         else:
             return None
@@ -373,7 +388,7 @@ class EventStorage(QAbstractTableModel):
             prev_monday = current_monday - timedelta(days=7)
             prev_sunday = current_sunday - timedelta(days=7)
             self.weekRange = (prev_monday, prev_sunday)
-            self.load_data()
+            self.load_data(*self.weekRange)
             return self.weekRange
         else:
             return None
@@ -384,21 +399,27 @@ class EventStorage(QAbstractTableModel):
             next_monday = current_monday + timedelta(days=7)
             next_sunday = current_sunday + timedelta(days=7)
             self.weekRange = (next_monday, next_sunday)
-            self.load_data()
+            self.load_data(*self.weekRange)
             return self.weekRange
         else:
             return None
 
     def headerData(self, section, orientation, role):
-        """ This method fills header cells. """
+        """
+        Метод отображения заголовков для полей модели.
+        """
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            mon, sun = self.weekRange
+            first_day, last_dat = self.weekRange
+
             if 'week' == self.mode:
                 delta = section
             else:
                 delta = self.storage.column
-            daystr = (mon + timedelta(days=delta)).strftime('%d/%m')
-            return QVariant('%s\n%s' % (self.week_days[delta], daystr))
+
+            day = first_day + timedelta(days=delta)
+            day_str = day.strftime('%d/%m')
+            return QVariant('%s\n%s' % (self.week_days[day.weekday()], day_str))
+
         if orientation == Qt.Vertical and role == Qt.DisplayRole:
             begin_hour, end_hour = self.params.work_hours
             start = timedelta(hours=begin_hour)

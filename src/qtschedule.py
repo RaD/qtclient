@@ -16,14 +16,15 @@ class QtSchedule(QTableView):
 
     """ Calendar class. """
 
+    params = ParamStorage()
+
     def __init__(self, parent):
         QTableView.__init__(self, parent)
 
         self.parent = parent
-        self.params = ParamStorage()
 
         # Define the model
-        self.model_object = EventStorage(self, mode='week')
+        self.model_object = EventStorage(self, mode='week', use_window=True)
         self.setModel(self.model_object)
 
         # Define the cell delegate
@@ -104,6 +105,9 @@ class QtSchedule(QTableView):
         return (self.rowAt(abs_y), self.columnAt(abs_x))
 
     def insertEvent(self, room_id, event):
+        """
+        Метод для добавления события в календарь.
+        """
         self.model().insert(room_id, event, True)
 
     def cellRowColRelative(self, rel):

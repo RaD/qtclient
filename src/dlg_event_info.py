@@ -75,11 +75,12 @@ class EventInfo(UiDlgTemplate):
 
         # disable controls for events in the past
         is_past = begin < datetime.now()
-        self.buttonRemove.setDisabled(is_past or self.event_object.prototype == self.event_object.RENT)
-        self.buttonVisitRFID.setDisabled(is_past or self.event_object.prototype == self.event_object.RENT)
-        self.buttonVisitManual.setDisabled(is_past or self.event_object.prototype == self.event_object.RENT)
-        self.buttonChange.setDisabled(is_past or self.event_object.prototype == self.event_object.RENT)
-        self.buttonVisitors.setDisabled(self.event_object.prototype == self.event_object.RENT)
+        is_rent = self.event_object.prototype == self.event_object.RENT
+        self.buttonRemove.setDisabled(is_past or is_rent)
+        self.buttonVisitRFID.setDisabled(is_past or is_rent)
+        self.buttonVisitManual.setDisabled(is_past or is_rent)
+        self.buttonChange.setDisabled(is_past or is_rent)
+        self.buttonVisitors.setDisabled(is_rent)
 
         #self._init_fix(status)
 
