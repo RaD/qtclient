@@ -82,11 +82,11 @@ class MainWindow(QMainWindow):
         host = settings.value('addressHttpServer', QVariant('WrongHost'))
         settings.endGroup()
 
-        if 'WrongHost' == host.toString():
-            self.app_settings()
-
         self.webresource = WebResource()
         self.params.http = self.webresource.get(self)
+
+        if 'WrongHost' == host.toString():
+            self.app_settings()
 
         self.baseTitle = self.tr('Manager\'s interface')
         self.logoutTitle()
