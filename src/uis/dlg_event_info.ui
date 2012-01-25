@@ -100,6 +100,21 @@
         <property name="enabled">
          <bool>true</bool>
         </property>
+        <item>
+         <property name="text">
+          <string>Waiting</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Fixed</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Cancelled</string>
+         </property>
+        </item>
        </widget>
       </item>
       <item row="1" column="2">

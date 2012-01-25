@@ -55,7 +55,9 @@ class EventInfo(UiDlgTemplate):
                      lambda: self.buttonFix.setDisabled(False))
 
     def initData(self, obj, index):
-        """ Use this method to initialize the dialog. """
+        """
+        Метод инициализации диалога.
+        """
         self.event_object = obj
         self.event_index = index
 
@@ -81,15 +83,6 @@ class EventInfo(UiDlgTemplate):
         self.buttonVisitManual.setDisabled(is_past or is_rent)
         self.buttonChange.setDisabled(is_past or is_rent)
         self.buttonVisitors.setDisabled(is_rent)
-
-        #self._init_fix(status)
-
-    def _init_fix(self, current):
-        """ Helper method to init eventFix combo."""
-        for id, title in self.parent.static['event_fix_choice']:
-            self.comboFix.addItem(title, QVariant(id))
-        self.comboFix.setCurrentIndex(int(current))
-        self.buttonFix.setDisabled(True)
 
     def show_visitors(self):
         dialog = ShowVisitors(self)
@@ -254,10 +247,9 @@ class EventInfo(UiDlgTemplate):
 
     def fixEvent(self):
         index = self.comboFix.currentIndex()
-        fix_id, ok = self.comboFix.itemData(index).toInt()
+        params = {'event_id': self.event_object.uuid,
+                  'fix_id': index}
 
-        params = {'event_id': self.schedule['id'],
-                  'fix_id': fix_id}
         if not self.http.request('/manager/register_fix/', params):
             QMessageBox.critical(self, self.tr('Register fix'), self.tr('Unable to fix: %s') % self.http.error_msg)
             return

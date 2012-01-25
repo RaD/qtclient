@@ -1150,32 +1150,32 @@ Status: %s</source>
 <context>
     <name>EventStorage</name>
     <message>
-        <location filename="src/event_storage.py" line="199"/>
+        <location filename="src/event_storage.py" line="200"/>
         <source>Day</source>
         <translation>День</translation>
     </message>
     <message>
-        <location filename="src/event_storage.py" line="283"/>
+        <location filename="src/event_storage.py" line="284"/>
         <source>Request information for the calendar.</source>
         <translation>Запрос информации для календаря.</translation>
     </message>
     <message>
-        <location filename="src/event_storage.py" line="288"/>
+        <location filename="src/event_storage.py" line="289"/>
         <source>Parsing the response...</source>
         <translation>Обработка ответа...</translation>
     </message>
     <message>
-        <location filename="src/event_storage.py" line="293"/>
+        <location filename="src/event_storage.py" line="294"/>
         <source>Filling the calendar...</source>
         <translation>Заполнение календаря...</translation>
     </message>
     <message>
-        <location filename="src/event_storage.py" line="302"/>
+        <location filename="src/event_storage.py" line="303"/>
         <source>Done</source>
         <translation>Выполнено</translation>
     </message>
     <message>
-        <location filename="src/event_storage.py" line="307"/>
+        <location filename="src/event_storage.py" line="308"/>
         <source>No reply</source>
         <translation>Нет отклика</translation>
     </message>
@@ -1784,55 +1784,55 @@ Status: %s</source>
     <message>
         <location filename="src/uis/dlg_event_info.ui" line="77"/>
         <source>Fix as</source>
-        <translation type="unfinished"></translation>
+        <translation>Зарегистрировать как</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_event_info.ui" line="108"/>
+        <location filename="src/uis/dlg_event_info.ui" line="123"/>
         <source>Change</source>
         <translation>Замена</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_event_info.ui" line="118"/>
+        <location filename="src/uis/dlg_event_info.ui" line="133"/>
         <source>Fix</source>
-        <translation type="unfinished"></translation>
+        <translation>Регистрировать</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_event_info.ui" line="138"/>
+        <location filename="src/uis/dlg_event_info.ui" line="153"/>
         <source>Price Category</source>
         <translation>Ценовая категория</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_event_info.ui" line="152"/>
+        <location filename="src/uis/dlg_event_info.ui" line="167"/>
         <source>Style</source>
         <translation>Стиль</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_event_info.ui" line="166"/>
+        <location filename="src/uis/dlg_event_info.ui" line="181"/>
         <source>Register visit</source>
         <translation>Регистрация посещения</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_event_info.ui" line="176"/>
+        <location filename="src/uis/dlg_event_info.ui" line="191"/>
         <source>By RFID</source>
         <translation>По RFID</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_event_info.ui" line="183"/>
+        <location filename="src/uis/dlg_event_info.ui" line="198"/>
         <source>Manually</source>
         <translation>Вручную</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_event_info.ui" line="194"/>
+        <location filename="src/uis/dlg_event_info.ui" line="209"/>
         <source>Visitors</source>
         <translation>Посетители</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_event_info.ui" line="201"/>
+        <location filename="src/uis/dlg_event_info.ui" line="216"/>
         <source>Remove</source>
         <translation>Удалить</translation>
     </message>
     <message>
-        <location filename="src/uis/dlg_event_info.ui" line="221"/>
+        <location filename="src/uis/dlg_event_info.ui" line="236"/>
         <source>Close</source>
         <translation>Закрыть</translation>
     </message>
@@ -1840,6 +1840,21 @@ Status: %s</source>
         <location filename="src/uis/dlg_event_info.ui" line="17"/>
         <source>Event Information</source>
         <translation>Информация о событии</translation>
+    </message>
+    <message>
+        <location filename="src/uis/dlg_event_info.ui" line="105"/>
+        <source>Waiting</source>
+        <translation>Ожидание</translation>
+    </message>
+    <message>
+        <location filename="src/uis/dlg_event_info.ui" line="110"/>
+        <source>Fixed</source>
+        <translation>Зарегистрировано</translation>
+    </message>
+    <message>
+        <location filename="src/uis/dlg_event_info.ui" line="115"/>
+        <source>Cancelled</source>
+        <translation>Отменено</translation>
     </message>
 </context>
 <context>
