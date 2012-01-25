@@ -19,7 +19,7 @@ class HttpException(Exception):
 
 class Abstract(object):
 
-    cookie_name = 'securelayer_sessionid'
+    cookie_name = 'advisor_sessionid'
     headers = {
         'Content-type': 'application/x-www-form-urlencoded',
         'Accept': 'text/plain'
