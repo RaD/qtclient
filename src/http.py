@@ -86,6 +86,9 @@ class Abstract(object):
                 self.response = None
                 return False
 
+        with open('./log.html', 'a') as log:
+            log.write(url)
+
         try:
             self.response = self.conn.getresponse()
         except httplib.BadStatusLine, e:
@@ -115,6 +118,9 @@ class Abstract(object):
             return None
         if self.response.status == 200: # http status
             data = self.response.read()
+
+            with open('./log.html', 'a') as log:
+                log.write(data)
 
             if not is_json:
                 return data # отдаём как есть

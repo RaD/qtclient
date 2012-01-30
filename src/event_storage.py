@@ -41,11 +41,10 @@ class Event(object):
         self.styles_list = self.activity.get('dance_style')
 
         self.coaches_list = self.activity.get('coaches')
-        history = info.get('history_set')
-        for event in history:
-            leaders = event.get('leaders')
-            if leaders and len(leaders) > 0:
-                self.coaches_list = leaders
+        history = info.get('history')
+        leaders = history.get('leaders')
+        if leaders and len(leaders) > 0:
+            self.coaches_list = leaders
 
     def __unicode__(self):
         return self.title
