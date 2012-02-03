@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
-# (c) 2009-2011 Ruslan Popov <ruslan.popov@gmail.com>
+# (c) 2009-2012 Ruslan Popov <ruslan.popov@gmail.com>
 
-import sys, re, time, operator
-from datetime import datetime, date, time as dtime, timedelta
-
-from os.path import dirname, join
+from datetime import datetime, timedelta
 
 from library import ParamStorage
 
-from settings import DEBUG, userRoles
+from settings import DEBUG
 DEBUG_COMMON, DEBUG_RFID, DEBUG_PRINTER = DEBUG
 
 from PyQt4.QtGui import *
@@ -27,24 +24,21 @@ class Event(object):
 
     TEAM = 0; RENT = 1;
 
-    def __init__(self, first_day, info):
+    def __init__(self, first_day, serialized):
         self.first_day = first_day
-        self.data = info
+        self.data = serialized
 
-        self.begin = datetime.strptime(info.get('begin'), '%Y-%m-%d %H:%M:%S')
-        self.end = datetime.strptime(info.get('end'), '%Y-%m-%d %H:%M:%S') + timedelta(seconds=1)
+        self.begin = datetime.strptime(serialized.get('begin'), '%Y-%m-%d %H:%M:%S')
+        self.end = datetime.strptime(serialized.get('end'), '%Y-%m-%d %H:%M:%S') + timedelta(seconds=1)
         self.duration = self.end - self.begin + timedelta(seconds=1)
 
-        self.activity = info.get('activity')
-        self.room_uuid = info.get('room__uuid')
-        self.prototype = self.RENT if 'renter' in self.activity else self.TEAM
-        self.styles_list = self.activity.get('dance_style')
+        self.room_uuid = serialized.get('room__uuid')
+        self.activity = serialized['plan']['activity']
+        self.prototype = self.RENT if 'renter' in self.activity.keys() else self.TEAM
 
-        self.coaches_list = self.activity.get('coaches')
-        history = info.get('history')
-        leaders = history.get('leaders')
-        if leaders and len(leaders) > 0:
-            self.coaches_list = leaders
+        if self.prototype == self.TEAM:
+            self.styles_list = self.activity.get('dance_style')
+            self.leaders = serialized.get('leaders')
 
     def __unicode__(self):
         return self.title
@@ -69,8 +63,7 @@ class Event(object):
         if self.prototype == self.RENT:
             return QApplication.translate('event_storage', 'Rent')
         else:
-            activity = self.data.get('activity')
-            ds_list = activity.get('dance_style')
+            ds_list = self.activity.get('dance_style')
             return u', '.join([i.get('title') for i in ds_list])
 
     @property
@@ -96,15 +89,15 @@ class Event(object):
         else:
             return ', '.join(
                 ['%s %s' % (i.get('last_name'), i.get('first_name')) \
-                 for i in self.coaches_list])
+                 for i in self.leaders])
 
-    def set_coaches(self, coaches_list):
-        self.coaches_list = coaches_list
+    def set_coaches(self, values):
+        self.leaders = values
 
     @property
     def tooltip(self):
         first_line = QApplication.translate('event_storage', '%1, %2 minutes').arg(self.title).arg(self.duration.seconds/60)
-        return '%s\n%s\n%s' % (first_line, self.coaches, self.category)
+        return '%s\n%s\n%s' % (first_line, self.leaders, self.category)
 
     @property
     def fixed(self): #FIXME
@@ -293,9 +286,9 @@ class EventStorage(QAbstractTableModel):
                 self.parent.parent.statusBar().showMessage(self.tr('Filling the calendar...'))
                 self.storage_init()
                 # place the event in the model
-                for event_info in response:
+                for item in response:
                     qApp.processEvents() # keep GUI active
-                    event = Event(first_day, event_info)
+                    event = Event(first_day, item)
                     self.insert(event.room_uuid, event)
                 # draw events
                 self.emit(SIGNAL('layoutChanged()'))
@@ -474,9 +467,6 @@ class EventStorage(QAbstractTableModel):
         monday = dt - timedelta(days=dt.weekday())
         sunday = monday + timedelta(days=6)
         return (monday, sunday)
-
-    def date2timestamp(self, d):
-        return int(time.mktime(d.timetuple()))
 
     def may_insert(self, event, room_id):
         """ This method checks the ability of placing the event on schedule. """
