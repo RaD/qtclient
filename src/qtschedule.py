@@ -452,10 +452,10 @@ class QtScheduleDelegate(QItemDelegate):
                 painter.fillRect(x, y, w, height, self.parent.string2color(room.get('color')));
 
                 if event.show_type == 'tail':
-                    if event.fixed in (1, 2):
-                        if event.fixed == 1:
-                            self.prepare( painter, (Qt.green, 3) )
+                    if event.fixed in (2, 3):
                         if event.fixed == 2:
+                            self.prepare( painter, (Qt.green, 3) )
+                        if event.fixed == 3:
                             self.prepare( painter, (Qt.blue, 3) )
                         painter.drawLine(x+self.PADDING, y+height-self.PADDING-5,
                                          x+self.PADDING+5, y+height-self.PADDING)

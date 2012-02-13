@@ -22,6 +22,7 @@ ERR_EVENT_NOVOUCHERLIST1 = 2201
 ERR_EVENT_NOVOUCHERLIST2 = 2202
 ERR_EVENT_REGISTERVISIT = 2203
 ERR_EVENT_PRINTLABEL = 2204
+ERR_EVENT_FIXATION = 2205
 
 EVENT_TYPE_TEAM = '1'
 EVENT_TYPE_RENT = '2'
@@ -49,10 +50,7 @@ class EventInfo(UiDlgTemplate):
         self.connect(self.buttonVisitRFID,   SIGNAL('clicked()'), self.search_by_rfid)
         self.connect(self.buttonVisitManual, SIGNAL('clicked()'), self.search_by_name)
         self.connect(self.buttonRemove,      SIGNAL('clicked()'), self.removeEvent)
-        self.connect(self.buttonFix,         SIGNAL('clicked()'), self.fixEvent)
         self.connect(self.buttonChange,      SIGNAL('clicked()'), self.change_coaches)
-        self.connect(self.comboFix, SIGNAL('currentIndexChanged(int)'),
-                     lambda: self.buttonFix.setDisabled(False))
 
     def initData(self, obj, index):
         """
@@ -74,6 +72,14 @@ class EventInfo(UiDlgTemplate):
             self.comboRoom.addItem(room.get('title'), QVariant(index))
 
         self.comboRoom.setCurrentIndex(self.params.static.get('rooms_by_uuid').get(self.event_object.room_uuid))
+
+        statuses = dict(enumerate([
+            self.tr('Unknown'),
+            self.tr('Waits'),
+            self.tr('Occurred'),
+            self.tr('Cancelled')
+            ]))
+        self.editStatus.setText(statuses.get(self.event_object.fixed, self.tr('Unknown')))
 
         # disable controls for events in the past
         is_past = begin < datetime.now()
@@ -246,25 +252,30 @@ class EventInfo(UiDlgTemplate):
                                         self.tr('Unable to remove this event!'))
 
     def fixEvent(self):
+        url = '/api/history/%s/' % self.event_object.uuid
         index = self.comboFix.currentIndex()
-        params = {'event_id': self.event_object.uuid,
-                  'fix_id': index}
+        params = {'status': index,}
 
-        if not self.http.request('/manager/register_fix/', params):
-            QMessageBox.critical(self, self.tr('Register fix'), self.tr('Unable to fix: %s') % self.http.error_msg)
-            return
-        default_response = None
-        response = self.http.parse(default_response)
-        if response:
-            message = self.tr('The event has been fixed.')
-
-            self.event_object.set_fixed(fix_id)
+        title=self.tr('Fixation')
+        http = self.params.http
+        if not http.request(url, params=params, method='PUT'):
+            QMessageBox.warning(self, title, '%s: %i\n\n%s\n\n%s' % (
+                self.tr('Error'), ERR_EVENT_FIXATION,
+                self.tr('Fixation error while request: %s') % http.error_msg,
+                self.tr('Call support team!')))
+        status, response = http.piston()
+        print status, response
+        if 'ALL_OK' != status:
+            QMessageBox.warning(self, title, '%s: %i\n\n%s\n\n%s' % (
+                self.tr('Error'), ERR_EVENT_FIXATION,
+                self.tr('Fixation error while response: %s') % desc,
+                self.tr('Call support team!')))
+        else:
+            self.event_object.set_fixed(index)
             model = self.parent.schedule.model()
             model.change(self.event_object, self.event_index)
             self.buttonFix.setDisabled(True)
-        else:
-            message = self.tr('Unable to fix this event.')
-        QMessageBox.information(self, self.tr('Event fix registration'), message)
+            QMessageBox.information(self, title, self.tr('Successful'))
 
     def change_coaches(self):
         """

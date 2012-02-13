@@ -74,7 +74,7 @@
       <item row="5" column="0">
        <widget class="QLabel" name="labelFix">
         <property name="text">
-         <string>Fix as</string>
+         <string>Status</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -95,42 +95,10 @@
         </property>
        </widget>
       </item>
-      <item row="5" column="1">
-       <widget class="QComboBox" name="comboFix">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <item>
-         <property name="text">
-          <string>Waiting</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Fixed</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Cancelled</string>
-         </property>
-        </item>
-       </widget>
-      </item>
       <item row="1" column="2">
        <widget class="QPushButton" name="buttonChange">
         <property name="text">
          <string>Change</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="2">
-       <widget class="QPushButton" name="buttonFix">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>Fix</string>
         </property>
        </widget>
       </item>
@@ -145,7 +113,14 @@
        <widget class="QDateTimeEdit" name="editEnd"/>
       </item>
       <item row="6" column="1">
-       <widget class="QLineEdit" name="editPriceCategory"/>
+       <widget class="QLineEdit" name="editPriceCategory">
+        <property name="acceptDrops">
+         <bool>false</bool>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
       </item>
       <item row="6" column="0">
        <widget class="QLabel" name="label">
@@ -168,6 +143,16 @@
         </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1">
+       <widget class="QLineEdit" name="editStatus">
+        <property name="acceptDrops">
+         <bool>false</bool>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
         </property>
        </widget>
       </item>

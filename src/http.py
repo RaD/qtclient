@@ -166,7 +166,8 @@ class Abstract(object):
         if self.response.status > 399:
             with open('./dump.html', 'w') as dump:
                 dump.write(data)
-        return (status_list.get(self.response.status, 'UNKNOWN'), data)
+        status = self.response.status
+        return (status_list.get(status, 'UNKNOWN'), data)
 
     def prepare(self, data):
         """

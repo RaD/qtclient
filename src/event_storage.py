@@ -31,6 +31,7 @@ class Event(object):
         self.begin = datetime.strptime(serialized.get('begin'), '%Y-%m-%d %H:%M:%S')
         self.end = datetime.strptime(serialized.get('end'), '%Y-%m-%d %H:%M:%S') + timedelta(seconds=1)
         self.duration = self.end - self.begin + timedelta(seconds=1)
+        self.status = serialized.get('status')
 
         self.room_uuid = serialized.get('room__uuid')
         self.activity = serialized['plan']['activity']
@@ -101,7 +102,6 @@ class Event(object):
 
     @property
     def fixed(self): #FIXME
-        return 0
         return int( self.data['status'] )
 
     def set_fixed(self, value):
