@@ -12,6 +12,8 @@ from dlg_settings import TabGeneral
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
+ERR_EVENT_FIXATION = 2205
+
 class QtSchedule(QTableView):
 
     """ Calendar class. """
@@ -70,12 +72,7 @@ class QtSchedule(QTableView):
         self.resizeColumnsToContents()
         self.verticalHeader().setStretchLastSection(True)
 
-        # Context menu
-        self.ctxMenuExchange = QAction(self.tr('Exchange rooms'), self)
-        self.ctxMenuExchange.setStatusTip(self.tr('Exchange rooms between selected and current events.'))
-        self.connect(self.ctxMenuExchange, SIGNAL('triggered()'), self.exchangeRooms)
-        self.contextMenu = QMenu(self)
-        self.contextMenu.addAction(self.ctxMenuExchange)
+        self.setup_context_menu()
 
     # def update_static(self, params=dict()):
     #     """ params = {'rooms',} """
@@ -148,7 +145,14 @@ class QtSchedule(QTableView):
         self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
 
     def data_of_event(self, event):
-        """ This method returns the event's information. """
+        """
+        Получение расширенной информации для события контекстного меню.
+
+        @type  event: PyQt4.QtGui.QContextMenuEvent
+        @param event: Событие контекстного меню.
+        @rtype: tuple
+        @return: Кортеж с данными.
+        """
         index = self.indexAt(event.pos())
         row = index.row()
         col = index.column()
@@ -181,38 +185,68 @@ class QtSchedule(QTableView):
         return False
 
     def contextMenuEvent(self, event):
-        """ Context menu's handler. """
+        """
+        Обрабатывает вызов контекстного меню. Унаследовано.
+
+        @type  event: PyQt4.QtGui.QContextMenuEvent
+        @param event: Событие контекстного меню.
+        """
+        self.menu_event = event
         index, row, col, x, y, cx, cy,\
             room_name, room_color, room_id \
             = self.data_of_event(event)
 
-        # Check an event existence at the given cell.
         self.current_event = self.model().get_event_by_cell(row, col, room_id)
-        self.current_data = (row, col, room_id)
         if not self.current_event:
             return
-        else:
-            # keep the current event
-            self.contextRow = index.row()
 
-            self.ctxMenuExchange.setDisabled(False)
+        self.current_data = (row, col, room_id)
+        self.contextRow = index.row()
 
-            # deny change if:
-            # - only one event is choosen;
-            # - events' dates do not equal;
-            # - date of any event is in past
-            if self.selected_event is None or \
-                    not self.event_intersection(self.current_event, self.selected_event) or \
-                    self.current_event == self.selected_event or \
-                    self.current_event.begin.date() != self.selected_event.begin.date() or \
-                    self.current_event.begin < datetime.now() or \
-                    self.selected_event.begin < datetime.now():
-                self.ctxMenuExchange.setDisabled(True)
-            if 'week' != self.model().getShowMode:
-                self.ctxMenuExchange.setDisabled(True)
-            self.contextMenu.exec_(event.globalPos())
+        # пока этот функционал отключен
+        self.ctxMenuExchange.setDisabled(True)
+        # # deny change if:
+        # # - only one event is choosen;
+        # # - events' dates do not equal;
+        # # - date of any event is in past
+        # if self.selected_event is None or \
+        #         not self.event_intersection(self.current_event, self.selected_event) or \
+        #         self.current_event == self.selected_event or \
+        #         self.current_event.begin.date() != self.selected_event.begin.date() or \
+        #         self.current_event.begin < datetime.now() or \
+        #         self.selected_event.begin < datetime.now():
+        #     self.ctxMenuExchange.setDisabled(True)
+        # if 'week' != self.model().getShowMode:
+        #     self.ctxMenuExchange.setDisabled(True)
 
-    def exchangeRooms(self):
+        # добавляем в меню элементы фиксации события
+        fixation_disable = self.current_event.fixed > 1
+        self.ctxFixOccurred.setDisabled(fixation_disable)
+        self.ctxFixCancelled.setDisabled(fixation_disable)
+
+        # показываем контекстное меню
+        self.contextMenu.exec_(event.globalPos())
+
+    def setup_context_menu(self):
+        u"""Настройка контекстного меню."""
+        self.contextMenu = QMenu(self)
+
+        self.ctxMenuExchange = QAction(self.tr('Exchange rooms'), self)
+        self.ctxMenuExchange.setStatusTip(self.tr('Exchange rooms between selected and current events.'))
+        self.connect(self.ctxMenuExchange, SIGNAL('triggered()'), self.ctx_exchange_rooms)
+        self.contextMenu.addAction(self.ctxMenuExchange)
+
+        self.ctxFixOccurred = QAction(self.tr('Fixation: Occurred'), self)
+        self.ctxFixOccurred.setStatusTip(self.tr('Approve that this event is occurred.'))
+        self.connect(self.ctxFixOccurred, SIGNAL('triggered()'), self.ctx_fix_occurred)
+        self.contextMenu.addAction(self.ctxFixOccurred)
+
+        self.ctxFixCancelled = QAction(self.tr('Fixation: Cancelled'), self)
+        self.ctxFixCancelled.setStatusTip(self.tr('Approve that this event is cancelled.'))
+        self.connect(self.ctxFixCancelled, SIGNAL('triggered()'), self.ctx_fix_cancelled)
+        self.contextMenu.addAction(self.ctxFixCancelled)
+
+    def ctx_exchange_rooms(self):
         exchanged = self.model().exchangeRoom(self.current_data,
                                               self.selected_data)
         if exchanged:
@@ -222,6 +256,43 @@ class QtSchedule(QTableView):
             self.parent.statusBar().showMessage(self.tr('Complete.'))
         else:
             self.parent.statusBar().showMessage(self.tr('Unable to exchange.'))
+
+    def ctx_fix_occurred(self):
+        event = self.current_event
+        self.fix(event, is_occurred=True)
+        event.occurred()
+
+    def ctx_fix_cancelled(self):
+        event = self.current_event
+        self.fix(event, is_cancelled=True)
+        event.cancelled()
+
+    def fix(self, event, **params):
+        """
+        Синхронизирует фиксацию на сервере.
+
+        @type  event: Экземпляр event_storage.Event.
+        @param event: Историческое событие.
+        """
+        url = '/api/history/%s/' % event.uuid
+
+        title=self.tr('Fixation')
+        http = self.params.http
+        if not http.request(url, params=params, method='PUT'):
+            QMessageBox.warning(self, title, '%s: %i\n\n%s\n\n%s' % (
+                self.tr('Error'), ERR_EVENT_FIXATION,
+                self.tr('Fixation error while request: %s') % http.error_msg,
+                self.tr('Call support team!')))
+        status, response = http.piston()
+        if 'ALL_OK' != status:
+            QMessageBox.warning(self, title, '%s: %i\n\n%s\n\n%s' % (
+                self.tr('Error'), ERR_EVENT_FIXATION,
+                self.tr('Fixation error while response: %s') % desc,
+                self.tr('Call support team!')))
+        else:
+            index = self.indexAt(self.menu_event.pos())
+            self.model().change(self.current_event, index)
+            QMessageBox.information(self, title, self.tr('Successful'))
 
     def mousePressEvent(self, event):
         """ Mouse click handler. Do DnD here. """

@@ -104,8 +104,11 @@ class Event(object):
     def fixed(self): #FIXME
         return int( self.data['status'] )
 
-    def set_fixed(self, value):
-        self.data['status'] = str(value)
+    def occurred(self):
+        self.data['status'] = '2'
+
+    def cancelled(self):
+        self.data['status'] = '3'
 
 class ModelStorage:
     """
@@ -209,36 +212,34 @@ class EventStorage(QAbstractTableModel):
         self.storage_init()
 
     def storage_init(self):
-        """
-        Метод для инициализации хранилища.
-        """
+        """Инициализирует хранилище."""
         self.emit(SIGNAL('layoutAboutToBeChanged()'))
         self.storage.init()
         self.emit(SIGNAL('layoutChanged()'))
 
     def update(self):
+        """Обновляет хранилище."""
         if 'week' == self.mode:
             self.load_data(*self.weekRange)
 
     def insert(self, room_uuid, event, emit_signal=False):
-        """ This method registers new event. """
-        self.emit(SIGNAL('layoutAboutToBeChanged()'))
+        """Добавляет новое событие в хранилище."""
+        if emit_signal:
+            self.emit(SIGNAL('layoutAboutToBeChanged()'))
 
         row, col = event.position()
-        #self.beginInsertRows(QModelIndex(), row, row)
         cells = []
         for i in xrange(event.duration.seconds / self.params.quant.seconds):
             cells.append( (row + i, col) )
             self.storage.byRCR(ModelStorage.SET,
                                (row + i, col, room_uuid), event)
         self.storage.setByER( (event, room_uuid), cells )
-        #self.endInsertRows()
 
         if emit_signal:
             self.emit(SIGNAL('layoutChanged()'))
 
     def remove(self, event, index, emit_signal=False):
-        """ This method removes the event. """
+        """Удаляет событие из хранилища."""
         room = event.data['room']['id']
         cell_list = self.get_cells_by_event(event, room)
         if cell_list:

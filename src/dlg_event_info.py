@@ -22,7 +22,6 @@ ERR_EVENT_NOVOUCHERLIST1 = 2201
 ERR_EVENT_NOVOUCHERLIST2 = 2202
 ERR_EVENT_REGISTERVISIT = 2203
 ERR_EVENT_PRINTLABEL = 2204
-ERR_EVENT_FIXATION = 2205
 
 EVENT_TYPE_TEAM = '1'
 EVENT_TYPE_RENT = '2'
@@ -250,32 +249,6 @@ class EventInfo(UiDlgTemplate):
             else:
                 QMessageBox.information(self, self.tr('Event removing'),
                                         self.tr('Unable to remove this event!'))
-
-    def fixEvent(self):
-        url = '/api/history/%s/' % self.event_object.uuid
-        index = self.comboFix.currentIndex()
-        params = {'status': index,}
-
-        title=self.tr('Fixation')
-        http = self.params.http
-        if not http.request(url, params=params, method='PUT'):
-            QMessageBox.warning(self, title, '%s: %i\n\n%s\n\n%s' % (
-                self.tr('Error'), ERR_EVENT_FIXATION,
-                self.tr('Fixation error while request: %s') % http.error_msg,
-                self.tr('Call support team!')))
-        status, response = http.piston()
-        print status, response
-        if 'ALL_OK' != status:
-            QMessageBox.warning(self, title, '%s: %i\n\n%s\n\n%s' % (
-                self.tr('Error'), ERR_EVENT_FIXATION,
-                self.tr('Fixation error while response: %s') % desc,
-                self.tr('Call support team!')))
-        else:
-            self.event_object.set_fixed(index)
-            model = self.parent.schedule.model()
-            model.change(self.event_object, self.event_index)
-            self.buttonFix.setDisabled(True)
-            QMessageBox.information(self, title, self.tr('Successful'))
 
     def change_coaches(self):
         """
