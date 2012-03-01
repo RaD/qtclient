@@ -539,10 +539,9 @@ class ClientInfo(BaseUserInfo):
                 # посещения до полной стоимости абонемента.
                 once_price = steps['category'].get('once')
                 while True:
-                    result = float(self.wizard_dialog('price', self.tr('Paid'), discount_price,
-                                                      self.tr('Payment range is %(min)0.2f .. %(max)0.2f.' ) % {
-                                                          'min': once_price, 'max': discount_price
-                                                          }))
+                    result = float(self.wizard_dialog(
+                        'price', self.tr('Paid'), discount_price,
+                         self.tr('Payment range is %1 .. %2.' ).arg(once_price, 0, 'f', 2).arg(discount_price, 0, 'f', 2)))
                     if result >= once_price and result <= price:
                         steps['paid'] = result
                         break
