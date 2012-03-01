@@ -28,17 +28,17 @@ class DlgSettings(QDialog):
         self.tabIndex = ['general', 'network', 'printer']
 
         applyButton = QPushButton(self.tr('Apply'))
-        cancelButton = QPushButton(self.tr('Cancel'))
+        self.cancelButton = QPushButton(self.tr('Cancel'))
 
         self.connect(applyButton, SIGNAL('clicked()'),
                      self.applyDialog)
-        self.connect(cancelButton, SIGNAL('clicked()'),
+        self.connect(self.cancelButton, SIGNAL('clicked()'),
                      self, SLOT('reject()'))
 
         buttonLayout = QHBoxLayout()
         buttonLayout.addStretch(1)
         buttonLayout.addWidget(applyButton)
-        buttonLayout.addWidget(cancelButton)
+        buttonLayout.addWidget(self.cancelButton)
 
         mainLayout = QVBoxLayout()
         mainLayout.addWidget(self.tabWidget)

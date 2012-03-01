@@ -67,6 +67,7 @@ class Abstract(object):
         return (host, port)
 
     def request(self, url, method='POST', params={}, force=False, credentials=None): # public
+        self.url = url
         if credentials:
             params = dict(params, **credentials)
         if self.session_id:
@@ -167,6 +168,12 @@ class Abstract(object):
             with open('./dump.html', 'w') as dump:
                 dump.write(data)
         status = self.response.status
+        print '=-=' * 10
+        print self.url
+        print data
+        if status != 200:
+            index = response.find(':') + 1
+            data = json.loads(response[index:])
         return (status_list.get(status, 'UNKNOWN'), data)
 
     def prepare(self, data):
