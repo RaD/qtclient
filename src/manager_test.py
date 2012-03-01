@@ -15,6 +15,7 @@ from PyQt4.QtTest import QTest
 from PyQt4.QtCore import Qt, QSettings, QVariant
 
 from manager import MainWindow
+from dlg_login import DlgLogin
 
 class ManagerTest(unittest.TestCase):
 
@@ -48,11 +49,14 @@ class ManagerTest(unittest.TestCase):
         self.settings.endGroup()
 
     def makeLogin(self, login, password):
-        self.wnd.open_session()
-        self.wnd.dialog.editLogin.setText(login)
-        self.wnd.dialog.editPassword.setText(password)
-        button = self.wnd.dialog.applyDialog
-        QTest.mouseClick(button, Qt.LeftButton)
+        dialog = DlgLogin(None, connecting_to=u'localhost/test')
+        dialog.editLogin.setText(login)
+        dialog.editPassword.setText(password)
+        QTest.mouseClick(dialog.buttonOk, Qt.LeftButton)
+        status, data = dialog.response
+        assert status == 'ALL_OK'
+        assert isinstance(data, dict)
+        assert login == data.get('username')
 
     def test_setup(self):
         """Тестирование настройки приложения."""

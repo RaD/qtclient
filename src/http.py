@@ -16,6 +16,8 @@ DEBUG_COMMON, DEBUG_RFID, DEBUG_PRINTER = DEBUG
 class HttpException(Exception):
     pass
 
+class RequestFailedException(HttpException):
+    pass
 
 class Abstract(object):
 
@@ -218,7 +220,9 @@ class WebResource(object):
     def get(self, parent=None):
         use_ssl_state = unicode(self.params.app_config(key='General/debug_use_ssl')).lower()
         self.use_ssl = u'true' == use_ssl_state
-        return self.use_ssl and Https(parent) or Http(parent)
+        resource = self.use_ssl and Https(parent) or Http(parent)
+        resource.use_ssl = self.use_ssl
+        return resource
 
 # Test part of module
 

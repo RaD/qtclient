@@ -339,72 +339,62 @@ class MainWindow(QMainWindow):
 
     # Menu handlers: The begin
 
-    def open_session(self):
-        def callback(credentials):
-            self.credentials = dict(credentials,
-                                    version='.'.join(map(str, self.params.version)))
-
+    def open_session(self, **kwargs):
         connecting_to = u'%s %s' % (
             self.params.http.hostport,
-            self.webresource.use_ssl and self.tr('Secure') or self.tr('Unsecure'),
+            self.params.http.use_ssl and self.tr('Secure') or self.tr('Unsecure'),
             )
         self.dialog = DlgLogin(self, connecting_to=connecting_to)
-        self.dialog.setCallback(callback)
-        self.dialog.setModal(True)
         dlgStatus = self.dialog.exec_()
 
         dialog_title = self.tr('Open session')
-        http = self.params.http
-        if QDialog.Accepted == dlgStatus:
-            if not http.request('/api/login/', 'POST', credentials=self.credentials):
-                QMessageBox.critical(self, dialog_title,
-                                     self.tr('Unable to make request: %1').arg(http.error_msg))
+        if not QDialog.Accepted == dlgStatus:
+            QMessageBox.critical(self, dialog_title, self.dialog.error_msg)
+            return
+        status, data = self.dialog.response
+
+        if status == 'ALL_OK':
+            self.params.logged_in = True
+            self.loggedTitle(data)
+
+            # подгружаем статическую информацию и список залов
+            static = self.get_static()
+            if not static:
+                print 'Check static!'
                 return
+            self.params.static = static
 
-            default_response = None
-            status, response = http.piston()
-            if status == 'ALL_OK':
-                self.params.logged_in = True
-                self.loggedTitle(response)
+            rooms_by_index = {}
+            rooms_by_uuid = {}
+            for index, room in enumerate(self.params.static.get('rooms')):
+                room_uuid = room.get('uuid')
+                rooms_by_index[index] = room
+                rooms_by_uuid[room_uuid] = index
+            self.params.static['rooms_by_index'] = rooms_by_index
+            self.params.static['rooms_by_uuid'] = rooms_by_uuid
 
-                # подгружаем статическую информацию и список залов
-                static = self.get_static()
-                if not static:
-                    print 'Check static!'
-                    return
-                self.params.static = static
+            # здесь только правим текстовые метки
+            self.get_dynamic()
+            # изменяем свойства элементов интерфейса
+            self.update_interface()
+            # загружаем информацию о занятиях на расписание
+            self.schedule.model().showCurrWeek()
 
-                rooms_by_index = {}
-                rooms_by_uuid = {}
-                for index, room in enumerate(self.params.static.get('rooms')):
-                    room_uuid = room.get('uuid')
-                    rooms_by_index[index] = room
-                    rooms_by_uuid[room_uuid] = index
-                self.params.static['rooms_by_index'] = rooms_by_index
-                self.params.static['rooms_by_uuid'] = rooms_by_uuid
+            # # run refresh timer
+            from settings import SCHEDULE_REFRESH_TIMEOUT
+            self.refreshTimer = self.makeTimer(self.refresh_data, SCHEDULE_REFRESH_TIMEOUT, True)
 
-                # здесь только правим текстовые метки
-                self.get_dynamic()
-                # изменяем свойства элементов интерфейса
-                self.update_interface()
-                # загружаем информацию о занятиях на расписание
-                self.schedule.model().showCurrWeek()
-
-                # # run refresh timer
-                from settings import SCHEDULE_REFRESH_TIMEOUT
-                self.refreshTimer = self.makeTimer(self.refresh_data, SCHEDULE_REFRESH_TIMEOUT, True)
-
-                self.printer_init()
-                self.interface_disable(MENU_LOGGED_IN | MENU_RFID | MENU_PRINTER)
-            elif status == 'NOT_IMPLEMENTED':
-                QMessageBox.information(self, dialog_title,
-                                        self.tr('Protocol is deprecated!'))
-            elif status == 'BAD_REQUEST':
-                QMessageBox.information(self, dialog_title,
-                                        self.tr('No protocol version found!'))
-            else:
-                QMessageBox.warning(self, dialog_title,
-                                    self.tr('It seems you\'ve entered wrong login/password.'))
+            self.printer_init()
+            self.interface_disable(MENU_LOGGED_IN | MENU_RFID | MENU_PRINTER)
+        elif status == 'NOT_IMPLEMENTED':
+            QMessageBox.information(self, dialog_title,
+                                    self.tr('Protocol is deprecated!'))
+        elif status == 'BAD_REQUEST':
+            QMessageBox.information(self, dialog_title,
+                                    self.tr('No protocol version found!'))
+        else:
+            QMessageBox.warning(self, dialog_title,
+                                self.tr('It seems you\'ve entered wrong login/password.'))
 
     def close_session(self):
         self.params.logged_in = False
