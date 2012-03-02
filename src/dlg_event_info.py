@@ -30,6 +30,18 @@ def dump(value):
     import pprint
     pprint.pprint(value)
 
+class EventInfoException(Exception):
+    pass
+
+class EmptyVoucherList(EventInfoException):
+    pass
+
+class UnableSendRequest(EventInfoException):
+    pass
+
+class BadResponse(EventInfoException):
+    pass
+
 class EventInfo(UiDlgTemplate):
 
     ui_file = 'uis/dlg_event_info.ui'
@@ -39,6 +51,7 @@ class EventInfo(UiDlgTemplate):
     event_index = None
 
     def __init__(self, parent=None):
+        self.stream = self.params.http
         UiDlgTemplate.__init__(self, parent)
 
     def setupUi(self):
@@ -133,22 +146,29 @@ class EventInfo(UiDlgTemplate):
             return self.visit_register(self.last_user_uuid)
 
     def select_voucher_list(self, *args, **kwargs):
-        # получаем список подходящих ваучеров
-        http = self.params.http
-        if not http.request('/api/voucher/%(event_id)s/%(client_id)s/%(start)s/' % kwargs, 'GET', force=True):
-            return None
-        status, response = http.piston()
-        return u'ALL_OK' == status and response or None
+        u"""Получает список подходящих ваучеров."""
+        url = '/api/voucher/%(event_id)s/%(client_id)s/%(start)s/' % kwargs
+        if not self.stream.request(url, 'GET', force=True):
+            raise UnableSendRequest()
+        status, data = self.stream.piston()
+        if not u'ALL_OK' == status:
+            raise BadResponse(status)
+        if 0 == len(data):
+            raise EmptyVoucherList()
+        return data
 
     def visit_register(self, user_uuid):
+        u"""Регистрирует посещение события."""
         title = self.tr('Client Registration')
         event = self.event_object
         # получаем список подходящих ваучеров
-        voucher_list = self.select_voucher_list(client_id=user_uuid, event_id=event.uuid,
-                                                start=event.begin.strftime('%Y%m%d%H%M%S'))
-        if not voucher_list or 0 == len(voucher_list):
-            QMessageBox.information(self, title,
-                                    self.tr('No voucher for this visit.\n\nBuy one.'))
+        try:
+            voucher_list = self.select_voucher_list(
+                client_id=user_uuid, event_id=event.uuid,
+                start=event.begin.strftime('%Y%m%d%H%M%S'))
+        except (UnableSendRequest, BadResponse, EmptyVoucherList):
+            msg = self.tr('No voucher for this visit.\n\nBuy one.')
+            QMessageBox.information(self, title, msg)
             return False
 
         # показываем список менеджеру, пусть выбирает
@@ -171,33 +191,27 @@ class EventInfo(UiDlgTemplate):
                        callback)
         # ваучер выбран, регистрируем посещение
         if QDialog.Accepted == dialog.exec_():
-            http = self.params.http
-            if not http.request('/api/voucher/', 'PUT',
-                                {'action': 'VISIT',
-                                 'uuid': self.voucher_uuid,
-                                 'plan_uuid': event.uuid,
-                                 'room_uuid': event.room_uuid,
-                                 'day': event.begin.strftime('%Y%m%d')}):
+            params = dict(action='VISIT', event=event.uuid, voucher=self.voucher_uuid)
+            if not self.stream.request('/api/voucher/', 'PUT', params):
                 QMessageBox.warning(self, title, '%s: %i\n\n%s\n\n%s' % (
                     self.tr('Error'), ERR_EVENT_REGISTERVISIT,
                     self.tr('Unable to register the visit: %s') % http.error_msg,
                     self.tr('Call support team!')))
                 return False
-            status, response = http.piston()
-            print status, response
+            status, data = self.stream.piston()
+            print status, data
             if u'CREATED' == status:
-                QMessageBox.information(self, title,
-                                        self.tr('The client has been registered for this event.'))
+                msg = self.tr('The client has been registered for this event.')
+                QMessageBox.information(self, title, msg)
                 # распечатаем чек
-                visit_uuid = response.get('uuid')
+                visit_uuid = data.get('uuid')
                 self.print_label(visit_uuid)
                 return True
             elif u'DUPLICATE_ENTRY' == status:
-                QMessageBox.warning(self, title,
-                                    self.tr('The client is already registered for this event.'))
+                msg = self.tr('The client is already registered for this event.')
             else:
-                QMessageBox.warning(self, title,
-                                    self.tr('Unable to register!\nStatus: %s') % status)
+                msg = self.tr('Unable to register!\nStatus: %s') % status
+            QMessageBox.warning(self, title, msg)
         return False
 
     def print_label(self, visit_uuid):

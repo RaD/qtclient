@@ -69,6 +69,7 @@ class Abstract(object):
         return (host, port)
 
     def request(self, url, method='POST', params={}, force=False, credentials=None): # public
+        u"""Выполняет запрос к удалённому сервису."""
         self.url = url
         if credentials:
             params = dict(params, **credentials)
