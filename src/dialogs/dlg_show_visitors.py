@@ -17,6 +17,7 @@ class ShowVisitors(UiDlgTemplate):
     event_uuid = None
 
     def __init__(self, parent=None):
+        self.stream = self.params.http
         UiDlgTemplate.__init__(self, parent)
 
     def setupUi(self):
@@ -31,21 +32,22 @@ class ShowVisitors(UiDlgTemplate):
 
     def initData(self, event_uuid):
         self.event_uuid = event_uuid
-        http = self.params.http
-        if not http.request('/api/history/%s/' % self.event_uuid, 'GET', force=True):
-            QMessageBox.critical(self, self.tr('Visitors'), self.tr('Unable to fetch: %s') % http.error_msg)
+        if not self.stream.request('/api/history/%s/' % self.event_uuid, 'GET', force=True):
+            msg = self.tr('Unable to fetch: %s') % http.error_msg
+            QMessageBox.critical(self, self.tr('Visitors'), msg)
             return
 
-        status, response = http.piston()
+        status, data = self.stream.piston()
         if 'ALL_OK' == status:
-            for item in response.pop().get('visit_set', []):
-
+            for item in data.get('visit_set', []):
                 client = item['voucher']['client']
 
                 last_name = client.get('last_name')
                 first_name = client.get('first_name')
-                rfid_code = client.get('rfid')['code']
                 registered = item.get('registered')
+                rfid_code = client.get('rfid')
+                if rfid_code is None:
+                    rfid_code = '--'
 
                 lastRow = self.tableVisitors.rowCount()
                 self.tableVisitors.insertRow(lastRow)

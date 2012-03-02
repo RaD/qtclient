@@ -1,17 +1,13 @@
 # -*- coding: utf-8 -*-
 # (c) 2009-2011 Ruslan Popov <ruslan.popov@gmail.com>
 
-import time
 from datetime import datetime
 
-from settings import DEBUG
-from event_storage import Event
 from ui_dialog import UiDlgTemplate
-from dialogs import WizardListDlg
+from dialogs import WizardListDlg, ShowVisitors
 from dialogs.rfid_wait import WaitingRFID
 from dialogs.show_coaches import ShowCoaches
 from dialogs.searching import Searching
-from dlg_show_visitors import ShowVisitors
 
 from library import ParamStorage
 
@@ -291,4 +287,3 @@ class EventInfo(UiDlgTemplate):
                 # update schedule model to immediate refresh this event
                 model = self.event_index.model()
                 model.change(self.event_object, self.event_index)
-

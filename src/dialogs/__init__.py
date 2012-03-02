@@ -6,6 +6,7 @@ from PyQt4.QtCore import *
 from PyQt4 import uic
 
 from dlg_login import DlgLogin
+from dlg_show_visitors import ShowVisitors
 
 class BreakDialog(Exception):
     pass
