@@ -60,6 +60,10 @@ class EventInfo(UiDlgTemplate):
         self.connect(self.buttonRemove,      SIGNAL('clicked()'), self.removeEvent)
         self.connect(self.buttonChange,      SIGNAL('clicked()'), self.change_coaches)
 
+        # временно отключим кнопку удаления
+        self.buttonRemove.setDisabled(True)
+        self.buttonChange.setDisabled(True)
+
     def initData(self, obj, index):
         """
         Метод инициализации диалога.

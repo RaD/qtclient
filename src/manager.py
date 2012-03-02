@@ -390,11 +390,11 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, dialog_title,
                                     self.tr('Protocol is deprecated!'))
         elif status == 'BAD_REQUEST':
-            QMessageBox.information(self, dialog_title,
-                                    self.tr('No protocol version found!'))
-        else:
             QMessageBox.warning(self, dialog_title,
                                 self.tr('It seems you\'ve entered wrong login/password.'))
+        else:
+            QMessageBox.information(self, dialog_title,
+                                    self.tr('Unknown error!'))
 
     def close_session(self):
         self.params.logged_in = False

@@ -48,7 +48,7 @@ class DlgLogin(UiDlgTemplate):
             self.accept()
 
     def exchange(self, data):
-        data = dict(data, version='.'.join(map(str, self.params.version)))
+        data = dict(data) #, version='.'.join(map(str, self.params.version)))
         if not self.stream.request('/api/login/', 'POST', credentials=data):
             self.error_msg = self.tr('Unable to make request: %1').arg(self.stream.error_msg)
             raise RequestFailedException()
