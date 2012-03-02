@@ -12,11 +12,11 @@ from qtschedule import QtSchedule
 from printer import Printer
 #from team_tree import TreeModel
 
+from dialogs import DlgLogin
 from dialogs.rfid_wait import WaitingRFID
 from dialogs.searching import Searching
 from dialogs.user_info import ClientInfo, RenterInfo
 from dlg_settings import DlgSettings
-from dlg_login import DlgLogin
 from dlg_event_assign import DlgEventAssign
 from dlg_event_info import EventInfo
 from dlg_calendar import DlgCalendar

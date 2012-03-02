@@ -15,7 +15,7 @@ from PyQt4.QtTest import QTest
 from PyQt4.QtCore import Qt, QSettings, QVariant
 
 from manager import MainWindow
-from dlg_login import DlgLogin
+from dialogs import DlgLogin
 
 class ManagerTest(unittest.TestCase):
 
