@@ -1,3 +1,9 @@
+advisor-client (0.4.4-1ubuntu1) maverick; urgency=low
+
+  * Event fixation feature is developed.
+
+ -- Ruslan Popov <ruslan.popov@gmail.com>  Sat, 03 Mar 2012 00:06:29 +0400
+
 advisor-client (0.4.3-1ubuntu2) maverick; urgency=low
 
   * Fix bug with creating configuration while new installation.

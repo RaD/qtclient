@@ -4,7 +4,7 @@
 from PyQt4.QtCore import *
 
 DEBUG = (True, True, False) # Common, RFID, Printer
-VERSION = (0, 4, 3)
+VERSION = (0, 4, 4)
 
 TEST_CREDENTIALS = {'login': 'rad', 'password': 'q1'}
 

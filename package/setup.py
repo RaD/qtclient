@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='advisor-client',
-      version='0.4.3',
+      version='0.4.4',
       description='Accounting System / Client Interface',
       author='Ruslan Popov',
       author_email='ruslan.popov@gmail.com',

@@ -1,5 +1,5 @@
 PROJECT=advisor-client
-VERSION=0.4.3
+VERSION=0.4.4
 
 BASEDIR=$(shell pwd)
 BUILD=$(BASEDIR)/build
@@ -13,9 +13,6 @@ clean:
 
 build: dist debianize
 
-check:
-	pyflakes ./src/*.py ./src/dialogs/*.py
-
 dist:
 	mkdir -p $(DST) $(DST)/$(LCL) $(DST)/uis $(DST)/dialogs
 	cp ./src/*.py ./src/*.css $(DST)/
@@ -23,6 +20,8 @@ dist:
 	cp ./src/dialogs/*.py $(DST)/dialogs/
 	cp ./src/advisor-client_*.qm $(DST)/
 	cp ./package/* $(BUILD)/
+
+	rm $(DST)/manager_test.py
 
 	cd $(BUILD); python setup.py sdist; cd -
 
