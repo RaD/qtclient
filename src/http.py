@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
-# (c) 2009-2011 Ruslan Popov <ruslan.popov@gmail.com>
+# (c) 2009-2012 Ruslan Popov <ruslan.popov@gmail.com>
 
-import sys, httplib, urllib, json
+import os
+import sys
+import httplib
+import urllib
+import json
+import tempfile
+
 from datetime import datetime
 
 from dlg_settings import TabNetwork
@@ -38,6 +44,11 @@ class Abstract(object):
     def debug(self, message):
         if DEBUG_COMMON:
             print '%s: %s' % (__name__, message)
+
+    def dump(self, filename, data):
+        dump_file = os.path.join(tempfile.gettempdir(), filename)
+        with open(dump_file, 'w') as log:
+            log.write(data)
 
     def connect(self):
         (self.host, self.port) = self.get_settings()
@@ -90,9 +101,6 @@ class Abstract(object):
                 self.response = None
                 return False
 
-        with open('./log.html', 'a') as log:
-            log.write(url)
-
         try:
             self.response = self.conn.getresponse()
         except httplib.BadStatusLine, e:
@@ -122,9 +130,7 @@ class Abstract(object):
             return None
         if self.response.status == 200: # http status
             data = self.response.read()
-
-            with open('./log.html', 'a') as log:
-                log.write(data)
+            self.dump('log.html', data)
 
             if not is_json:
                 return data # отдаём как есть
@@ -144,8 +150,7 @@ class Abstract(object):
             return default
         elif self.response.status == 500: # error
             self.error_msg = 'Error 500. Check dump!'
-            with open('./dump.html', 'w') as dump:
-                dump.write(self.response.read())
+            self.dump('dump.html', self.response.read())
         else:
             self.error_msg = '[%s] %s' % (self.response.status, self.response.reason)
             return default
@@ -168,8 +173,7 @@ class Abstract(object):
         except ValueError:
             data = response
         if self.response.status > 399:
-            with open('./dump.html', 'w') as dump:
-                dump.write(data)
+            self.dump('dump.html', data)
         status = self.response.status
         print '=-=' * 10
         print self.url
