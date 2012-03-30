@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 # (c) 2009-2011 Ruslan Popov <ruslan.popov@gmail.com>
 
-from settings import DEBUG, userRoles
+from settings import userRoles
 from card_list import CardListModel
 from rent_list import RentListModel
-from dialogs import BreakDialog, WizardDialog, WizardListDlg, WizardSpinDlg, WizardPriceDlg, PaymentDlg
+from dialogs import BreakDialog, WizardListDlg, WizardSpinDlg, WizardPriceDlg, PaymentDlg
 from dialogs.rfid_wait import WaitingRFID
 
 from dialogs.assign_rent import AssignRent
@@ -13,22 +13,22 @@ from library import ParamStorage
 
 from datetime import datetime, date, timedelta
 
-import json
-
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
 ERR_VOUCHER_PAYMENT = 2101
 
+
 def str2date(value):
     return datetime.strptime(value, '%Y-%m-%d').date()
+
 
 class BaseUserInfo(UiDlgTemplate):
 
     ui_file = 'uis/dlg_user_info.ui'
     params = ParamStorage()
     model = None
-    user_id = None # новые записи обозначаются отсутствием идентификатора
+    user_id = None  # новые записи обозначаются отсутствием идентификатора
     discounts_by_index = {}
     discounts_by_uuid = {}
     rfid_id = None
@@ -99,7 +99,7 @@ class BaseUserInfo(UiDlgTemplate):
         mode = kwargs.get('mode', 'client')
         data = [
             ('uuid', self.user_id),
-            ('is_active', True), # статусом надо управлять на диалоге
+            ('is_active', True),  # статусом надо управлять на диалоге
             ('last_name', self.editLastName.text().toUtf8()),
             ('first_name', self.editFirstName.text().toUtf8()),
             ('phone', self.editPhone.text().toUtf8()),
@@ -110,7 +110,7 @@ class BaseUserInfo(UiDlgTemplate):
 
         # соберём информацию о скидках клиента, сохраняем
         # идентификаторы установленных скидок
-        data = data + [ ('discount', i) for i,(o, desc) in self.discounts_by_uuid.items() if o.checkState() == Qt.Checked]
+        data = data + [('discount', i) for i, (o, desc) in self.discounts_by_uuid.items() if o.checkState() == Qt.Checked]
 
         # передаём на сервер
         dialog_title = self.tr('Saving')
@@ -128,6 +128,7 @@ class BaseUserInfo(UiDlgTemplate):
         else:
             QMessageBox.warning(self, dialog_title, self.tr('Warning!\nPlease fill all fields.'))
             return False
+
 
 class RenterInfo(BaseUserInfo):
 
@@ -170,7 +171,7 @@ class RenterInfo(BaseUserInfo):
             item, desc = self.discounts[i['id']]
             item.setCheckState(Qt.Checked)
 
-        birth_date = data.get('birth_date') # it could be none while testing
+        birth_date = data.get('birth_date')  # it could be none while testing
         self.dateBirth.setDate(birth_date and str2date(birth_date) or \
                                QDate.currentDate())
 
@@ -181,13 +182,15 @@ class RenterInfo(BaseUserInfo):
         """ Метод отображает диалог регистрации аренды. """
 
         dialog = AssignRent(self, renter=self.user_id)
-        dialog.init_data( {'rent_item_list': [], } )
+        data = dict(rent_item_list=[])
+        dialog.init_data(data)
         dialog.exec_()
 
     def save_dialog(self):
         """ Save user settings. """
         if self.save_user(mode='renter'):
             self.buttonAssign.setDisabled(False)
+
 
 class ClientInfo(BaseUserInfo):
 
@@ -250,7 +253,7 @@ class ClientInfo(BaseUserInfo):
             checkbox, desc = self.discounts_by_uuid[item.get('uuid')]
             checkbox.setCheckState(Qt.Checked)
 
-        birth_date = data.get('birth_date', None) # it could be none while testing
+        birth_date = data.get('birth_date', None)  # it could be none while testing
         self.dateBirth.setDate(birth_date and str2date(birth_date) or \
                                QDate.currentDate())
 
@@ -264,7 +267,7 @@ class ClientInfo(BaseUserInfo):
             self.buttonRFID.setDisabled(True)
 
         # заполняем список приобретённых ваучеров
-        self.tableHistory.model().init_data( data.get('voucher_list') )
+        self.tableHistory.model().init_data(data.get('voucher_list'))
 
     def save_dialog(self):
         """
@@ -327,6 +330,7 @@ class ClientInfo(BaseUserInfo):
         voucher_id = voucher.get('id')
         if not voucher_id:
             raise Exception('Bad voucher id')
+
         # определяем обработчик диалога
         def callback(selected_date):
             self.selected_date = selected_date
@@ -391,7 +395,7 @@ class ClientInfo(BaseUserInfo):
         self.wizard_data = None
 
         def callback(data):
-            self.wizard_data = data # id, title, voucher_type
+            self.wizard_data = data  # id, title, voucher_type
 
         dialogs = {
             'list': WizardListDlg,
@@ -475,13 +479,13 @@ class ClientInfo(BaseUserInfo):
                 }
             if 'category' in steps:
                 kwargs['category'] = steps['category'].get('uuid')
-            data = dict(steps, **kwargs) # копируем содержимое steps и корректируем указанные поля
+            data = dict(steps, **kwargs)  # копируем содержимое steps и корректируем указанные поля
             if not http.request('/api/voucher/', 'POST', data):
                 QMessageBox.critical(self, self.tr('Save info'), self.tr('Unable to save: %1').arg(http.error_msg))
                 return False
             status, response = http.piston()
             if 'CREATED' == status:
-                saved_steps = dict(steps, # копируем содержимое steps и корректируем указанные поля
+                saved_steps = dict(steps,  # копируем содержимое steps и корректируем указанные поля
                                    uuid=response.get('uuid'),
                                    available=response.get('available'),
                                    registered=datetime.strptime(response.get('registered'), '%Y-%m-%d %H:%M:%S'))
@@ -504,13 +508,13 @@ class ClientInfo(BaseUserInfo):
 
         try:
             if voucher_type in ('once', 'abonement',):
-                category_list = [ (i['uuid'], i['title']) for i in self.params.static.get('category_team')]
+                category_list = [(i['uuid'], i['title']) for i in self.params.static.get('category_team')]
                 result = self.wizard_dialog('list', self.tr('Price Category'), category_list)
                 if result:
                     # из списка категорий выбираем нужную по идентификатору
                     steps['category'] = filter(lambda x: result == x.get('uuid'),
                                                self.params.static.get('category_team'))[0]
-            if voucher_type in ('test',): # WARNING: судя по таблице ваучеров, у пробного нет категории
+            if voucher_type in ('test',):  # WARNING: судя по таблице ваучеров, у пробного нет категории
                 # назначаем самую дорогую из имеющихся категорий
                 steps['category'] = reduce(lambda a, b: float(a['full']) > float(b['full']) and a or b,
                                            self.params.static.get('category_team'))
@@ -541,7 +545,7 @@ class ClientInfo(BaseUserInfo):
                 while True:
                     result = float(self.wizard_dialog(
                         'price', self.tr('Paid'), discount_price,
-                         self.tr('Payment range is %1 .. %2.' ).arg(once_price, 0, 'f', 2).arg(discount_price, 0, 'f', 2)))
+                         self.tr('Payment range is %1 .. %2.').arg(once_price, 0, 'f', 2).arg(discount_price, 0, 'f', 2)))
                     if result >= once_price and result <= price:
                         steps['paid'] = result
                         break
@@ -566,7 +570,7 @@ class ClientInfo(BaseUserInfo):
         steps['begin'] = steps['end'] = u''
 
         try:
-            card_list = [ (i['uuid'], i['title']) for i in self.params.static.get('card_club')]
+            card_list = [(i['uuid'], i['title']) for i in self.params.static.get('card_club')]
             card_uuid = self.wizard_dialog('list', self.tr('Card Type'), card_list)
             if not card_uuid:
                 raise RuntimeWarning('Wrong Card Type')
@@ -578,11 +582,11 @@ class ClientInfo(BaseUserInfo):
             # которая должна быть в диапазоне от стоимости одного
             # посещения до полной стоимости абонемента.
             while True:
-                result = float(self.wizard_dialog('price', self.tr('Paid'), price,
-                                                  self.tr('Payment range is %(min)0.2f .. %(max)0.2f.' ) % {
-                                                      'min': price/2.0, 'max': price
-                                                      }))
-                if result >= price/2.0 and result <= price:
+                result = float(
+                    self.wizard_dialog('price', self.tr('Paid'), price,
+                        self.tr('Payment range is %(min)0.2f .. %(max)0.2f.') % \
+                            dict(min=price / 2.0, max=price)))
+                if result >= price / 2.0 and result <= price:
                     steps['paid'] = result
                     break
         except BreakDialog:
@@ -598,7 +602,7 @@ class ClientInfo(BaseUserInfo):
         steps['begin'] = steps['end'] = u''
 
         try:
-            card_list = [ (i['uuid'], i['title']) for i in self.params.static.get('card_promo')]
+            card_list = [(i['uuid'], i['title']) for i in self.params.static.get('card_promo')]
             card_uuid = self.wizard_dialog('list', self.tr('Card Type'), card_list)
             if not card_uuid:
                 raise RuntimeWarning('Wrong Card Type')
@@ -660,12 +664,12 @@ class ClientInfo(BaseUserInfo):
         tmp_uuid = None
         tmp_percent = 0
         for discount in sorted(self.params.static.get('discount_card'),
-                               lambda a,b: cmp(int(a['threshold']), int(b['threshold']))):
+                               lambda a, b: cmp(int(a['threshold']), int(b['threshold']))):
             if discount['threshold'] <= sold:
                 tmp_uuid = discount['uuid']
                 tmp_percent = int(discount['percent'])
             else:
-                break # заканчиваем цикл
+                break  # заканчиваем цикл
         if tmp_uuid:
             percent += tmp_percent
             uuid_list.append(tmp_uuid)
