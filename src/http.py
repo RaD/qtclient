@@ -115,8 +115,8 @@ class Abstract(object):
         if cookie_string:
             cookie = {}
             for item in cookie_string.split('; '):
-                key, value = item.split('=')
-                cookie.update( { key: value } )
+                key, value = tuple(item.split('=')) if u'=' in item else (item, u'')
+                cookie[key] = value
             if DEBUG_COMMON:
                 import pprint
                 pprint.pprint(cookie)
